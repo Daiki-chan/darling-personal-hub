@@ -785,6 +785,7 @@ figcaption {
   overflow: hidden;
   color: var(--text);
   background: #050506;
+  will-change: opacity;
 }
 
 .intro-halo {

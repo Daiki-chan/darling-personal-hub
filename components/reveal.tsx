@@ -15,10 +15,10 @@ export const Reveal = memo(function Reveal({ children, className, delay = 0 }: R
   return (
     <motion.div
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.75, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.52, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>

@@ -29,7 +29,6 @@ export const IntroGate = memo(function IntroGate() {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [isRouteReady, setIsRouteReady] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
@@ -44,22 +43,22 @@ export const IntroGate = memo(function IntroGate() {
   }, []);
 
   useEffect(() => {
-    if (step !== 2) return;
-
     router.prefetch("/thu-vien");
     router.prefetch("/am-nhac");
     router.prefetch("/portfolio");
-  }, [router, step]);
+  }, [router]);
 
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
       if (closeTimer.current !== null) {
         window.clearTimeout(closeTimer.current);
       }
     };
-  }, [isOpen]);
+  }, []);
 
   const advance = () => {
     if (!isRouteReady) return;
@@ -83,22 +82,22 @@ export const IntroGate = memo(function IntroGate() {
     if (isLeaving) return;
 
     setIsLeaving(true);
-    const closeDelay = reduceMotion ? 0 : 820;
+    router.prefetch(target);
+    const closeDelay = reduceMotion ? 0 : 240;
     closeTimer.current = window.setTimeout(() => {
-      setIsOpen(false);
       router.push(target);
     }, closeDelay);
   };
 
   const floatingMotion = reduceMotion ? {} : { y: [0, -6, 0] };
 
-  return isOpen ? (
-    <motion.div
+  return (
+    <motion.main
       className="intro-layer"
       initial={{ opacity: 1 }}
       aria-busy={!isRouteReady}
       animate={{ opacity: isLeaving ? 0 : 1 }}
-      transition={{ duration: reduceMotion ? 0 : 0.8, ease: softEase }}
+      transition={{ duration: reduceMotion ? 0 : 0.28, ease: softEase }}
     >
           <div className="intro-halo intro-halo--violet" aria-hidden="true" />
           <div className="intro-halo intro-halo--indigo" aria-hidden="true" />
@@ -159,7 +158,7 @@ export const IntroGate = memo(function IntroGate() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -16 }}
-                    transition={{ duration: reduceMotion ? 0 : 1, ease: softEase }}
+                    transition={{ duration: reduceMotion ? 0 : 0.72, ease: softEase }}
                   >
                     <Portal
                       className="portal--library"
@@ -194,8 +193,8 @@ export const IntroGate = memo(function IntroGate() {
               </div>
             </div>
           ) : null}
-        </motion.div>
-      ) : null;
+        </motion.main>
+      );
 });
 
 type PortalProps = {
@@ -223,7 +222,7 @@ const Portal = memo(function Portal({
       className={`portal ${className}`}
       initial={reduceMotion ? false : { opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: reduceMotion ? 0 : index * 0.14, ease: softEase }}
+      transition={{ duration: 0.62, delay: reduceMotion ? 0 : index * 0.08, ease: softEase }}
       whileHover={reduceMotion ? undefined : { y: -6, scale: 1.01 }}
       whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       onClick={(event) => {
