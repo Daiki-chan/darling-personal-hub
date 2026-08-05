@@ -525,7 +525,7 @@ export function MusicHub() {
     }
 
     if (state.lyrics.status === "empty" || state.lyrics.status === "idle") {
-      return <p className={styles.lyricsMessage}>Chưa có lời đồng bộ cho bản nhạc này.</p>;
+      return <p className={styles.lyricsMessage}>Chưa có lời bài hát cho bản nhạc này.</p>;
     }
 
     if (state.lyrics.instrumental) {

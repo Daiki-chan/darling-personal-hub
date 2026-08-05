@@ -187,8 +187,8 @@ export function YTIFrameEngine({
 
       try {
         ytPlayerRef.current = new window.YT.Player("yt-player-target", {
-          height: "100%",
-          width: "100%",
+          height: "1",
+          width: "1",
           videoId: initialVideoId,
           playerVars: {
             autoplay: 0,
@@ -249,7 +249,6 @@ export function YTIFrameEngine({
   useEffect(() => {
     const track = currentTrack;
     if (track.source.kind === "youtube") {
-      // Pause HTML5 audio
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -266,7 +265,6 @@ export function YTIFrameEngine({
         }
       }
     } else if (track.source.kind === "direct") {
-      // Pause YouTube player
       if (ytPlayerRef.current && isYtReadyRef.current) {
         try {
           ytPlayerRef.current.pauseVideo();
@@ -348,7 +346,20 @@ export function YTIFrameEngine({
   }, [seekTarget]);
 
   return (
-    <div style={{ position: "absolute", width: 0, height: 0, opacity: 0, pointerEvents: "none", overflow: "hidden" }}>
+    <div
+      aria-hidden="true"
+      className="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"
+      style={{
+        position: "fixed",
+        top: "-9999px",
+        left: "-9999px",
+        width: "1px",
+        height: "1px",
+        opacity: 0,
+        pointerEvents: "none",
+        zIndex: -9999,
+      }}
+    >
       <div ref={containerRef} style={{ width: "1px", height: "1px" }} />
       <audio ref={audioRef} preload="metadata" />
     </div>

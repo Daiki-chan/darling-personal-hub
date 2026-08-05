@@ -388,11 +388,14 @@
 .visualizerCard {
   padding: 1.5rem;
   border-radius: 20px;
-  background: #09090b;
+  background: rgba(24, 24, 27, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  overflow: hidden;
 }
 
 .visualizerTitle {
@@ -403,11 +406,12 @@
 }
 
 .visualizerCanvasHolder {
-  height: 90px;
+  height: 128px;
   width: 100%;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  position: relative;
 }
 
 .lyricsToggleBtn {
