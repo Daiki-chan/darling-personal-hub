@@ -4,26 +4,10 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BriefcaseBusiness, Headphones, Images } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef, useState } from "react";
+import { consumeInitialDocumentVisit } from "@/lib/document-visit";
 
 const softEase = [0.16, 1, 0.3, 1] as const;
 const floatEase = [0.37, 0, 0.63, 1] as const;
-const introStorageKey = "darling-intro-complete";
-
-function hasCompletedIntro() {
-  try {
-    return window.localStorage.getItem(introStorageKey) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function rememberIntroCompletion() {
-  try {
-    window.localStorage.setItem(introStorageKey, "true");
-  } catch {
-    // The portal still works when storage is unavailable.
-  }
-}
 
 export const IntroGate = memo(function IntroGate() {
   const router = useRouter();
@@ -33,11 +17,18 @@ export const IntroGate = memo(function IntroGate() {
   const closeTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   useEffect(() => {
-    const shouldShowPortals = window.location.hash === "#portals" || hasCompletedIntro();
+    const isInitialVisit = consumeInitialDocumentVisit();
 
-    if (shouldShowPortals) {
+    if (isInitialVisit) {
+      if (window.location.hash) {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${window.location.pathname}${window.location.search}`,
+        );
+      }
+    } else if (window.location.hash === "#portals") {
       setStep(2);
-      rememberIntroCompletion();
     }
     setIsRouteReady(true);
   }, []);
@@ -63,11 +54,7 @@ export const IntroGate = memo(function IntroGate() {
   const advance = () => {
     if (!isRouteReady) return;
     if (step < 2) {
-      setStep((current) => {
-        const nextStep = (current + 1) as 0 | 1 | 2;
-        if (nextStep === 2) rememberIntroCompletion();
-        return nextStep;
-      });
+      setStep((current) => (current + 1) as 0 | 1 | 2);
     }
   };
 
