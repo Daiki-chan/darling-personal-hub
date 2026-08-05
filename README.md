@@ -16,7 +16,7 @@ Một personal hub tối, điện ảnh và tối giản, được chia thành b
 - Framer Motion cho chuyển cảnh
 - Lucide React cho icon
 - Canvas và Web Audio API cho visualizer
-- Piped API cho tìm kiếm và stream YouTube Music
+- YouTube Data API v3 cho tìm kiếm và YouTube IFrame API cho phát nhạc
 - LRCLIB cho lời bài hát
 
 ## Chạy local
@@ -33,16 +33,12 @@ Mở `http://localhost:3000` trong trình duyệt.
 Tạo file `.env.local` ở thư mục gốc:
 
 ```env
-PIPED_API_BASE_URL=https://pipedapi.kavin.rocks
-COBALT_API_URL=https://your-cobalt-api.example
-COBALT_API_KEY=
+YOUTUBE_DATA_API_KEY=your-google-api-key
 NEXT_PUBLIC_MUSIC_TRACK_ONE_URL=https://your-r2-domain.example/track-one.mp3
 NEXT_PUBLIC_MUSIC_TRACK_TWO_URL=https://your-r2-domain.example/track-two.flac
 ```
 
-`PIPED_API_BASE_URL` có thể trỏ đến Piped instance riêng của bạn. Public instance chỉ phù hợp để bắt đầu và có thể thay đổi trạng thái theo thời gian.
-
-`COBALT_API_URL` là fallback tùy chọn cho stream YouTube. Theo tài liệu Cobalt, bạn cần dùng instance tự host hoặc instance mà chủ sở hữu đã cho phép. Nếu instance yêu cầu API key, đặt thêm `COBALT_API_KEY`.
+YouTube Data API key chỉ được dùng ở server route và cần đặt trong Vercel Environment Variables.
 
 Danh sách nhạc cá nhân nằm tại `lib/music.ts`. Mỗi track hỗ trợ URL MP3, FLAC hoặc định dạng audio mà trình duyệt có thể phát.
 
@@ -55,14 +51,14 @@ npm run build
 npm run start
 ```
 
-Website cần môi trường server Next.js vì các route `/api/yt-search`, `/api/yt-stream` và `/api/lyrics` chạy phía server. Vercel hỗ trợ cấu hình này trực tiếp. GitHub Pages không chạy được các Route Handler này.
+Website cần môi trường server Next.js vì các route `/api/youtube-search` và `/api/lyrics` chạy phía server. Vercel hỗ trợ cấu hình này trực tiếp. GitHub Pages không chạy được các Route Handler này.
 
 ## Thay nội dung
 
 - Ảnh thư viện và portfolio: cập nhật các vị trí `MediaPlaceholder` trong `app/thu-vien/page.tsx` và `app/portfolio/page.tsx`.
 - Cover và nhạc cá nhân: cập nhật `lib/music.ts` cùng các file trong `public/music/covers`.
-- Piped instance: đặt biến môi trường `PIPED_API_BASE_URL` trên Vercel.
-- Cobalt fallback: đặt `COBALT_API_URL` và `COBALT_API_KEY` nếu instance yêu cầu xác thực.
+- YouTube Data API: đặt biến môi trường `YOUTUBE_DATA_API_KEY` trên Vercel.
+- YouTube IFrame API chạy trực tiếp trên trình duyệt, không cần audio proxy.
 
 ## Theme
 

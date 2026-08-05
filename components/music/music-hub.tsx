@@ -479,7 +479,7 @@ export function MusicHub() {
 
     dispatch({ type: "SEARCH_START" });
     try {
-      const response = await fetch(`/api/yt-search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         dispatch({ type: "SEARCH_ERROR" });
         return;
@@ -656,7 +656,7 @@ export function MusicHub() {
                     <img alt="" className={styles.searchArt} src={item.thumbnail} />
                     <div className={styles.searchMeta}>
                       <strong>{item.title}</strong>
-                      <span>{item.artist}</span>
+                      <span>{item.artist} · {formatTime(item.duration)}</span>
                     </div>
                   </button>
                 ))}

@@ -21,6 +21,7 @@ declare global {
             modestbranding?: 0 | 1;
             iv_load_policy?: 1 | 3;
             origin?: string;
+            playsinline?: 0 | 1;
           };
           events?: {
             onReady?: (event: { target: YTPlayerInstance }) => void;
@@ -183,7 +184,7 @@ export function YTIFrameEngine({
       const initialVideoId =
         currentTrackRef.current.source.kind === "youtube"
           ? currentTrackRef.current.source.videoId
-          : "";
+          : undefined;
 
       try {
         ytPlayerRef.current = new window.YT.Player("yt-player-target", {
@@ -199,6 +200,7 @@ export function YTIFrameEngine({
             modestbranding: 1,
             iv_load_policy: 3,
             origin: window.location.origin,
+            playsinline: 1,
           },
           events: {
             onReady: (event) => {
