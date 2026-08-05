@@ -207,11 +207,9 @@ const Portal = memo(function Portal({
     <motion.button
       type="button"
       className={`portal ${className}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.62, delay: reduceMotion ? 0 : index * 0.08, ease: softEase }}
-      whileHover={reduceMotion ? undefined : { y: -6, scale: 1.01 }}
-      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       onClick={(event) => {
         event.stopPropagation();
         onClick();

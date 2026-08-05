@@ -893,6 +893,7 @@ figcaption {
   text-align: left;
   cursor: pointer;
   transition:
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 240ms ease,
     box-shadow 240ms ease;
 }
@@ -937,14 +938,28 @@ figcaption {
 
 .portal--music {
   grid-column: 6 / 9;
-  translate: 0 42px;
 }
 
 .portal--work {
   grid-column: 9 / 13;
 
   min-height: 350px;
-  translate: 0 -28px;
+}
+
+@media (min-width: 768px) {
+  .portal--music {
+    translate: 0 42px;
+  }
+
+  .portal--work {
+    translate: 0 -28px;
+  }
+}
+
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .portal:hover {
+    transform: translateY(-6px) scale(1.01);
+  }
 }
 
 .portal--library {
@@ -1200,8 +1215,15 @@ figcaption {
     inset: auto;
     isolation: isolate;
     width: min(100%, 420px);
-    grid-template-columns: 1fr;
+    height: fit-content;
+    min-height: 0;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     align-self: center;
+    justify-self: center;
     gap: 0;
     padding: 0.4rem;
     overflow: hidden;
@@ -1219,21 +1241,23 @@ figcaption {
   .portal--library,
   .portal--music,
   .portal--work {
-    grid-column: 1;
+    grid-column: auto;
+    grid-row: auto;
     width: 100%;
-    min-height: 116px;
+    min-height: 108px;
     height: auto;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 24px;
     align-items: center;
-    justify-content: flex-start;
-    gap: clamp(0.9rem, 4vw, 1.15rem);
-    padding: 1rem 3.2rem 1rem 1rem;
+    gap: clamp(0.9rem, 4vw, 1.1rem);
+    padding: 1rem;
     border: 0;
     border-radius: 20px;
     background: transparent;
     box-shadow: none;
     transform: none !important;
-    translate: 0 0 !important;
+    translate: none !important;
+    will-change: auto !important;
   }
 
   .portal:hover {
@@ -1264,7 +1288,6 @@ figcaption {
 
   .portal__icon {
     width: 42px;
-    flex: 0 0 42px;
     border: 0;
     border-radius: 13px;
   }
@@ -1283,7 +1306,6 @@ figcaption {
 
   .portal__copy {
     min-width: 0;
-    flex: 1;
     gap: 0.32rem;
   }
 
@@ -1308,14 +1330,16 @@ figcaption {
   }
 
   .portal__arrow {
-    top: 50%;
-    right: 1.1rem;
+    position: static !important;
+    top: auto;
+    right: auto;
     width: 24px;
     height: 24px;
     border: 0;
     border-radius: 0;
     background: transparent;
-    transform: translateY(-50%);
+    transform: none;
+    justify-self: end;
   }
 
   .portal:hover .portal__arrow {
@@ -1337,8 +1361,9 @@ figcaption {
   .portal--library,
   .portal--music,
   .portal--work {
-    min-height: 96px;
+    min-height: 92px;
     height: auto;
+    padding-block: 0.85rem;
   }
 
   .portal__copy > span {
