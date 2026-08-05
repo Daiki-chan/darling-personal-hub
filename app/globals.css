@@ -1144,8 +1144,8 @@ figcaption {
     justify-content: flex-start;
     gap: clamp(0.9rem, 4vw, 1.25rem);
     padding: clamp(1rem, 4vw, 1.35rem);
-    transform: none;
-    translate: none;
+    transform: none !important;
+    translate: 0 0 !important;
   }
 
   .portal--library {
@@ -1156,11 +1156,13 @@ figcaption {
   .portal--music {
     width: 92%;
     justify-self: end;
+    translate: 0 0 !important;
   }
 
   .portal--work {
     width: 98%;
     justify-self: start;
+    translate: 0 0 !important;
   }
 
   .portal__icon {
