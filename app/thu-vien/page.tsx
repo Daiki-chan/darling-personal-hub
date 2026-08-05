@@ -53,7 +53,7 @@ export default function GalleryPage() {
         <section className="section-shell library-note" aria-label="Ghi chú thư viện">
           <Reveal>
             <p>Không cần một chủ đề cố định. Chỉ cần đó là bức ảnh bạn muốn giữ.</p>
-            <Link className="text-link" href="/">
+            <Link className="text-link" href="/#portals">
               <ArrowLeft aria-hidden="true" size={18} strokeWidth={1.5} />
               Trở về cổng chính
             </Link>

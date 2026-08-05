@@ -6,14 +6,23 @@ import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef, useState } from "react";
 
 const softEase = [0.16, 1, 0.3, 1] as const;
+const floatEase = [0.37, 0, 0.63, 1] as const;
 
 export const IntroGate = memo(function IntroGate() {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [isRouteReady, setIsRouteReady] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+  useEffect(() => {
+    if (window.location.hash === "#portals") {
+      setStep(2);
+    }
+    setIsRouteReady(true);
+  }, []);
+
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -26,6 +35,7 @@ export const IntroGate = memo(function IntroGate() {
   }, [isOpen]);
 
   const advance = () => {
+    if (!isRouteReady) return;
     if (step < 2) setStep((current) => (current + 1) as 0 | 1 | 2);
   };
 
@@ -38,47 +48,49 @@ export const IntroGate = memo(function IntroGate() {
 
   const enterPath = (target: string) => {
     setIsLeaving(true);
-    const closeDelay = reduceMotion ? 0 : 560;
+    const closeDelay = reduceMotion ? 0 : 820;
     closeTimer.current = window.setTimeout(() => {
       setIsOpen(false);
       router.push(target);
     }, closeDelay);
   };
 
-  const floatingMotion = reduceMotion ? {} : { y: [0, -8, 0] };
+  const floatingMotion = reduceMotion ? {} : { y: [0, -6, 0] };
 
   return isOpen ? (
     <motion.div
       className="intro-layer"
       initial={{ opacity: 1 }}
+      aria-busy={!isRouteReady}
       animate={isLeaving ? { opacity: 0, filter: "blur(12px)" } : { opacity: 1, filter: "blur(0px)" }}
-      transition={{ duration: reduceMotion ? 0 : 0.55, ease: softEase }}
+      transition={{ duration: reduceMotion ? 0 : 0.8, ease: softEase }}
     >
           <div className="intro-halo intro-halo--violet" aria-hidden="true" />
           <div className="intro-halo intro-halo--indigo" aria-hidden="true" />
 
-          <div
-            className={`intro-stage ${step < 2 ? "intro-stage--clickable" : ""}`}
-            onClick={advance}
-            onKeyDown={handleKeyboard}
-            role={step < 2 ? "button" : undefined}
-            tabIndex={step < 2 ? 0 : undefined}
-            aria-label={step < 2 ? "Tiếp tục phần giới thiệu" : undefined}
-          >
+          {isRouteReady ? (
+            <div
+              className={`intro-stage ${step < 2 ? "intro-stage--clickable" : ""}`}
+              onClick={advance}
+              onKeyDown={handleKeyboard}
+              role={step < 2 ? "button" : undefined}
+              tabIndex={step < 2 ? 0 : undefined}
+              aria-label={step < 2 ? "Tiếp tục phần giới thiệu" : undefined}
+            >
             <div className="intro-scene">
               <AnimatePresence mode="sync">
                 {step === 0 ? (
                   <motion.div
                     key="welcome"
                     className="intro-copy"
-                    initial={{ opacity: 0, y: 16, filter: "blur(10px)" }}
+                    initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -14, filter: "blur(10px)" }}
-                    transition={{ duration: reduceMotion ? 0 : 0.7, ease: softEase }}
+                    exit={{ opacity: 0, y: -24, filter: "blur(12px)" }}
+                    transition={{ duration: reduceMotion ? 0 : 1.1, ease: softEase }}
                   >
                     <motion.h1
                       animate={floatingMotion}
-                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                      transition={{ duration: 8.8, repeat: Infinity, ease: floatEase }}
                     >
                       Darling Ohayo
                     </motion.h1>
@@ -90,14 +102,14 @@ export const IntroGate = memo(function IntroGate() {
                   <motion.div
                     key="japanese"
                     className="intro-copy intro-copy--japanese"
-                    initial={{ opacity: 0, scale: 0.97, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 1.03, filter: "blur(12px)" }}
-                    transition={{ duration: reduceMotion ? 0 : 0.75, ease: softEase }}
+                    initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -24, filter: "blur(12px)" }}
+                    transition={{ duration: reduceMotion ? 0 : 1.15, ease: softEase }}
                   >
                     <motion.h1
                       animate={floatingMotion}
-                      transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+                      transition={{ duration: 9.4, repeat: Infinity, ease: floatEase }}
                     >
                       私の人生へようこそ
                     </motion.h1>
@@ -109,10 +121,10 @@ export const IntroGate = memo(function IntroGate() {
                   <motion.div
                     key="portals"
                     className="portal-grid"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: reduceMotion ? 0 : 0.6 }}
+                    initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -16, filter: "blur(10px)" }}
+                    transition={{ duration: reduceMotion ? 0 : 1, ease: softEase }}
                   >
                     <Portal
                       className="portal--library"
@@ -143,11 +155,12 @@ export const IntroGate = memo(function IntroGate() {
                     />
                   </motion.div>
                 ) : null}
-              </AnimatePresence>
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
-    </motion.div>
-  ) : null;
+          ) : null}
+        </motion.div>
+      ) : null;
 });
 
 type PortalProps = {
@@ -175,9 +188,9 @@ function Portal({
       className={`portal ${className}`}
       initial={reduceMotion ? false : { opacity: 0, y: 30, filter: "blur(8px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.7, delay: reduceMotion ? 0 : index * 0.1, ease: softEase }}
-      whileHover={reduceMotion ? undefined : { y: -8, scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.9, delay: reduceMotion ? 0 : index * 0.14, ease: softEase }}
+      whileHover={reduceMotion ? undefined : { y: -6, scale: 1.01 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       onClick={(event) => {
         event.stopPropagation();
         onClick();

@@ -8,7 +8,7 @@ type SiteHeaderProps = {
 export function SiteHeader({ active }: SiteHeaderProps) {
   return (
     <header className="site-nav">
-      <Link className="brand" href="/" aria-label="Về cổng chính">
+      <Link className="brand" href="/#portals" aria-label="Về màn hình chọn không gian">
         Darling
       </Link>
       <nav className="nav-links" aria-label="Điều hướng chính">

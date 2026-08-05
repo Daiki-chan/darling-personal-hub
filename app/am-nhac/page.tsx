@@ -47,7 +47,7 @@ export default function MusicLibraryPage() {
               </Reveal>
             ))}
           </div>
-          <Link className="text-link" href="/">
+          <Link className="text-link" href="/#portals">
             <ArrowLeft aria-hidden="true" size={18} strokeWidth={1.5} />
             Trở về cổng chính
           </Link>
