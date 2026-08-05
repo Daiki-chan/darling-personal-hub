@@ -18,6 +18,9 @@ export type SyncedLyricLine = {
   text: string;
 };
 
+const DEFAULT_TRACK_ONE_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+const DEFAULT_TRACK_TWO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3";
+
 export const personalTracks: MusicTrack[] = [
   {
     id: "moonlit-signal",
@@ -29,7 +32,7 @@ export const personalTracks: MusicTrack[] = [
     accentFallback: "#8b5cf6",
     source: {
       kind: "direct",
-      url: process.env.NEXT_PUBLIC_MUSIC_TRACK_ONE_URL ?? "",
+      url: process.env.NEXT_PUBLIC_MUSIC_TRACK_ONE_URL?.trim() || DEFAULT_TRACK_ONE_URL,
     },
   },
   {
@@ -42,7 +45,7 @@ export const personalTracks: MusicTrack[] = [
     accentFallback: "#6366f1",
     source: {
       kind: "direct",
-      url: process.env.NEXT_PUBLIC_MUSIC_TRACK_TWO_URL ?? "",
+      url: process.env.NEXT_PUBLIC_MUSIC_TRACK_TWO_URL?.trim() || DEFAULT_TRACK_TWO_URL,
     },
   },
 ];

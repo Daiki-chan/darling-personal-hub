@@ -2,6 +2,23 @@ const PUBLIC_PIPED_APIS = [
   "https://api.piped.private.coffee",
   "https://pipedapi.orangenet.cc",
   "https://pipedapi.kavin.rocks",
+  "https://pipedapi.astrobot.zone",
+  "https://pipedapi.drgns.space",
+];
+
+const PUBLIC_COBALT_APIS = [
+  "https://api.cobalt.tools",
+  "https://cobalt-api.kwi.mobi",
+  "https://co.wuk.sh",
+  "https://cobalt.stream",
+  "https://api.cobalt.crstn.dev",
+];
+
+const PUBLIC_INVIDIOUS_APIS = [
+  "https://invidious.nerdvpn.de",
+  "https://inv.tux.pizza",
+  "https://vid.puffyan.us",
+  "https://invidious.drgns.space",
 ];
 
 export type PipedAudioStream = {
@@ -11,6 +28,20 @@ export type PipedAudioStream = {
   mimeType?: string;
   url?: string;
   videoOnly?: boolean;
+};
+
+export type InvidiousAdaptiveFormat = {
+  bitrate?: string | number;
+  container?: string;
+  encoding?: string;
+  type?: string;
+  url?: string;
+};
+
+export type InvidiousVideoResponse = {
+  adaptiveFormats?: InvidiousAdaptiveFormat[];
+  formatStreams?: InvidiousAdaptiveFormat[];
+  title?: string;
 };
 
 export type PipedStreamResponse = {
@@ -35,13 +66,28 @@ export type PipedSearchResponse = {
   items?: PipedSearchItem[];
 };
 
+export function getCobaltApiBases() {
+  const configured = process.env.COBALT_API_URL?.trim();
+  if (configured) {
+    const base = configured.replace(/\/+$/, "");
+    return [base, ...PUBLIC_COBALT_APIS.filter((url) => url !== base)];
+  }
+
+  return PUBLIC_COBALT_APIS;
+}
+
 export function getPipedApiBases() {
   const configured = process.env.PIPED_API_BASE_URL?.trim();
   if (configured) {
-    return [configured.replace(/\/+$/, "")];
+    const base = configured.replace(/\/+$/, "");
+    return [base, ...PUBLIC_PIPED_APIS.filter((url) => url !== base)];
   }
 
   return PUBLIC_PIPED_APIS;
+}
+
+export function getInvidiousApiBases() {
+  return PUBLIC_INVIDIOUS_APIS;
 }
 
 export function extractVideoId(value: string | undefined) {
@@ -81,6 +127,18 @@ export function selectAudioStream(streams: PipedAudioStream[] | undefined) {
     }
 
     return (b.bitrate ?? 0) - (a.bitrate ?? 0);
+  })[0];
+}
+
+export function selectInvidiousAudioStream(formats: InvidiousAdaptiveFormat[] | undefined) {
+  const candidates = (formats ?? []).filter(
+    (item) => item.url && item.type?.startsWith("audio/"),
+  );
+
+  return candidates.sort((a, b) => {
+    const aBitrate = typeof a.bitrate === "number" ? a.bitrate : Number(a.bitrate) || 0;
+    const bBitrate = typeof b.bitrate === "number" ? b.bitrate : Number(b.bitrate) || 0;
+    return bBitrate - aBitrate;
   })[0];
 }
 

@@ -246,6 +246,7 @@ export function MusicHub() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const activeLyricElementRef = useRef<HTMLParagraphElement>(null);
+  const retryCountRef = useRef(0);
 
   stateRef.current = state;
   lyricsLinesRef.current = state.lyrics.lines;
@@ -295,24 +296,33 @@ export function MusicHub() {
       return null;
     }
 
-    if (!audioContextRef.current) {
-      const context = new AudioContext();
-      const source = context.createMediaElementSource(audio);
-      const nextAnalyser = context.createAnalyser();
-      nextAnalyser.fftSize = 256;
-      nextAnalyser.smoothingTimeConstant = 0.84;
-      source.connect(nextAnalyser);
-      nextAnalyser.connect(context.destination);
-      audioContextRef.current = context;
-      sourceNodeRef.current = source;
-      setAnalyser(nextAnalyser);
-    }
+    try {
+      if (!audioContextRef.current) {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return null;
 
-    if (audioContextRef.current.state === "suspended") {
-      await audioContextRef.current.resume();
-    }
+        const context = new AudioCtx();
+        const source = context.createMediaElementSource(audio);
+        const nextAnalyser = context.createAnalyser();
+        nextAnalyser.fftSize = 256;
+        nextAnalyser.smoothingTimeConstant = 0.84;
+        source.connect(nextAnalyser);
+        nextAnalyser.connect(context.destination);
+        audioContextRef.current = context;
+        sourceNodeRef.current = source;
+        setAnalyser(nextAnalyser);
+      }
 
-    return audioContextRef.current;
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
+      return audioContextRef.current;
+    } catch {
+      return null;
+    }
   }, []);
 
   useEffect(() => {
@@ -325,6 +335,66 @@ export function MusicHub() {
       audioContextRef.current = null;
       sourceNodeRef.current = null;
     };
+  }, []);
+
+  const handleAudioError = useCallback((reason?: string) => {
+    const snapshot = stateRef.current;
+    const currentTrackObj = snapshot.queue.find((item) => item.id === snapshot.currentId);
+    dispatch({ type: "SET_BUFFERING", value: false });
+    dispatch({ type: "SET_PLAYING", value: false });
+
+    if (retryCountRef.current < 2) {
+      retryCountRef.current += 1;
+      dispatch({ type: "SET_BUFFERING", value: true });
+      dispatch({
+        type: "SET_ERROR",
+        value: `Đang kết nối lại nguồn phát (lần ${retryCountRef.current}/2)...`,
+      });
+      setTimeout(() => {
+        const updatedTrack = stateRef.current.queue.find((t) => t.id === snapshot.currentId);
+        if (updatedTrack && audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.crossOrigin = "anonymous";
+          const src = getTrackAudioUrl(updatedTrack);
+          if (src) {
+            audioRef.current.src = src;
+            audioRef.current.load();
+            void audioRef.current.play().catch(() => handleAudioError(reason));
+          }
+        }
+      }, 700);
+    } else {
+      retryCountRef.current = 0;
+      if (currentTrackObj?.source.kind === "youtube") {
+        const directFallback =
+          personalTracks.find((t) => t.source.kind === "direct") || personalTracks[0];
+        dispatch({
+          type: "SET_ERROR",
+          value: "Nguồn phát YouTube không phản hồi. Tự động chuyển sang bản nhạc mẫu trực tiếp.",
+        });
+        if (directFallback && directFallback.id !== currentTrackObj.id) {
+          setTimeout(() => {
+            const audio = audioRef.current;
+            if (audio) {
+              dispatch({ type: "SELECT_TRACK", track: directFallback });
+              const fallbackSource = getTrackAudioUrl(directFallback);
+              if (fallbackSource) {
+                audio.pause();
+                audio.crossOrigin = "anonymous";
+                audio.src = fallbackSource;
+                audio.load();
+                void audio.play().catch(() => undefined);
+              }
+            }
+          }, 1000);
+        }
+      } else {
+        dispatch({
+          type: "SET_ERROR",
+          value: reason || "Không thể phát nguồn này. Hãy kiểm tra URL, CORS hoặc thử một bài khác.",
+        });
+      }
+    }
   }, []);
 
   const loadTrack = useCallback(
@@ -349,6 +419,7 @@ export function MusicHub() {
       }
 
       audio.pause();
+      audio.crossOrigin = "anonymous";
       audio.src = source;
       audio.load();
       syncTimeline(audio);
@@ -358,16 +429,13 @@ export function MusicHub() {
         try {
           await ensureAudioGraph();
           await audio.play();
+          retryCountRef.current = 0;
         } catch {
-          dispatch({
-            type: "SET_ERROR",
-            value: "Không thể phát nguồn này. Hãy kiểm tra URL, CORS hoặc thử một bài khác.",
-          });
-          dispatch({ type: "SET_BUFFERING", value: false });
+          handleAudioError();
         }
       }
     },
-    [ensureAudioGraph, syncTimeline],
+    [ensureAudioGraph, handleAudioError, syncTimeline],
   );
 
   const moveInQueue = useCallback(
@@ -407,17 +475,14 @@ export function MusicHub() {
       try {
         await ensureAudioGraph();
         await audio.play();
+        retryCountRef.current = 0;
       } catch {
-        dispatch({
-          type: "SET_ERROR",
-          value: "Trình duyệt không thể bắt đầu phát. Hãy thử chọn lại bài hát.",
-        });
-        dispatch({ type: "SET_BUFFERING", value: false });
+        handleAudioError("Trình duyệt không thể bắt đầu phát. Hãy thử chọn lại bài hát.");
       }
     } else {
       audio.pause();
     }
-  }, [ensureAudioGraph]);
+  }, [ensureAudioGraph, handleAudioError]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -430,11 +495,13 @@ export function MusicHub() {
     );
     const initialSource = initialTrack ? getTrackAudioUrl(initialTrack) : "";
     if (initialSource) {
+      audio.crossOrigin = "anonymous";
       audio.src = initialSource;
       audio.load();
     }
 
     const onPlay = () => {
+      retryCountRef.current = 0;
       dispatch({ type: "SET_PLAYING", value: true });
       dispatch({ type: "SET_BUFFERING", value: false });
       dispatch({ type: "SET_ERROR", value: null });
@@ -455,14 +522,7 @@ export function MusicHub() {
       syncTimeline(audio);
     };
     const onEnded = () => moveInQueue(1, true);
-    const onError = () => {
-      dispatch({ type: "SET_BUFFERING", value: false });
-      dispatch({ type: "SET_PLAYING", value: false });
-      dispatch({
-        type: "SET_ERROR",
-        value: "Nguồn nhạc không phản hồi. Hãy thử lại hoặc chọn bài khác.",
-      });
-    };
+    const onError = () => handleAudioError();
 
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
@@ -483,7 +543,7 @@ export function MusicHub() {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [moveInQueue, syncTimeline]);
+  }, [handleAudioError, moveInQueue, syncTimeline]);
 
   useEffect(() => {
     if (!currentTrack) {
