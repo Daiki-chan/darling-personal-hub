@@ -1198,10 +1198,21 @@ figcaption {
   .portal-grid {
     position: relative;
     inset: auto;
-    width: min(100%, 440px);
+    isolation: isolate;
+    width: min(100%, 420px);
     grid-template-columns: 1fr;
     align-self: center;
-    gap: clamp(0.8rem, 2.2dvh, 1.1rem);
+    gap: 0;
+    padding: 0.4rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.055), transparent 38%),
+      rgba(10, 10, 15, 0.84);
+    box-shadow:
+      0 30px 90px rgba(3, 3, 10, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .portal,
@@ -1209,67 +1220,87 @@ figcaption {
   .portal--music,
   .portal--work {
     grid-column: 1;
-    min-height: 0;
-    height: clamp(132px, 21dvh, 178px);
+    width: 100%;
+    min-height: 116px;
+    height: auto;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    gap: clamp(0.9rem, 4vw, 1.25rem);
-    padding: clamp(1rem, 4vw, 1.35rem);
-    border-radius: 22px;
-    box-shadow: 0 18px 44px rgba(5, 5, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    gap: clamp(0.9rem, 4vw, 1.15rem);
+    padding: 1rem 3.2rem 1rem 1rem;
+    border: 0;
+    border-radius: 20px;
+    background: transparent;
+    box-shadow: none;
     transform: none !important;
     translate: 0 0 !important;
   }
 
-  .portal--library {
-    width: 96%;
-    justify-self: start;
-    background:
-      linear-gradient(135deg, rgba(139, 92, 246, 0.13), rgba(13, 13, 17, 0.94) 58%),
-      rgba(13, 13, 17, 0.9);
+  .portal:hover {
+    border-color: transparent;
+    background: rgba(255, 255, 255, 0.035);
   }
 
-  .portal--music {
-    width: 92%;
-    justify-self: end;
-    translate: 0 0 !important;
-    background:
-      linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(13, 13, 17, 0.94) 58%),
-      rgba(13, 13, 17, 0.9);
+  .portal:active {
+    background: rgba(139, 92, 246, 0.09);
   }
 
-  .portal--work {
-    width: 98%;
-    justify-self: start;
-    translate: 0 0 !important;
-    background:
-      linear-gradient(135deg, rgba(226, 232, 240, 0.09), rgba(13, 13, 17, 0.94) 58%),
-      rgba(13, 13, 17, 0.9);
+  .portal::before {
+    background: radial-gradient(circle at 16% 50%, var(--portal-glow), transparent 42%);
+    opacity: 0.34;
+  }
+
+  .portal::after {
+    inset: auto 1rem 0;
+    height: 1px;
+    border: 0;
+    border-radius: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.025));
+  }
+
+  .portal:last-child::after {
+    display: none;
   }
 
   .portal__icon {
-    width: 48px;
-    flex: 0 0 48px;
+    width: 42px;
+    flex: 0 0 42px;
+    border: 0;
+    border-radius: 13px;
+  }
+
+  .portal--library .portal__icon {
+    background: rgba(139, 92, 246, 0.13);
+  }
+
+  .portal--music .portal__icon {
+    background: rgba(99, 102, 241, 0.13);
+  }
+
+  .portal--work .portal__icon {
+    background: rgba(226, 232, 240, 0.08);
   }
 
   .portal__copy {
     min-width: 0;
     flex: 1;
-    gap: 0.35rem;
+    gap: 0.32rem;
   }
 
   .portal__copy strong {
-    font-size: clamp(1.55rem, 8vw, 2.15rem);
+    font-size: clamp(1.45rem, 7.2vw, 1.82rem);
+    font-weight: 520;
+    line-height: 1.05;
   }
 
   .portal__copy > span {
-    display: -webkit-box;
-    overflow: hidden;
+    display: block;
+    max-width: 27ch;
+    overflow: visible;
+    color: rgba(242, 240, 247, 0.55);
     font-size: 0.82rem;
     line-height: 1.45;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: unset;
   }
 
   .site-footer {
@@ -1278,10 +1309,18 @@ figcaption {
 
   .portal__arrow {
     top: 50%;
-    right: 1rem;
-    width: 34px;
-    height: 34px;
+    right: 1.1rem;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     transform: translateY(-50%);
+  }
+
+  .portal:hover .portal__arrow {
+    border-color: transparent;
+    background: transparent;
   }
 }
 
@@ -1291,18 +1330,19 @@ figcaption {
   }
 
   .portal-grid {
-    gap: 0.55rem;
+    padding: 0.3rem;
   }
 
   .portal,
   .portal--library,
   .portal--music,
   .portal--work {
-    height: clamp(104px, 18dvh, 128px);
+    min-height: 96px;
+    height: auto;
   }
 
   .portal__copy > span {
-    -webkit-line-clamp: 1;
+    font-size: 0.76rem;
   }
 
 }
