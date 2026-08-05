@@ -874,6 +874,9 @@ figcaption {
 
 .portal {
   /* Web frosted glass approximation */
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 310px;
   display: flex;
   flex-direction: column;
@@ -892,6 +895,32 @@ figcaption {
   transition:
     border-color 240ms ease,
     box-shadow 240ms ease;
+}
+
+.portal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 92% 8%, var(--portal-glow), transparent 42%);
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.portal::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.portal > * {
+  position: relative;
+  z-index: 1;
 }
 
 .portal:hover {
@@ -913,8 +942,24 @@ figcaption {
 
 .portal--work {
   grid-column: 9 / 13;
+
   min-height: 350px;
   translate: 0 -28px;
+}
+
+.portal--library {
+  --portal-glow: rgba(139, 92, 246, 0.22);
+  --portal-accent: #c4b5fd;
+}
+
+.portal--music {
+  --portal-glow: rgba(99, 102, 241, 0.2);
+  --portal-accent: #a5b4fc;
+}
+
+.portal--work {
+  --portal-glow: rgba(226, 232, 240, 0.16);
+  --portal-accent: #e2e8f0;
 }
 
 .portal__icon {
@@ -924,9 +969,36 @@ figcaption {
   place-items: center;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
-  color: #c4b5fd;
+  color: var(--portal-accent, #c4b5fd);
 }
 
+
+.portal__arrow {
+  position: absolute !important;
+  top: clamp(1.2rem, 2vw, 2rem);
+  right: clamp(1.2rem, 2vw, 2rem);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-control);
+  color: var(--portal-accent, #c4b5fd);
+  background: rgba(255, 255, 255, 0.035);
+  transition:
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms ease,
+    background 220ms ease;
+}
+
+.portal:hover .portal__arrow {
+  border-color: rgba(196, 181, 253, 0.48);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.portal:hover .portal__arrow svg {
+  transform: translate(2px, -2px);
+}
 .portal__copy {
   display: grid;
   gap: 0.75rem;
@@ -1109,8 +1181,8 @@ figcaption {
   }
 
   .intro-scene {
-    min-height: 100%;
-    padding-block: clamp(1rem, 4dvh, 2.5rem);
+    min-height: calc(100dvh - 2rem);
+    padding-block: clamp(0.75rem, 3dvh, 1.5rem);
   }
 
   .intro-copy h1 {
@@ -1129,7 +1201,7 @@ figcaption {
     width: min(100%, 440px);
     grid-template-columns: 1fr;
     align-self: center;
-    gap: clamp(0.65rem, 1.8dvh, 1rem);
+    gap: clamp(0.8rem, 2.2dvh, 1.1rem);
   }
 
   .portal,
@@ -1144,6 +1216,8 @@ figcaption {
     justify-content: flex-start;
     gap: clamp(0.9rem, 4vw, 1.25rem);
     padding: clamp(1rem, 4vw, 1.35rem);
+    border-radius: 22px;
+    box-shadow: 0 18px 44px rgba(5, 5, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transform: none !important;
     translate: 0 0 !important;
   }
@@ -1151,26 +1225,37 @@ figcaption {
   .portal--library {
     width: 96%;
     justify-self: start;
+    background:
+      linear-gradient(135deg, rgba(139, 92, 246, 0.13), rgba(13, 13, 17, 0.94) 58%),
+      rgba(13, 13, 17, 0.9);
   }
 
   .portal--music {
     width: 92%;
     justify-self: end;
     translate: 0 0 !important;
+    background:
+      linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(13, 13, 17, 0.94) 58%),
+      rgba(13, 13, 17, 0.9);
   }
 
   .portal--work {
     width: 98%;
     justify-self: start;
     translate: 0 0 !important;
+    background:
+      linear-gradient(135deg, rgba(226, 232, 240, 0.09), rgba(13, 13, 17, 0.94) 58%),
+      rgba(13, 13, 17, 0.9);
   }
 
   .portal__icon {
-    flex: 0 0 46px;
+    width: 48px;
+    flex: 0 0 48px;
   }
 
   .portal__copy {
     min-width: 0;
+    flex: 1;
     gap: 0.35rem;
   }
 
@@ -1189,6 +1274,14 @@ figcaption {
 
   .site-footer {
     min-height: 96px;
+  }
+
+  .portal__arrow {
+    top: 50%;
+    right: 1rem;
+    width: 34px;
+    height: 34px;
+    transform: translateY(-50%);
   }
 }
 

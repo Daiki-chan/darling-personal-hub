@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { BriefcaseBusiness, Headphones, Images } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, Headphones, Images } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useRef, useState } from "react";
 import { consumeInitialDocumentVisit } from "@/lib/document-visit";
@@ -221,6 +221,9 @@ const Portal = memo(function Portal({
       <span className="portal__copy">
         <strong>{title}</strong>
         <span>{description}</span>
+      </span>
+      <span className="portal__arrow" aria-hidden="true">
+        <ArrowUpRight size={18} strokeWidth={1.5} />
       </span>
     </motion.button>
   );
