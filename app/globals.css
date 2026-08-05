@@ -95,8 +95,7 @@ a:focus-visible,
   align-items: center;
   padding-inline: max(24px, calc((100vw - 1400px) / 2));
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(9, 9, 11, 0.72);
-  backdrop-filter: blur(18px) saturate(120%);
+  background: rgba(9, 9, 11, 0.94);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -675,8 +674,7 @@ figcaption {
   padding: clamp(2rem, 4vw, 4rem);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-panel);
-  background: rgba(17, 17, 22, 0.9);
-  backdrop-filter: blur(18px);
+  background: rgba(17, 17, 22, 0.94);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     -24px -24px 80px rgba(5, 5, 5, 0.28);
@@ -794,21 +792,20 @@ figcaption {
   width: min(62vw, 880px);
   aspect-ratio: 1;
   border-radius: 50%;
-  filter: blur(110px);
-  opacity: 0.14;
+  opacity: 0.22;
   pointer-events: none;
 }
 
 .intro-halo--violet {
   left: -22%;
   top: -32%;
-  background: var(--accent);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.82), rgba(139, 92, 246, 0.18) 36%, transparent 70%);
 }
 
 .intro-halo--indigo {
   right: -24%;
   bottom: -34%;
-  background: var(--atmosphere);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.7), rgba(99, 102, 241, 0.16) 36%, transparent 70%);
 }
 
 .intro-stage {
@@ -887,11 +884,13 @@ figcaption {
   color: var(--text);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
-    rgba(13, 13, 17, 0.72);
-  backdrop-filter: blur(20px);
+    rgba(13, 13, 17, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   text-align: left;
   cursor: pointer;
+  transition:
+    border-color 240ms ease,
+    box-shadow 240ms ease;
 }
 
 .portal:hover {
@@ -908,13 +907,13 @@ figcaption {
 
 .portal--music {
   grid-column: 6 / 9;
-  transform: translateY(42px);
+  translate: 0 42px;
 }
 
 .portal--work {
   grid-column: 9 / 13;
   min-height: 350px;
-  transform: translateY(-28px);
+  translate: 0 -28px;
 }
 
 .portal__icon {
@@ -1105,6 +1104,7 @@ figcaption {
     grid-column: 1;
     min-height: 210px;
     transform: none;
+    translate: none;
   }
 
   .site-footer {
@@ -1284,6 +1284,11 @@ figcaption {
   min-height: 100dvh;
 }
 
+.inner-page > section:not(:first-child) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
 .route-hero,
 .portfolio-hero {
   min-height: 100dvh;
@@ -1460,6 +1465,10 @@ figcaption {
   font-size: clamp(2rem, 4vw, 4rem);
   line-height: 1.05;
   letter-spacing: -0.045em;
+}
+
+.portfolio-return {
+  margin-top: 2.5rem;
 }
 
 @media (max-width: 767px) {

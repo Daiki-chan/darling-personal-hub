@@ -1,4 +1,5 @@
-import { ArrowDownRight, ArrowUpRight, BriefcaseBusiness, Mail } from "lucide-react";
+import Link from "next/link";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, BriefcaseBusiness, Mail } from "lucide-react";
 import { MediaPlaceholder } from "@/components/media-placeholder";
 import { Reveal } from "@/components/reveal";
 import { SiteFooter } from "@/components/site-footer";
@@ -106,6 +107,10 @@ export default function PortfolioPage() {
               <ArrowUpRight aria-hidden="true" size={18} strokeWidth={1.5} />
             </a>
           </Reveal>
+          <Link className="text-link portfolio-return" href="/#portals">
+            <ArrowLeft aria-hidden="true" size={18} strokeWidth={1.5} />
+            Trở về cổng chính
+          </Link>
         </section>
       </main>
       <SiteFooter />

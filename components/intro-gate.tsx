@@ -7,6 +7,23 @@ import { memo, useEffect, useRef, useState } from "react";
 
 const softEase = [0.16, 1, 0.3, 1] as const;
 const floatEase = [0.37, 0, 0.63, 1] as const;
+const introStorageKey = "darling-intro-complete";
+
+function hasCompletedIntro() {
+  try {
+    return window.localStorage.getItem(introStorageKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function rememberIntroCompletion() {
+  try {
+    window.localStorage.setItem(introStorageKey, "true");
+  } catch {
+    // The portal still works when storage is unavailable.
+  }
+}
 
 export const IntroGate = memo(function IntroGate() {
   const router = useRouter();
@@ -17,12 +34,22 @@ export const IntroGate = memo(function IntroGate() {
   const closeTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   useEffect(() => {
-    if (window.location.hash === "#portals") {
+    const shouldShowPortals = window.location.hash === "#portals" || hasCompletedIntro();
+
+    if (shouldShowPortals) {
       setStep(2);
+      rememberIntroCompletion();
     }
     setIsRouteReady(true);
   }, []);
 
+  useEffect(() => {
+    if (step !== 2) return;
+
+    router.prefetch("/thu-vien");
+    router.prefetch("/am-nhac");
+    router.prefetch("/portfolio");
+  }, [router, step]);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -36,7 +63,13 @@ export const IntroGate = memo(function IntroGate() {
 
   const advance = () => {
     if (!isRouteReady) return;
-    if (step < 2) setStep((current) => (current + 1) as 0 | 1 | 2);
+    if (step < 2) {
+      setStep((current) => {
+        const nextStep = (current + 1) as 0 | 1 | 2;
+        if (nextStep === 2) rememberIntroCompletion();
+        return nextStep;
+      });
+    }
   };
 
   const handleKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -47,6 +80,8 @@ export const IntroGate = memo(function IntroGate() {
   };
 
   const enterPath = (target: string) => {
+    if (isLeaving) return;
+
     setIsLeaving(true);
     const closeDelay = reduceMotion ? 0 : 820;
     closeTimer.current = window.setTimeout(() => {
@@ -62,7 +97,7 @@ export const IntroGate = memo(function IntroGate() {
       className="intro-layer"
       initial={{ opacity: 1 }}
       aria-busy={!isRouteReady}
-      animate={isLeaving ? { opacity: 0, filter: "blur(12px)" } : { opacity: 1, filter: "blur(0px)" }}
+      animate={{ opacity: isLeaving ? 0 : 1 }}
       transition={{ duration: reduceMotion ? 0 : 0.8, ease: softEase }}
     >
           <div className="intro-halo intro-halo--violet" aria-hidden="true" />
@@ -83,9 +118,9 @@ export const IntroGate = memo(function IntroGate() {
                   <motion.div
                     key="welcome"
                     className="intro-copy"
-                    initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -24, filter: "blur(12px)" }}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -24 }}
                     transition={{ duration: reduceMotion ? 0 : 1.1, ease: softEase }}
                   >
                     <motion.h1
@@ -102,9 +137,9 @@ export const IntroGate = memo(function IntroGate() {
                   <motion.div
                     key="japanese"
                     className="intro-copy intro-copy--japanese"
-                    initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -24, filter: "blur(12px)" }}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -24 }}
                     transition={{ duration: reduceMotion ? 0 : 1.15, ease: softEase }}
                   >
                     <motion.h1
@@ -121,9 +156,9 @@ export const IntroGate = memo(function IntroGate() {
                   <motion.div
                     key="portals"
                     className="portal-grid"
-                    initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -16, filter: "blur(10px)" }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
                     transition={{ duration: reduceMotion ? 0 : 1, ease: softEase }}
                   >
                     <Portal
@@ -173,7 +208,7 @@ type PortalProps = {
   onClick: () => void;
 };
 
-function Portal({
+const Portal = memo(function Portal({
   className,
   title,
   description,
@@ -186,8 +221,8 @@ function Portal({
     <motion.button
       type="button"
       className={`portal ${className}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 30, filter: "blur(8px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9, delay: reduceMotion ? 0 : index * 0.14, ease: softEase }}
       whileHover={reduceMotion ? undefined : { y: -6, scale: 1.01 }}
       whileTap={reduceMotion ? undefined : { scale: 0.98 }}
@@ -203,4 +238,4 @@ function Portal({
       </span>
     </motion.button>
   );
-}
+});
