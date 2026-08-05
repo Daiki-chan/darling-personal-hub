@@ -106,18 +106,37 @@ export function YTIFrameEngine({
 
     const handleError = () => {
       if (currentTrackRef.current.source.kind === "direct") {
+        onPlayStateChange(false, false);
         onError("Direct audio playback failed.");
       }
+    };
+
+    const handlePlaying = () => {
+      if (currentTrackRef.current.source.kind === "direct") onPlayStateChange(true, false);
+    };
+
+    const handlePause = () => {
+      if (currentTrackRef.current.source.kind === "direct") onPlayStateChange(false, false);
+    };
+
+    const handleWaiting = () => {
+      if (currentTrackRef.current.source.kind === "direct") onPlayStateChange(isPlayingRef.current, true);
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
+    audio.addEventListener("playing", handlePlaying);
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("waiting", handleWaiting);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
+      audio.removeEventListener("playing", handlePlaying);
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("waiting", handleWaiting);
     };
   }, [onTimeUpdate, onEnded, onError]);
 
@@ -277,11 +296,11 @@ export function YTIFrameEngine({
 
       const audio = audioRef.current;
       if (audio) {
-        audio.crossOrigin = "anonymous";
+        audio.removeAttribute("crossorigin");
         audio.src = track.source.url;
         audio.load();
         if (isPlaying) {
-          audio.play().catch(() => onPlayStateChange(false, false));
+          audio.play().then(() => onPlayStateChange(true, false)).catch(() => onPlayStateChange(false, false));
         }
       }
     }
@@ -306,7 +325,7 @@ export function YTIFrameEngine({
       const audio = audioRef.current;
       if (audio) {
         if (isPlaying) {
-          audio.play().catch(() => onPlayStateChange(false, false));
+          audio.play().then(() => onPlayStateChange(true, false)).catch(() => onPlayStateChange(false, false));
         } else {
           audio.pause();
         }
