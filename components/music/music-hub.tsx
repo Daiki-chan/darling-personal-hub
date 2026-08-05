@@ -18,6 +18,7 @@ import {
   SkipForward,
   Sparkles,
   Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -32,10 +33,10 @@ import {
   useState,
 } from "react";
 import { AudioVisualizer } from "@/components/music/audio-visualizer";
+import { YTIFrameEngine } from "@/components/music/yt-iframe-engine";
 import {
   findActiveLyricIndex,
   formatTime,
-  getTrackAudioUrl,
   parseSyncedLyrics,
   personalTracks,
   type MusicTrack,
@@ -63,6 +64,8 @@ type PlayerState = {
   accent: string;
   buffering: boolean;
   currentId: string;
+  currentTime: number;
+  duration: number;
   error: string | null;
   expanded: boolean;
   lyricsOpen: boolean;
@@ -72,12 +75,18 @@ type PlayerState = {
   searchItems: SearchItem[];
   searchQuery: string;
   searchStatus: "idle" | "loading" | "ready" | "empty" | "error";
+  seekTarget: number | null;
+  volume: number;
 };
 
 type PlayerAction =
   | { type: "SELECT_TRACK"; track: MusicTrack }
   | { type: "SET_PLAYING"; value: boolean }
   | { type: "SET_BUFFERING"; value: boolean }
+  | { type: "SET_PLAYSTATE"; playing: boolean; buffering: boolean }
+  | { type: "SET_TIME"; currentTime: number; duration: number }
+  | { type: "SET_SEEK_TARGET"; value: number | null }
+  | { type: "SET_VOLUME"; value: number }
   | { type: "SET_EXPANDED"; value: boolean }
   | { type: "SET_LYRICS_OPEN"; value: boolean }
   | { type: "SET_ACCENT"; value: string }
@@ -96,8 +105,7 @@ type PlayerAction =
     }
   | { type: "LYRICS_EMPTY" }
   | { type: "LYRICS_ERROR" }
-  | { type: "SET_ACTIVE_LYRIC"; value: number }
-  | { type: "UPDATE_DURATION"; id: string; duration: number };
+  | { type: "SET_ACTIVE_LYRIC"; value: number };
 
 const initialLyrics: LyricsState = {
   activeIndex: -1,
@@ -111,6 +119,8 @@ const initialState: PlayerState = {
   accent: personalTracks[0]?.accentFallback ?? "#8b5cf6",
   buffering: false,
   currentId: personalTracks[0]?.id ?? "",
+  currentTime: 0,
+  duration: personalTracks[0]?.duration ?? 0,
   error: null,
   expanded: false,
   lyricsOpen: false,
@@ -120,6 +130,8 @@ const initialState: PlayerState = {
   searchItems: [],
   searchQuery: "",
   searchStatus: "idle",
+  seekTarget: null,
+  volume: 0.9,
 };
 
 function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
@@ -129,15 +141,32 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
       return {
         ...state,
         currentId: action.track.id,
+        currentTime: 0,
+        duration: action.track.duration || 0,
         error: null,
         lyrics: initialLyrics,
+        playing: true,
+        buffering: true,
         queue: alreadyQueued ? state.queue : [...state.queue, action.track],
+        seekTarget: null,
       };
     }
     case "SET_PLAYING":
       return { ...state, playing: action.value };
     case "SET_BUFFERING":
       return { ...state, buffering: action.value };
+    case "SET_PLAYSTATE":
+      return { ...state, playing: action.playing, buffering: action.buffering };
+    case "SET_TIME":
+      return {
+        ...state,
+        currentTime: action.currentTime,
+        duration: action.duration > 0 ? action.duration : state.duration,
+      };
+    case "SET_SEEK_TARGET":
+      return { ...state, seekTarget: action.value };
+    case "SET_VOLUME":
+      return { ...state, volume: action.value };
     case "SET_EXPANDED":
       return { ...state, expanded: action.value };
     case "SET_LYRICS_OPEN":
@@ -179,13 +208,6 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
       return { ...state, lyrics: { ...initialLyrics, status: "error" } };
     case "SET_ACTIVE_LYRIC":
       return { ...state, lyrics: { ...state.lyrics, activeIndex: action.value } };
-    case "UPDATE_DURATION":
-      return {
-        ...state,
-        queue: state.queue.map((track) =>
-          track.id === action.id ? { ...track, duration: action.duration } : track,
-        ),
-      };
     default:
       return state;
   }
@@ -198,12 +220,6 @@ const revealVariants = {
     y: 0,
     transition: { duration: 0.72, ease: [0.16, 1, 0.3, 1] as const },
   },
-};
-
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.36 } },
-  exit: { opacity: 0, transition: { duration: 0.26 } },
 };
 
 function deterministicAccent(seed: string) {
@@ -229,26 +245,13 @@ function PlayStateIcon({ buffering, playing }: { buffering: boolean; playing: bo
 
 export function MusicHub() {
   const [state, dispatch] = useReducer(playerReducer, initialState);
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const prefersReducedMotion = Boolean(useReducedMotion());
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const stateRef = useRef(state);
   const lyricsLinesRef = useRef<SyncedLyricLine[]>([]);
   const activeLyricRef = useRef(-1);
-  const collapsedProgressRef = useRef<HTMLInputElement>(null);
-  const expandedProgressRef = useRef<HTMLInputElement>(null);
-  const collapsedTimeRef = useRef<HTMLSpanElement>(null);
-  const expandedTimeRef = useRef<HTMLSpanElement>(null);
-  const collapsedDurationRef = useRef<HTMLSpanElement>(null);
-  const expandedDurationRef = useRef<HTMLSpanElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const activeLyricElementRef = useRef<HTMLParagraphElement>(null);
-  const retryCountRef = useRef(0);
 
-  stateRef.current = state;
   lyricsLinesRef.current = state.lyrics.lines;
 
   const currentTrack = useMemo(
@@ -256,299 +259,39 @@ export function MusicHub() {
     [state.currentId, state.queue],
   );
 
-  const syncTimeline = useCallback((audio: HTMLAudioElement) => {
-    const knownDuration = stateRef.current.queue.find(
-      (track) => track.id === stateRef.current.currentId,
-    )?.duration;
-    const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : knownDuration || 0;
-    const progress = duration > 0 ? Math.min(100, (audio.currentTime / duration) * 100) : 0;
-
-    for (const slider of [collapsedProgressRef.current, expandedProgressRef.current]) {
-      if (slider) {
-        slider.max = duration > 0 ? duration.toString() : "1";
-        slider.value = audio.currentTime.toString();
-        slider.style.setProperty("--track-progress", `${progress}%`);
-      }
-    }
-
-    for (const label of [collapsedTimeRef.current, expandedTimeRef.current]) {
-      if (label) {
-        label.textContent = formatTime(audio.currentTime);
-      }
-    }
-
-    for (const label of [collapsedDurationRef.current, expandedDurationRef.current]) {
-      if (label) {
-        label.textContent = formatTime(duration);
-      }
-    }
-
-    const nextActive = findActiveLyricIndex(lyricsLinesRef.current, audio.currentTime);
+  // Sync lyrics active line
+  useEffect(() => {
+    const nextActive = findActiveLyricIndex(lyricsLinesRef.current, state.currentTime);
     if (nextActive !== activeLyricRef.current) {
       activeLyricRef.current = nextActive;
       dispatch({ type: "SET_ACTIVE_LYRIC", value: nextActive });
     }
+  }, [state.currentTime]);
+
+  const selectTrack = useCallback((track: MusicTrack) => {
+    dispatch({ type: "SELECT_TRACK", track });
   }, []);
-
-  const ensureAudioGraph = useCallback(async () => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return null;
-    }
-
-    try {
-      if (!audioContextRef.current) {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (!AudioCtx) return null;
-
-        const context = new AudioCtx();
-        const source = context.createMediaElementSource(audio);
-        const nextAnalyser = context.createAnalyser();
-        nextAnalyser.fftSize = 256;
-        nextAnalyser.smoothingTimeConstant = 0.84;
-        source.connect(nextAnalyser);
-        nextAnalyser.connect(context.destination);
-        audioContextRef.current = context;
-        sourceNodeRef.current = source;
-        setAnalyser(nextAnalyser);
-      }
-
-      if (audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume();
-      }
-
-      return audioContextRef.current;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      const context = audioContextRef.current;
-      if (context && context.state !== "closed") {
-        void context.close().catch(() => undefined);
-      }
-      sourceNodeRef.current?.disconnect();
-      audioContextRef.current = null;
-      sourceNodeRef.current = null;
-    };
-  }, []);
-
-  const handleAudioError = useCallback((reason?: string) => {
-    const snapshot = stateRef.current;
-    const currentTrackObj = snapshot.queue.find((item) => item.id === snapshot.currentId);
-    dispatch({ type: "SET_BUFFERING", value: false });
-    dispatch({ type: "SET_PLAYING", value: false });
-
-    if (retryCountRef.current < 2) {
-      retryCountRef.current += 1;
-      dispatch({ type: "SET_BUFFERING", value: true });
-      dispatch({
-        type: "SET_ERROR",
-        value: `Đang kết nối lại nguồn phát (lần ${retryCountRef.current}/2)...`,
-      });
-      setTimeout(() => {
-        const updatedTrack = stateRef.current.queue.find((t) => t.id === snapshot.currentId);
-        if (updatedTrack && audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.crossOrigin = "anonymous";
-          const src = getTrackAudioUrl(updatedTrack);
-          if (src) {
-            audioRef.current.src = src;
-            audioRef.current.load();
-            void audioRef.current.play().catch(() => handleAudioError(reason));
-          }
-        }
-      }, 700);
-    } else {
-      retryCountRef.current = 0;
-      if (currentTrackObj?.source.kind === "youtube") {
-        const directFallback =
-          personalTracks.find((t) => t.source.kind === "direct") || personalTracks[0];
-        dispatch({
-          type: "SET_ERROR",
-          value: "Nguồn phát YouTube không phản hồi. Tự động chuyển sang bản nhạc mẫu trực tiếp.",
-        });
-        if (directFallback && directFallback.id !== currentTrackObj.id) {
-          setTimeout(() => {
-            const audio = audioRef.current;
-            if (audio) {
-              dispatch({ type: "SELECT_TRACK", track: directFallback });
-              const fallbackSource = getTrackAudioUrl(directFallback);
-              if (fallbackSource) {
-                audio.pause();
-                audio.crossOrigin = "anonymous";
-                audio.src = fallbackSource;
-                audio.load();
-                void audio.play().catch(() => undefined);
-              }
-            }
-          }, 1000);
-        }
-      } else {
-        dispatch({
-          type: "SET_ERROR",
-          value: reason || "Không thể phát nguồn này. Hãy kiểm tra URL, CORS hoặc thử một bài khác.",
-        });
-      }
-    }
-  }, []);
-
-  const loadTrack = useCallback(
-    async (track: MusicTrack, autoplay: boolean) => {
-      const audio = audioRef.current;
-      if (!audio) {
-        return;
-      }
-
-      dispatch({ type: "SELECT_TRACK", track });
-      const source = getTrackAudioUrl(track);
-
-      if (!source) {
-        audio.pause();
-        audio.removeAttribute("src");
-        audio.load();
-        dispatch({
-          type: "SET_ERROR",
-          value: "Track mẫu chưa có URL. Hãy gắn URL R2 hoặc MP3 trong biến môi trường.",
-        });
-        return;
-      }
-
-      audio.pause();
-      audio.crossOrigin = "anonymous";
-      audio.src = source;
-      audio.load();
-      syncTimeline(audio);
-
-      if (autoplay) {
-        dispatch({ type: "SET_BUFFERING", value: true });
-        try {
-          await ensureAudioGraph();
-          await audio.play();
-          retryCountRef.current = 0;
-        } catch {
-          handleAudioError();
-        }
-      }
-    },
-    [ensureAudioGraph, handleAudioError, syncTimeline],
-  );
 
   const moveInQueue = useCallback(
-    (offset: number, autoplay = true) => {
-      const snapshot = stateRef.current;
-      if (!snapshot.queue.length) {
-        return;
-      }
-
+    (offset: number) => {
+      if (!state.queue.length) return;
       const currentIndex = Math.max(
         0,
-        snapshot.queue.findIndex((track) => track.id === snapshot.currentId),
+        state.queue.findIndex((track) => track.id === state.currentId),
       );
-      const nextIndex = (currentIndex + offset + snapshot.queue.length) % snapshot.queue.length;
-      void loadTrack(snapshot.queue[nextIndex], autoplay);
+      const nextIndex = (currentIndex + offset + state.queue.length) % state.queue.length;
+      selectTrack(state.queue[nextIndex]);
     },
-    [loadTrack],
+    [selectTrack, state.currentId, state.queue],
   );
 
-  const togglePlayback = useCallback(async () => {
-    const audio = audioRef.current;
-    const track = stateRef.current.queue.find((item) => item.id === stateRef.current.currentId);
-    if (!audio || !track) {
-      return;
-    }
+  const togglePlayback = useCallback(() => {
+    dispatch({ type: "SET_PLAYING", value: !state.playing });
+  }, [state.playing]);
 
-    if (audio.paused) {
-      if (!getTrackAudioUrl(track)) {
-        dispatch({
-          type: "SET_ERROR",
-          value: "Track mẫu chưa có URL. Hãy tìm một bài trên YouTube Music hoặc thêm URL R2.",
-        });
-        return;
-      }
-
-      dispatch({ type: "SET_BUFFERING", value: true });
-      try {
-        await ensureAudioGraph();
-        await audio.play();
-        retryCountRef.current = 0;
-      } catch {
-        handleAudioError("Trình duyệt không thể bắt đầu phát. Hãy thử chọn lại bài hát.");
-      }
-    } else {
-      audio.pause();
-    }
-  }, [ensureAudioGraph, handleAudioError]);
-
+  // Extract color accent from artwork
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
-
-    const initialTrack = stateRef.current.queue.find(
-      (track) => track.id === stateRef.current.currentId,
-    );
-    const initialSource = initialTrack ? getTrackAudioUrl(initialTrack) : "";
-    if (initialSource) {
-      audio.crossOrigin = "anonymous";
-      audio.src = initialSource;
-      audio.load();
-    }
-
-    const onPlay = () => {
-      retryCountRef.current = 0;
-      dispatch({ type: "SET_PLAYING", value: true });
-      dispatch({ type: "SET_BUFFERING", value: false });
-      dispatch({ type: "SET_ERROR", value: null });
-    };
-    const onPause = () => dispatch({ type: "SET_PLAYING", value: false });
-    const onWaiting = () => dispatch({ type: "SET_BUFFERING", value: true });
-    const onCanPlay = () => dispatch({ type: "SET_BUFFERING", value: false });
-    const onTimeUpdate = () => syncTimeline(audio);
-    const onLoadedMetadata = () => {
-      const snapshot = stateRef.current;
-      if (Number.isFinite(audio.duration) && audio.duration > 0) {
-        dispatch({
-          type: "UPDATE_DURATION",
-          id: snapshot.currentId,
-          duration: audio.duration,
-        });
-      }
-      syncTimeline(audio);
-    };
-    const onEnded = () => moveInQueue(1, true);
-    const onError = () => handleAudioError();
-
-    audio.addEventListener("play", onPlay);
-    audio.addEventListener("pause", onPause);
-    audio.addEventListener("waiting", onWaiting);
-    audio.addEventListener("canplay", onCanPlay);
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("ended", onEnded);
-    audio.addEventListener("error", onError);
-
-    return () => {
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("waiting", onWaiting);
-      audio.removeEventListener("canplay", onCanPlay);
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("error", onError);
-    };
-  }, [handleAudioError, moveInQueue, syncTimeline]);
-
-  useEffect(() => {
-    if (!currentTrack) {
-      return;
-    }
+    if (!currentTrack) return;
 
     dispatch({ type: "SET_ACCENT", value: currentTrack.accentFallback });
     const image = new Image();
@@ -559,9 +302,7 @@ export function MusicHub() {
       try {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d", { willReadFrequently: true });
-        if (!context) {
-          return;
-        }
+        if (!context) return;
 
         canvas.width = 28;
         canvas.height = 28;
@@ -609,23 +350,16 @@ export function MusicHub() {
     image.src = currentTrack.artwork;
   }, [currentTrack]);
 
+  // Fetch LRCLIB Synced Lyrics
   useEffect(() => {
-    if (!currentTrack) {
-      return;
-    }
-
-    const source = getTrackAudioUrl(currentTrack);
-    if (!source || currentTrack.duration <= 0) {
-      dispatch({ type: "LYRICS_EMPTY" });
-      return;
-    }
+    if (!currentTrack) return;
 
     const controller = new AbortController();
     const params = new URLSearchParams({
       track_name: currentTrack.title,
       artist_name: currentTrack.artist,
       album_name: currentTrack.album,
-      duration: Math.round(currentTrack.duration).toString(),
+      duration: Math.round(currentTrack.duration || state.duration || 0).toString(),
     });
     dispatch({ type: "LYRICS_START" });
 
@@ -662,12 +396,10 @@ export function MusicHub() {
     return () => controller.abort();
   }, [currentTrack]);
 
+  // Keyboard navigation for expanded view
   useEffect(() => {
-    if (!state.expanded) {
-      return;
-    }
+    if (!state.expanded) return;
 
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
@@ -675,30 +407,6 @@ export function MusicHub() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         dispatch({ type: "SET_EXPANDED", value: false });
-        return;
-      }
-
-      if (event.key !== "Tab" || !overlayRef.current) {
-        return;
-      }
-
-      const focusable = Array.from(
-        overlayRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-      if (!focusable.length) {
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
       }
     };
 
@@ -706,14 +414,12 @@ export function MusicHub() {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
     };
   }, [state.expanded]);
 
+  // Auto scroll synced lyrics line into view
   useEffect(() => {
-    if (state.lyrics.activeIndex < 0 || !state.lyricsOpen) {
-      return;
-    }
+    if (state.lyrics.activeIndex < 0 || !state.lyricsOpen) return;
 
     activeLyricElementRef.current?.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -721,10 +427,9 @@ export function MusicHub() {
     });
   }, [prefersReducedMotion, state.lyrics.activeIndex, state.lyricsOpen]);
 
+  // MediaSession integration
   useEffect(() => {
-    if (!currentTrack || !("mediaSession" in navigator)) {
-      return;
-    }
+    if (!currentTrack || !("mediaSession" in navigator)) return;
 
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -733,10 +438,10 @@ export function MusicHub() {
         album: currentTrack.album,
         artwork: [{ src: currentTrack.artwork, sizes: "512x512" }],
       });
-      navigator.mediaSession.setActionHandler("play", () => void togglePlayback());
-      navigator.mediaSession.setActionHandler("pause", () => audioRef.current?.pause());
-      navigator.mediaSession.setActionHandler("previoustrack", () => moveInQueue(-1, true));
-      navigator.mediaSession.setActionHandler("nexttrack", () => moveInQueue(1, true));
+      navigator.mediaSession.setActionHandler("play", () => dispatch({ type: "SET_PLAYING", value: true }));
+      navigator.mediaSession.setActionHandler("pause", () => dispatch({ type: "SET_PLAYING", value: false }));
+      navigator.mediaSession.setActionHandler("previoustrack", () => moveInQueue(-1));
+      navigator.mediaSession.setActionHandler("nexttrack", () => moveInQueue(1));
     } catch {
       return;
     }
@@ -751,24 +456,17 @@ export function MusicHub() {
         return;
       }
     };
-  }, [currentTrack, moveInQueue, togglePlayback]);
+  }, [currentTrack, moveInQueue]);
 
   const handleSeek = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
-    audio.currentTime = Number(event.currentTarget.value);
-    syncTimeline(audio);
+    const targetSeconds = Number(event.currentTarget.value);
+    dispatch({ type: "SET_SEEK_TARGET", value: targetSeconds });
   };
 
   const handleVolume = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
-    audio.volume = Number(event.currentTarget.value);
-    event.currentTarget.style.setProperty("--track-progress", `${audio.volume * 100}%`);
+    const nextVolume = Number(event.currentTarget.value);
+    dispatch({ type: "SET_VOLUME", value: nextVolume });
+    event.currentTarget.style.setProperty("--track-progress", `${nextVolume * 100}%`);
   };
 
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
@@ -805,11 +503,12 @@ export function MusicHub() {
       accentFallback: deterministicAccent(item.videoId),
       source: { kind: "youtube", videoId: item.videoId },
     };
-    void loadTrack(track, true);
+    selectTrack(track);
   };
 
   const hubStyle = { "--music-accent": state.accent } as CSSProperties;
-  const displayDuration = currentTrack?.duration ?? 0;
+  const progressPercent =
+    state.duration > 0 ? Math.min(100, (state.currentTime / state.duration) * 100) : 0;
 
   const renderLyrics = () => {
     if (state.lyrics.status === "loading") {
@@ -851,436 +550,354 @@ export function MusicHub() {
       .map((line, index) => <p key={`${line}-${index}`}>{line}</p>);
   };
 
-  if (!currentTrack) {
-    return null;
-  }
+  if (!currentTrack) return null;
 
   return (
     <div className={styles.hub} style={hubStyle}>
-      <audio ref={audioRef} crossOrigin="anonymous" preload="metadata" />
-      <div className={styles.ambient} aria-hidden="true" />
-      <div className={styles.ambientSecondary} aria-hidden="true" />
+      <YTIFrameEngine
+        currentTrack={currentTrack}
+        isPlaying={state.playing}
+        onEnded={() => moveInQueue(1)}
+        onError={(msg) => dispatch({ type: "SET_ERROR", value: msg })}
+        onPlayStateChange={(playing, buffering) =>
+          dispatch({ type: "SET_PLAYSTATE", playing, buffering })
+        }
+        onTimeUpdate={(currentTime, duration) =>
+          dispatch({ type: "SET_TIME", currentTime, duration })
+        }
+        seekTarget={state.seekTarget}
+        volume={state.volume}
+      />
 
-      <section className={styles.shell} aria-labelledby="music-hub-title">
+      <div className={styles.glow} aria-hidden="true" />
+
+      <div className="layout-shell">
         <motion.div
-          className={styles.intro}
-          initial={prefersReducedMotion ? false : "hidden"}
           animate="visible"
+          className={styles.header}
+          initial="hidden"
           variants={revealVariants}
         >
-          <div>
-            <span className={styles.kicker}>Personal frequency</span>
-            <h1 id="music-hub-title">Nhạc giữa đêm.</h1>
-          </div>
-          <div className={styles.introAside}>
-            <p>Kho nhạc riêng, tìm kiếm nhanh và một player luôn ở đúng nhịp của bạn.</p>
-            <Link href="/#portals" className={styles.backLink}>
-              <ArrowLeft aria-hidden="true" size={17} />
-              Trở về cổng chính
+          <div className={styles.headerTop}>
+            <Link className={styles.backLink} href="/">
+              <ArrowLeft aria-hidden="true" size={18} />
+              <span>Quay lại cổng chính</span>
             </Link>
+
+            <div className={styles.headerBadge}>
+              <Sparkles aria-hidden="true" size={14} />
+              <span>YouTube Music Engine</span>
+            </div>
           </div>
+
+          <div className={styles.headerTitleGroup}>
+            <div className={styles.headerIcon}>
+              <Headphones aria-hidden="true" size={28} />
+            </div>
+            <div>
+              <h1 className={styles.title}>Âm nhạc</h1>
+              <p className={styles.subtitle}>
+                Không gian âm thanh cá nhân. Tìm kiếm bài hát trên YouTube Music hoặc lắng nghe các bản nhạc mẫu.
+              </p>
+            </div>
+          </div>
+
+          <form className={styles.searchForm} onSubmit={handleSearch}>
+            <div className={styles.searchInputWrapper}>
+              <Search aria-hidden="true" className={styles.searchIcon} size={18} />
+              <input
+                className={styles.searchInput}
+                onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", value: e.target.value })}
+                placeholder="Tìm bài hát, nghệ sĩ trên YouTube Music..."
+                type="text"
+                value={state.searchQuery}
+              />
+              {state.searchQuery ? (
+                <button
+                  className={styles.clearSearch}
+                  onClick={() => dispatch({ type: "SET_SEARCH_QUERY", value: "" })}
+                  type="button"
+                >
+                  <X aria-hidden="true" size={16} />
+                </button>
+              ) : null}
+            </div>
+            <button className={styles.searchButton} type="submit">
+              Tìm kiếm
+            </button>
+          </form>
+
+          {state.searchStatus === "loading" ? (
+            <div className={styles.searchStatusMessage}>
+              <LoaderCircle aria-hidden="true" className={styles.spinner} size={18} />
+              <span>Đang kết nối YouTube Music...</span>
+            </div>
+          ) : null}
+
+          {state.searchStatus === "error" ? (
+            <p className={styles.searchStatusMessage}>Không thể tìm kiếm nhạc lúc này. Hãy thử từ khóa khác.</p>
+          ) : null}
+
+          {state.searchStatus === "empty" ? (
+            <p className={styles.searchStatusMessage}>Không tìm thấy kết quả phù hợp trên YouTube Music.</p>
+          ) : null}
+
+          {state.searchItems.length > 0 ? (
+            <div className={styles.searchResults}>
+              <h2 className={styles.sectionTitle}>Kết quả tìm kiếm</h2>
+              <div className={styles.searchGrid}>
+                {state.searchItems.map((item) => (
+                  <button
+                    className={styles.searchCard}
+                    key={item.videoId}
+                    onClick={() => selectSearchItem(item)}
+                    type="button"
+                  >
+                    <img alt="" className={styles.searchArt} src={item.thumbnail} />
+                    <div className={styles.searchMeta}>
+                      <strong>{item.title}</strong>
+                      <span>{item.artist}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </motion.div>
 
-        <motion.div
-          className={styles.stage}
-          initial={prefersReducedMotion ? false : "hidden"}
-          animate="visible"
-          variants={revealVariants}
-        >
-          <div className={styles.nowPlaying}>
-            <div className={styles.stageLabel}>
-              <span>Đang chọn</span>
-              <span>{currentTrack.source.kind === "youtube" ? "YouTube Music" : "Personal archive"}</span>
+        <div className={styles.contentGrid}>
+          <div className={styles.queueSection}>
+            <h2 className={styles.sectionTitle}>
+              <ListMusic aria-hidden="true" size={20} />
+              <span>Danh sách phát</span>
+            </h2>
+
+            <div className={styles.queueList}>
+              {state.queue.map((track) => {
+                const isActive = track.id === state.currentId;
+                return (
+                  <button
+                    className={`${styles.queueCard} ${isActive ? styles.queueCardActive : ""}`}
+                    key={track.id}
+                    onClick={() => selectTrack(track)}
+                    type="button"
+                  >
+                    <img alt="" className={styles.queueArt} src={track.artwork} />
+                    <div className={styles.queueMeta}>
+                      <strong>{track.title}</strong>
+                      <span>{track.artist}</span>
+                    </div>
+                    {isActive ? (
+                      <span className={styles.playingIndicator}>
+                        <Disc3
+                          aria-hidden="true"
+                          className={state.playing ? styles.spinner : undefined}
+                          size={18}
+                        />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <motion.button
-              type="button"
-              className={styles.coverButton}
-              onClick={() => dispatch({ type: "SET_EXPANDED", value: true })}
-              aria-label="Mở player toàn màn hình"
-              whileHover={prefersReducedMotion ? undefined : { scale: 1.012 }}
-              whileTap={{ scale: 0.988 }}
-            >
-              <motion.div className={styles.coverFrame} layoutId="music-cover">
-                <img src={currentTrack.artwork} alt={`Bìa của ${currentTrack.title}`} crossOrigin="anonymous" />
-                <div className={styles.coverShade} />
-                <div className={styles.coverVisualizer}>
-                  <AudioVisualizer
-                    analyser={analyser}
-                    active={state.playing}
-                    reducedMotion={prefersReducedMotion}
-                  />
-                </div>
-              </motion.div>
-            </motion.button>
-
-            <div className={styles.nowMeta}>
-              <div>
-                <h2>{currentTrack.title}</h2>
-                <p>
-                  {currentTrack.artist} <span aria-hidden="true">·</span> {currentTrack.album}
-                </p>
+          <div className={styles.visualizerSection}>
+            <div className={styles.visualizerCard}>
+              <h3 className={styles.visualizerTitle}>Sóng âm & Lời nhạc</h3>
+              <div className={styles.visualizerCanvasHolder}>
+                <AudioVisualizer
+                  active={state.playing}
+                  analyser={null}
+                  reducedMotion={prefersReducedMotion}
+                />
               </div>
               <button
+                className={styles.lyricsToggleBtn}
+                onClick={() => dispatch({ type: "SET_LYRICS_OPEN", value: !state.lyricsOpen })}
                 type="button"
-                className={styles.roundButton}
-                onClick={() => void togglePlayback()}
-                aria-label={state.playing ? "Tạm dừng" : "Phát nhạc"}
               >
-                <PlayStateIcon buffering={state.buffering} playing={state.playing} />
+                <Music2 aria-hidden="true" size={18} />
+                <span>{state.lyricsOpen ? "Ẩn lời bài hát" : "Xem lời bài hát"}</span>
               </button>
+
+              {state.lyricsOpen ? <div className={styles.lyricsContainer}>{renderLyrics()}</div> : null}
             </div>
-          </div>
-
-          <aside className={styles.discovery} aria-label="Khám phá và thư viện nhạc">
-            <div className={styles.discoveryHeader}>
-              <div>
-                <h2>Tìm một tần số.</h2>
-              </div>
-              <Headphones aria-hidden="true" size={25} strokeWidth={1.4} />
-            </div>
-
-            <form className={styles.searchForm} onSubmit={handleSearch} role="search">
-              <Search aria-hidden="true" size={19} />
-              <input
-                value={state.searchQuery}
-                onChange={(event) => dispatch({ type: "SET_SEARCH_QUERY", value: event.target.value })}
-                placeholder="Tên bài hát hoặc nghệ sĩ"
-                aria-label="Tìm trên YouTube Music"
-              />
-              <button type="submit" disabled={state.searchStatus === "loading"}>
-                {state.searchStatus === "loading" ? (
-                  <LoaderCircle aria-hidden="true" className={styles.spinner} size={19} />
-                ) : (
-                  "Tìm"
-                )}
-              </button>
-            </form>
-
-            <div className={styles.sourceNote}>
-              <Sparkles aria-hidden="true" size={15} />
-              <span>Tìm kiếm qua Piped. Nhạc cá nhân phát trực tiếp từ URL của bạn.</span>
-            </div>
-
-            <div className={styles.trackList} aria-live="polite">
-              {state.searchStatus === "ready" ? (
-                <>
-                  <div className={styles.listTitle}>
-                    <span>Kết quả tìm kiếm</span>
-                    <button type="button" onClick={() => dispatch({ type: "CLEAR_SEARCH" })}>
-                      Xóa
-                    </button>
-                  </div>
-                  {state.searchItems.map((item, index) => (
-                    <button
-                      type="button"
-                      className={styles.trackRow}
-                      onClick={() => selectSearchItem(item)}
-                      key={item.videoId}
-                    >
-                      <span className={styles.trackIndex}>{String(index + 1).padStart(2, "0")}</span>
-                      <img src={item.thumbnail} alt="" />
-                      <span className={styles.trackCopy}>
-                        <strong>{item.title}</strong>
-                        <span>{item.artist}</span>
-                      </span>
-                      <span className={styles.trackDuration}>{formatTime(item.duration)}</span>
-                      <Play aria-hidden="true" size={17} />
-                    </button>
-                  ))}
-                </>
-              ) : (
-                <>
-                  <div className={styles.listTitle}>
-                    <span>Trong thư viện</span>
-                    <span>{state.queue.length.toString().padStart(2, "0")} tracks</span>
-                  </div>
-                  {state.queue.map((track, index) => {
-                    const selected = track.id === currentTrack.id;
-                    const available = Boolean(getTrackAudioUrl(track));
-                    return (
-                      <button
-                        type="button"
-                        className={`${styles.trackRow} ${selected ? styles.trackRowActive : ""}`}
-                        onClick={() => void loadTrack(track, true)}
-                        key={track.id}
-                        aria-current={selected ? "true" : undefined}
-                      >
-                        <span className={styles.trackIndex}>
-                          {selected && state.playing ? (
-                            <Music2 aria-hidden="true" size={16} />
-                          ) : (
-                            String(index + 1).padStart(2, "0")
-                          )}
-                        </span>
-                        <img src={track.artwork} alt="" crossOrigin="anonymous" />
-                        <span className={styles.trackCopy}>
-                          <strong>{track.title}</strong>
-                          <span>{track.artist}</span>
-                        </span>
-                        <span className={styles.trackDuration}>{available ? formatTime(track.duration) : "Gắn URL"}</span>
-                        {selected && state.playing ? (
-                          <Pause aria-hidden="true" size={17} />
-                        ) : (
-                          <Play aria-hidden="true" size={17} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </>
-              )}
-
-              {state.searchStatus === "loading" ? (
-                <div className={styles.listMessage}>
-                  <LoaderCircle aria-hidden="true" className={styles.spinner} size={20} />
-                  Đang lắng nghe tín hiệu
-                </div>
-              ) : null}
-              {state.searchStatus === "empty" ? (
-                <p className={styles.listMessage}>Không thấy kết quả phù hợp. Hãy thử từ khóa khác.</p>
-              ) : null}
-              {state.searchStatus === "error" ? (
-                <p className={styles.listMessage}>Không thể tìm lúc này. Kiểm tra cấu hình Piped rồi thử lại.</p>
-              ) : null}
-            </div>
-          </aside>
-        </motion.div>
-      </section>
-
-      <AnimatePresence>
-        {state.error ? (
-          <motion.div
-            className={styles.toast}
-            role="status"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-          >
-            <span>{state.error}</span>
-            <button type="button" onClick={() => dispatch({ type: "SET_ERROR", value: null })}>
-              <X aria-hidden="true" size={17} />
-              <span className={styles.srOnly}>Đóng thông báo</span>
-            </button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <div className={styles.miniPlayer} aria-label="Trình phát nhạc thu gọn">
-        <div className={styles.miniTrack}>
-          <img src={currentTrack.artwork} alt="" crossOrigin="anonymous" />
-          <div>
-            <strong>{currentTrack.title}</strong>
-            <span>{currentTrack.artist}</span>
           </div>
         </div>
+      </div>
 
-        <div className={styles.miniTransport}>
-          <div className={styles.transportButtons}>
-            <button type="button" onClick={() => moveInQueue(-1)} aria-label="Bài trước">
-              <SkipBack aria-hidden="true" size={18} fill="currentColor" />
+      {/* Sticky Mini Player */}
+      <div className={styles.miniPlayer}>
+        <div
+          className={styles.miniProgressBar}
+          style={{ "--track-progress": `${progressPercent}%` } as CSSProperties}
+        />
+        <div className={styles.miniContent}>
+          <button
+            className={styles.miniTrackInfo}
+            onClick={() => dispatch({ type: "SET_EXPANDED", value: true })}
+            type="button"
+          >
+            <img alt="" className={styles.miniArt} src={currentTrack.artwork} />
+            <div className={styles.miniMeta}>
+              <strong>{currentTrack.title}</strong>
+              <span>{currentTrack.artist}</span>
+            </div>
+          </button>
+
+          <div className={styles.miniControls}>
+            <button
+              aria-label="Bài trước"
+              className={styles.miniButton}
+              onClick={() => moveInQueue(-1)}
+              type="button"
+            >
+              <SkipBack aria-hidden="true" size={20} />
             </button>
             <button
+              aria-label={state.playing ? "Tạm dừng" : "Phát"}
+              className={`${styles.miniButton} ${styles.miniButtonPlay}`}
+              onClick={togglePlayback}
               type="button"
-              className={styles.primaryControl}
-              onClick={() => void togglePlayback()}
-              aria-label={state.playing ? "Tạm dừng" : "Phát nhạc"}
             >
               <PlayStateIcon buffering={state.buffering} playing={state.playing} />
             </button>
-            <button type="button" onClick={() => moveInQueue(1)} aria-label="Bài tiếp theo">
-              <SkipForward aria-hidden="true" size={18} fill="currentColor" />
+            <button
+              aria-label="Bài kế tiếp"
+              className={styles.miniButton}
+              onClick={() => moveInQueue(1)}
+              type="button"
+            >
+              <SkipForward aria-hidden="true" size={20} />
             </button>
           </div>
-          <div className={styles.miniTimeline}>
-            <span ref={collapsedTimeRef}>0:00</span>
-            <input
-              ref={collapsedProgressRef}
-              type="range"
-              min="0"
-              max={displayDuration || 1}
-              defaultValue="0"
-              onChange={handleSeek}
-              aria-label="Tiến độ bài hát"
-            />
-            <span ref={collapsedDurationRef}>{formatTime(displayDuration)}</span>
+
+          <div className={styles.miniRightActions}>
+            <div className={styles.volumeWrapper}>
+              <button
+                aria-label="Âm lượng"
+                className={styles.miniButton}
+                onClick={() => dispatch({ type: "SET_VOLUME", value: state.volume === 0 ? 0.9 : 0 })}
+                type="button"
+              >
+                {state.volume === 0 ? (
+                  <VolumeX aria-hidden="true" size={18} />
+                ) : (
+                  <Volume2 aria-hidden="true" size={18} />
+                )}
+              </button>
+              <input
+                aria-label="Chỉnh âm lượng"
+                className={styles.volumeSlider}
+                max="1"
+                min="0"
+                onChange={handleVolume}
+                step="0.01"
+                type="range"
+                value={state.volume}
+              />
+            </div>
+
+            <button
+              aria-label="Mở rộng trình phát"
+              className={styles.miniButton}
+              onClick={() => dispatch({ type: "SET_EXPANDED", value: true })}
+              type="button"
+            >
+              <ChevronUp aria-hidden="true" size={20} />
+            </button>
           </div>
         </div>
-
-        <button
-          type="button"
-          className={styles.expandButton}
-          onClick={() => dispatch({ type: "SET_EXPANDED", value: true })}
-          aria-label="Mở player toàn màn hình"
-        >
-          <Maximize2 aria-hidden="true" size={19} />
-        </button>
       </div>
 
+      {/* Fullscreen Expanded Player Overlay */}
       <AnimatePresence>
         {state.expanded ? (
           <motion.div
+            animate={{ opacity: 1, y: 0 }}
             className={styles.overlay}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Đang phát ${currentTrack.title}`}
+            exit={{ opacity: 0, y: "100%" }}
+            initial={{ opacity: 0, y: "100%" }}
             ref={overlayRef}
-            variants={overlayVariants}
-            initial={prefersReducedMotion ? false : "hidden"}
-            animate="visible"
-            exit="exit"
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className={styles.overlayAmbient} aria-hidden="true" />
-            <header className={styles.overlayHeader}>
-              <div>
-                <Disc3 aria-hidden="true" size={19} />
-                <span>Darling frequencies</span>
-              </div>
+            <div className={styles.overlayHeader}>
               <button
-                type="button"
-                ref={closeButtonRef}
+                aria-label="Thu nhỏ trình phát"
+                className={styles.closeButton}
                 onClick={() => dispatch({ type: "SET_EXPANDED", value: false })}
+                ref={closeButtonRef}
+                type="button"
               >
-                <Minimize2 aria-hidden="true" size={19} />
-                Thu gọn
+                <Minimize2 aria-hidden="true" size={20} />
               </button>
-            </header>
+              <span className={styles.overlayBadge}>Đang phát từ YouTube Music</span>
+            </div>
 
-            <div className={`${styles.fullPlayer} ${state.lyricsOpen ? styles.fullPlayerWithLyrics : ""}`}>
-              <div className={styles.vinylStage}>
+            <div className={styles.overlayBody}>
+              <div className={styles.overlayArtWrapper}>
                 <motion.div
-                  className={styles.vinyl}
                   animate={
                     state.playing && !prefersReducedMotion ? { rotate: 360 } : { rotate: 0 }
                   }
-                  transition={
-                    state.playing && !prefersReducedMotion
-                      ? { duration: 16, ease: "linear", repeat: Infinity }
-                      : { duration: 0.5 }
-                  }
+                  className={styles.vinylDisc}
+                  transition={{ duration: 22, ease: "linear", repeat: Infinity }}
                 >
-                  <img src={currentTrack.artwork} alt={`Bìa của ${currentTrack.title}`} crossOrigin="anonymous" />
-                  <span aria-hidden="true" />
+                  <img alt="" className={styles.overlayArt} src={currentTrack.artwork} />
                 </motion.div>
-
-                {!prefersReducedMotion && state.playing ? (
-                  <div className={styles.notes} aria-hidden="true">
-                    {[0, 1, 2, 3].map((item) => (
-                      <motion.span
-                        key={item}
-                        initial={{ opacity: 0, y: 12, scale: 0.8 }}
-                        animate={{ opacity: [0, 0.55, 0], y: [12, -38, -80], x: [0, item % 2 ? 18 : -18] }}
-                        transition={{ duration: 5.5 + item, delay: item * 0.9, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <Music2 size={16 + item * 2} />
-                      </motion.span>
-                    ))}
-                  </div>
-                ) : null}
               </div>
 
-              <div className={styles.fullControls}>
-                <div className={styles.fullMeta}>
-                  <h2>{currentTrack.title}</h2>
-                  <p>{currentTrack.artist}</p>
-                </div>
+              <div className={styles.overlayInfoGroup}>
+                <h2 className={styles.overlayTitle}>{currentTrack.title}</h2>
+                <p className={styles.overlayArtist}>{currentTrack.artist}</p>
+                <span className={styles.overlayAlbum}>{currentTrack.album}</span>
+              </div>
 
-                <div className={styles.fullVisualizer}>
-                  <AudioVisualizer
-                    analyser={analyser}
-                    active={state.playing}
-                    reducedMotion={prefersReducedMotion}
-                  />
-                </div>
-
-                <div className={styles.fullTimeline}>
-                  <input
-                    ref={expandedProgressRef}
-                    type="range"
-                    min="0"
-                    max={displayDuration || 1}
-                    defaultValue="0"
-                    onChange={handleSeek}
-                    aria-label="Tiến độ bài hát"
-                  />
-                  <div>
-                    <span ref={expandedTimeRef}>0:00</span>
-                    <span ref={expandedDurationRef}>{formatTime(displayDuration)}</span>
-                  </div>
-                </div>
-
-                <div className={styles.fullTransport}>
-                  <button type="button" onClick={() => moveInQueue(-1)} aria-label="Bài trước">
-                    <SkipBack aria-hidden="true" size={23} fill="currentColor" />
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.fullPlay}
-                    onClick={() => void togglePlayback()}
-                    aria-label={state.playing ? "Tạm dừng" : "Phát nhạc"}
-                  >
-                    <PlayStateIcon buffering={state.buffering} playing={state.playing} />
-                  </button>
-                  <button type="button" onClick={() => moveInQueue(1)} aria-label="Bài tiếp theo">
-                    <SkipForward aria-hidden="true" size={23} fill="currentColor" />
-                  </button>
-                </div>
-
-                <div className={styles.utilityControls}>
-                  <label>
-                    <Volume2 aria-hidden="true" size={18} />
-                    <span className={styles.srOnly}>Âm lượng</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      defaultValue="1"
-                      onChange={handleVolume}
-                      aria-label="Âm lượng"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => dispatch({ type: "SET_LYRICS_OPEN", value: !state.lyricsOpen })}
-                    aria-expanded={state.lyricsOpen}
-                  >
-                    <ListMusic aria-hidden="true" size={18} />
-                    Lời bài hát
-                    <ChevronUp
-                      aria-hidden="true"
-                      className={state.lyricsOpen ? styles.chevronOpen : undefined}
-                      size={16}
-                    />
-                  </button>
+              <div className={styles.overlayProgressGroup}>
+                <input
+                  aria-label="Thanh thời gian"
+                  className={styles.progressSlider}
+                  max={state.duration > 0 ? state.duration : 1}
+                  min="0"
+                  onChange={handleSeek}
+                  step="0.1"
+                  style={{ "--track-progress": `${progressPercent}%` } as CSSProperties}
+                  type="range"
+                  value={state.currentTime}
+                />
+                <div className={styles.timeLabels}>
+                  <span>{formatTime(state.currentTime)}</span>
+                  <span>{formatTime(state.duration)}</span>
                 </div>
               </div>
 
-              <AnimatePresence>
-                {state.lyricsOpen ? (
-                  <motion.aside
-                    className={styles.lyricsPanel}
-                    aria-label="Lời bài hát"
-                    initial={prefersReducedMotion ? false : { opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 18 }}
-                    transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <div className={styles.lyricsHeader}>
-                      <div>
-                        <h3>Lời bài hát</h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => dispatch({ type: "SET_LYRICS_OPEN", value: false })}
-                        aria-label="Đóng lời bài hát"
-                      >
-                        <X aria-hidden="true" size={18} />
-                      </button>
-                    </div>
-                    <div className={styles.lyricsScroll}>{renderLyrics()}</div>
-                  </motion.aside>
-                ) : null}
-              </AnimatePresence>
+              <div className={styles.overlayMainControls}>
+                <button
+                  aria-label="Bài trước"
+                  className={styles.overlayControlBtn}
+                  onClick={() => moveInQueue(-1)}
+                  type="button"
+                >
+                  <SkipBack aria-hidden="true" size={28} />
+                </button>
+                <button
+                  aria-label={state.playing ? "Tạm dừng" : "Phát"}
+                  className={`${styles.overlayControlBtn} ${styles.overlayPlayBtn}`}
+                  onClick={togglePlayback}
+                  type="button"
+                >
+                  <PlayStateIcon buffering={state.buffering} playing={state.playing} />
+                </button>
+                <button
+                  aria-label="Bài kế tiếp"
+                  className={styles.overlayControlBtn}
+                  onClick={() => moveInQueue(1)}
+                  type="button"
+                >
+                  <SkipForward aria-hidden="true" size={28} />
+                </button>
+              </div>
             </div>
           </motion.div>
         ) : null}

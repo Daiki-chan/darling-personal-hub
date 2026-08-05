@@ -52,7 +52,7 @@ export const personalTracks: MusicTrack[] = [
 
 export function getTrackAudioUrl(track: MusicTrack) {
   if (track.source.kind === "youtube") {
-    return `/api/yt-stream?videoId=${encodeURIComponent(track.source.videoId)}`;
+    return null;
   }
 
   return track.source.url.trim();
