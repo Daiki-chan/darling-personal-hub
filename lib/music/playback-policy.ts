@@ -54,7 +54,7 @@ export function planPlaybackContinuation(
     if (loopTrack) return { kind: "track", queue: rebuilt, track: loopTrack };
   }
 
-  if (input.fromEnded && input.autoRadioEnabled) return { kind: "radio" };
+  if (input.autoRadioEnabled) return { kind: "radio" };
   return { kind: "stop" };
 }
 

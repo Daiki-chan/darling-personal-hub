@@ -30,10 +30,10 @@ describe("playback continuation priority", () => {
 
   it("uses repeat-one before Auto Radio only when a track ended", () => {
     expect(planPlaybackContinuation({ ...base, repeatMode: "one" })).toEqual({ kind: "restart" });
-    expect(planPlaybackContinuation({ ...base, fromEnded: false, repeatMode: "one" })).toEqual({ kind: "stop" });
+    expect(planPlaybackContinuation({ ...base, fromEnded: false, repeatMode: "one" })).toEqual({ kind: "radio" });
   });
 
-  it("uses repeat-all before Auto Radio, then radio only on natural end", () => {
+  it("uses repeat-all before Auto Radio, then radio on natural end or manual next", () => {
     const repeated = planPlaybackContinuation({
       ...base,
       history: [{ ...track("history"), playedAt: 1 }],
@@ -41,7 +41,8 @@ describe("playback continuation priority", () => {
     });
     expect(repeated).toMatchObject({ kind: "track", track: { videoId: "history" } });
     expect(planPlaybackContinuation(base)).toEqual({ kind: "radio" });
-    expect(planPlaybackContinuation({ ...base, fromEnded: false })).toEqual({ kind: "stop" });
+    expect(planPlaybackContinuation({ ...base, fromEnded: false })).toEqual({ kind: "radio" });
+    expect(planPlaybackContinuation({ ...base, autoRadioEnabled: false, fromEnded: false })).toEqual({ kind: "stop" });
   });
 
   it("excludes current, recent and unavailable radio candidates", () => {

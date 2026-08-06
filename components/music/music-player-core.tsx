@@ -370,6 +370,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     if (radioTrackRef.current === currentTrack.videoId) return;
+    dispatch({ type: "SET_STATUS", status: "buffering", playing: current.isPlaying });
     radioAbortRef.current?.abort();
     const controller = new AbortController();
     radioAbortRef.current = controller;
@@ -390,6 +391,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       );
       if (!selected) {
         dispatch({ type: "SET_PLAYING", value: false });
+        showToast("AUTO_RADIO", "Auto Radio ch\u01b0a t\u00ecm th\u1ea5y b\u00e0i ti\u1ebfp theo.");
         return;
       }
       const queue = uniqueTracks([...stateRef.current.queue, selected]);
@@ -398,6 +400,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
         dispatch({ type: "SET_PLAYING", value: false });
+        showToast("AUTO_RADIO", "Kh\u00f4ng th\u1ec3 t\u1ea3i b\u00e0i ti\u1ebfp theo. Vui l\u00f2ng th\u1eed l\u1ea1i.");
       }
     } finally {
       if (radioTrackRef.current === currentTrack.videoId) radioTrackRef.current = null;

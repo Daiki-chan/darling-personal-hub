@@ -2378,3 +2378,107 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* Expanded-player controls stay explicit while scrollbars remain visually quiet. */
+.expandedClose {
+  position: absolute;
+  top: max(1.5rem, env(safe-area-inset-top));
+  right: max(1.5rem, env(safe-area-inset-right));
+  z-index: 3;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0 0.85rem;
+  pointer-events: auto;
+  border: 1px solid var(--music-border-strong);
+  border-radius: var(--music-control-radius);
+  color: var(--music-text);
+  background: rgba(15, 15, 17, 0.9);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px) saturate(115%);
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
+  font-size: 0.78rem;
+  font-weight: 620;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.expandedClose:hover {
+  border-color: color-mix(in srgb, var(--music-accent) 42%, white 12%);
+  background: rgba(24, 24, 27, 0.96);
+}
+
+.expandedClose:active {
+  transform: scale(0.97);
+}
+
+.suggestions,
+.trackStrip,
+.homeRail,
+.lyricsCorrection,
+.syncedLyrics,
+.plainLyrics,
+.expandedPanel .queueList {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.suggestions::-webkit-scrollbar,
+.trackStrip::-webkit-scrollbar,
+.homeRail::-webkit-scrollbar,
+.lyricsCorrection::-webkit-scrollbar,
+.syncedLyrics::-webkit-scrollbar,
+.plainLyrics::-webkit-scrollbar,
+.expandedPanel .queueList::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.syncedLyrics,
+.plainLyrics {
+  scrollbar-gutter: auto;
+}
+
+.expandedPanel .queuePanel {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.expandedPanel .queueList {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  .expandedClose {
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(0.75rem, env(safe-area-inset-right));
+    min-height: 40px;
+    padding-inline: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expandedClose {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .expandedClose {
+    background: #111114;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }

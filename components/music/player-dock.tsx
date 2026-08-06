@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Captions,
   ChevronDown,
@@ -9,6 +9,7 @@ import {
   Heart,
   ListMusic,
   LoaderCircle,
+  Minimize2,
   Pause,
   Play,
   Radio,
@@ -21,7 +22,11 @@ import {
   VolumeX,
 } from "lucide-react";
 import { formatTime } from "@/lib/music/format";
-import { resolveMusicUIState } from "@/lib/music/player-ui";
+import {
+  createExpandedPlayerHistoryState,
+  isExpandedPlayerHistoryState,
+  resolveMusicUIState,
+} from "@/lib/music/player-ui";
 import { LyricsPanel } from "./lyrics-panel";
 import { useMusicPlayer, usePlaybackClock } from "./music-player-core";
 import { QueuePanel } from "./queue-panel";
@@ -73,25 +78,47 @@ export function PlayerDock() {
   const uiState = resolveMusicUIState(Boolean(track), state.expanded);
   const expanded = uiState === "expanded";
 
+  const requestMinimize = useCallback(() => {
+    if (isExpandedPlayerHistoryState(window.history.state)) {
+      window.history.back();
+      return;
+    }
+    setExpanded(false);
+  }, [setExpanded]);
+
   useEffect(() => {
     if (!expanded) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
+    if (!isExpandedPlayerHistoryState(window.history.state)) {
+      window.history.pushState(
+        createExpandedPlayerHistoryState(window.history.state),
+        "",
+        window.location.href,
+      );
+    }
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     closeButtonRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setExpanded(false);
+      if (event.key === "Escape") requestMinimize();
     };
+    const onPopState = () => setExpanded(false);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("popstate", onPopState);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("popstate", onPopState);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
       restoreFocusRef.current?.focus();
     };
-  }, [expanded, setExpanded]);
+  }, [expanded, requestMinimize, setExpanded]);
 
   if (!track) return null;
   const queueHasNavigation = state.queue.length > 1;
+  const canPlayNext = queueHasNavigation || state.autoRadioEnabled || state.repeatMode === "all";
   const buffering = state.status === "loading" || state.status === "buffering";
 
   return (
@@ -101,7 +128,7 @@ export function PlayerDock() {
           aria-hidden="true"
           className={styles.expandedBackdrop}
           onPointerDown={(event) => {
-            if (event.target === event.currentTarget) setExpanded(false);
+            if (event.target === event.currentTarget) requestMinimize();
           }}
         />
       ) : null}
@@ -113,6 +140,18 @@ export function PlayerDock() {
       role={expanded ? "dialog" : "region"}
     >
       <div className={styles.dockAmbient} aria-hidden="true" />
+      {expanded ? (
+        <button
+          aria-label={"Thu nh\u1ecf tr\u00ecnh ph\u00e1t"}
+          className={styles.expandedClose}
+          onClick={requestMinimize}
+          ref={closeButtonRef}
+          type="button"
+        >
+          <Minimize2 aria-hidden="true" size={17} />
+          <span>{"Thu nh\u1ecf"}</span>
+        </button>
+      ) : null}
       <div className={styles.dockShell}>
         <div className={styles.videoColumn}>
           <YouTubeVideoStage />
@@ -139,8 +178,7 @@ export function PlayerDock() {
             </button>
             <button
               aria-label={expanded ? "Thu gọn trình phát" : "Mở trình phát"}
-              onClick={() => setExpanded(!expanded)}
-              ref={closeButtonRef}
+              onClick={() => expanded ? requestMinimize() : setExpanded(true)}
               type="button"
             >
               {expanded ? <ChevronDown aria-hidden="true" size={21} /> : <ChevronUp aria-hidden="true" size={21} />}
@@ -175,7 +213,7 @@ export function PlayerDock() {
                 <Play aria-hidden="true" fill="currentColor" size={24} />
               )}
             </button>
-            <button aria-label="Bài tiếp theo" disabled={!queueHasNavigation} onClick={() => void next()} type="button">
+            <button aria-label="Bài tiếp theo" disabled={!canPlayNext} onClick={() => void next()} type="button">
               <SkipForward aria-hidden="true" fill="currentColor" size={22} />
             </button>
             <button
