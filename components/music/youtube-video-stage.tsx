@@ -234,7 +234,8 @@ export function YouTubeVideoStage() {
   }, [state.seekRequest]);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const syncClock = () => {
+      if (document.hidden) return;
       const player = playerRef.current;
       if (!player || !readyRef.current) return;
       try {
@@ -245,8 +246,14 @@ export function YouTubeVideoStage() {
       } catch {
         // A transient iframe navigation can make getters unavailable for one tick.
       }
-    }, 500);
-    return () => window.clearInterval(interval);
+    };
+    const interval = window.setInterval(syncClock, 750);
+    document.addEventListener("visibilitychange", syncClock);
+    syncClock();
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", syncClock);
+    };
   }, [clock, reportDuration]);
 
   return (

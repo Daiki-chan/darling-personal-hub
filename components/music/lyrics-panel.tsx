@@ -276,13 +276,7 @@ export function LyricsPanel() {
               pauseAutoScroll();
             }
           }}
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) pauseAutoScroll();
-          }}
-          onTouchMove={pauseAutoScroll}
-          onPointerMove={(event) => {
-            if (event.buttons) pauseAutoScroll();
-          }}
+          onPointerDown={pauseAutoScroll}
           onWheel={pauseAutoScroll}
           ref={scrollContainerRef}
           tabIndex={0}

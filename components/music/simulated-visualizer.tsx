@@ -26,6 +26,7 @@ export function SimulatedVisualizer() {
     let lastPaint = 0;
     let energy = state.isPlaying ? 1 : 0.16;
     const seed = seedValue(state.currentTrack.videoId);
+    const accent = state.accent || "#8f8a82";
 
     const resize = () => {
       const bounds = canvas.getBoundingClientRect();
@@ -38,7 +39,11 @@ export function SimulatedVisualizer() {
     };
 
     const paint = (timestamp: number) => {
-      if (timestamp - lastPaint < 33 && !reduceMotion) {
+      if (document.hidden || width <= 1 || height <= 1) {
+        frame = 0;
+        return;
+      }
+      if (timestamp - lastPaint < 50 && !reduceMotion) {
         frame = requestAnimationFrame(paint);
         return;
       }
@@ -48,8 +53,7 @@ export function SimulatedVisualizer() {
       const targetEnergy = state.isPlaying ? 0.55 + state.volume.volume / 100 * 0.45 : 0.11;
       energy += (targetEnergy - energy) * (state.isPlaying ? 0.08 : 0.035);
       context.clearRect(0, 0, width, height);
-      const accent = getComputedStyle(canvas).getPropertyValue("--music-accent").trim() || "#8f8a82";
-      const bars = Math.max(18, Math.min(52, Math.floor(width / 8)));
+      const bars = Math.max(16, Math.min(36, Math.floor(width / 10)));
       const gap = 3;
       const barWidth = Math.max(2, (width - gap * (bars - 1)) / bars);
 
@@ -79,7 +83,7 @@ export function SimulatedVisualizer() {
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [clock, reduceMotion, state.currentTrack, state.isPlaying, state.volume]);
+  }, [clock, reduceMotion, state.accent, state.currentTrack?.videoId, state.isPlaying, state.volume.volume]);
 
   return (
     <div className={styles.visualizer}>
