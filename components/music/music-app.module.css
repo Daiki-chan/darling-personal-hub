@@ -1,0 +1,1748 @@
+.hub {
+  --music-accent: #8f8a82;
+  --music-bg: #050505;
+  --music-surface: #0b0b0d;
+  --music-elevated: #111114;
+  --music-border: rgba(255, 255, 255, 0.08);
+  --music-border-strong: rgba(255, 255, 255, 0.14);
+  --music-text: rgba(255, 255, 255, 0.94);
+  --music-secondary: rgba(255, 255, 255, 0.6);
+  --music-muted: rgba(255, 255, 255, 0.4);
+  --music-radius: 16px;
+  --music-control-radius: 999px;
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  padding: calc(var(--nav-height) + clamp(2rem, 4vw, 4.5rem)) clamp(1rem, 4vw, 4rem) 6rem;
+  overflow-x: clip;
+  color: var(--music-text);
+  background: var(--music-bg);
+}
+
+.hubWithPlayer {
+  padding-bottom: 13.5rem;
+}
+
+.hub button,
+.hub input,
+.hub select {
+  font: inherit;
+}
+
+.hub button {
+  color: inherit;
+}
+
+.hub button:disabled,
+.hub input:disabled {
+  cursor: not-allowed;
+  opacity: 0.36;
+}
+
+.ambientBackground {
+  position: fixed;
+  inset: var(--nav-height) 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 4%, color-mix(in srgb, var(--music-accent) 18%, transparent), transparent 34rem),
+    radial-gradient(circle at 6% 52%, color-mix(in srgb, var(--music-accent) 7%, transparent), transparent 28rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 35%),
+    #050505;
+  transition: background 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hubInner {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+.searchSection {
+  display: grid;
+  gap: clamp(1.6rem, 3vw, 2.5rem);
+  padding-bottom: clamp(4rem, 8vw, 7.5rem);
+}
+
+.searchHeading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  align-items: end;
+  gap: clamp(2.5rem, 8vw, 8rem);
+}
+
+.kicker {
+  margin: 0 0 1rem;
+  color: color-mix(in srgb, var(--music-accent) 62%, white);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.searchHeading h1 {
+  max-width: 12ch;
+  margin: 0;
+  text-wrap: balance;
+  font-size: clamp(2.85rem, 5.4vw, 5.8rem);
+  font-weight: 510;
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+}
+
+.searchHeading > div > p:last-child {
+  max-width: 52ch;
+  margin: 1.25rem 0 0;
+  color: var(--music-secondary);
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+  line-height: 1.65;
+}
+
+.searchForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.searchForm > label,
+.playlistIntro label {
+  grid-column: 1 / -1;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 550;
+}
+
+.searchControl {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--music-border-strong);
+  border-radius: var(--music-radius);
+  background: rgba(11, 11, 13, 0.86);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: border-color 220ms ease, background 220ms ease;
+}
+
+.searchControl:focus-within {
+  border-color: color-mix(in srgb, var(--music-accent) 65%, white 12%);
+  background: var(--music-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--music-accent) 18%, transparent);
+}
+
+.searchControl > svg {
+  color: var(--music-muted);
+}
+
+.searchControl input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--music-text);
+  background: transparent;
+}
+
+.searchControl input::placeholder {
+  color: var(--music-muted);
+}
+
+.searchControl button,
+.trackActions button,
+.queueActions button,
+.dockHeader button,
+.transport button,
+.dockUtilities button,
+.offsetControls button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.searchControl button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+}
+
+.searchForm > button,
+.loadMore,
+.inlineState > button,
+.playlistIntro form > div > button,
+.renameForm button,
+.playlistControls button,
+.resumeScroll {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.75rem 1.15rem;
+  border: 1px solid transparent;
+  border-radius: var(--music-control-radius);
+  color: #050505;
+  background: color-mix(in srgb, var(--music-accent) 64%, white);
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), filter 220ms ease;
+}
+
+.searchForm > button:hover,
+.loadMore:hover,
+.inlineState > button:hover,
+.playlistIntro form > div > button:hover,
+.renameForm button:hover,
+.resumeScroll:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.searchForm > button:active,
+.loadMore:active,
+.inlineState > button:active,
+.playlistIntro form > div > button:active,
+.renameForm button:active,
+.resumeScroll:active {
+  transform: scale(0.98);
+}
+
+.suggestions {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  scrollbar-width: thin;
+}
+
+.suggestions button {
+  flex: 0 0 auto;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.suggestions button:hover {
+  color: var(--music-text);
+  border-color: var(--music-border-strong);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.resultsBlock {
+  display: grid;
+  gap: 1.4rem;
+  margin-top: 0.5rem;
+}
+
+.sectionHeading,
+.panelHeading,
+.lyricsHeader,
+.playlistTitle {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sectionHeading h2,
+.panelHeading h2,
+.lyricsHeader h2,
+.playlistIntro h2,
+.libraryEmpty h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 540;
+  letter-spacing: -0.035em;
+}
+
+.sectionHeading > span,
+.panelHeading span,
+.lyricsHeader span,
+.playlistTitle span {
+  color: var(--music-muted);
+  font-size: 0.78rem;
+}
+
+.searchGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.searchCard {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+}
+
+.searchCardMain,
+.searchSkeleton {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--music-radius);
+  background: var(--music-elevated);
+}
+
+.searchCardMain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  border-radius: inherit;
+}
+
+.searchCardMain img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease;
+}
+
+.searchCard:hover .searchCardMain img {
+  transform: scale(1.025);
+  filter: brightness(1.07);
+}
+
+.searchCardCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.searchCardCopy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.91rem;
+  font-weight: 580;
+  line-height: 1.35;
+}
+
+.searchCardCopy span,
+.searchCardCopy small {
+  overflow: hidden;
+  color: var(--music-secondary);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchCardCopy small {
+  color: var(--music-muted);
+}
+
+.trackActions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trackActions > button,
+.actionMenuWrap > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.035);
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.trackActions button:hover:not(:disabled) {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.085);
+}
+
+.trackActions button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.trackActions .actionActive,
+.controlActive {
+  color: color-mix(in srgb, var(--music-accent) 68%, white);
+}
+
+.actionMenuWrap {
+  position: relative;
+}
+
+.actionMenu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  z-index: 20;
+  width: 190px;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.45rem;
+  border: 1px solid var(--music-border-strong);
+  border-radius: 12px;
+  background: #151518;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+}
+
+.actionMenu button {
+  min-height: 36px;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  color: var(--music-secondary);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.actionMenu button:hover {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.searchSkeleton,
+.restoreSkeleton span,
+.lyricsSkeleton span {
+  background:
+    linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.06) 48%, transparent 62%),
+    #101012;
+  background-size: 220% 100%;
+  animation: shimmer 1.7s ease-in-out infinite;
+}
+
+.inlineState,
+.emptySearch {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-radius);
+  color: var(--music-secondary);
+  background: rgba(11, 11, 13, 0.7);
+}
+
+.inlineState > svg,
+.emptySearch > svg {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--music-accent) 65%, white);
+}
+
+.inlineState > div,
+.emptySearch {
+  flex: 1;
+}
+
+.inlineState > div,
+.emptySearch {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.inlineState strong,
+.emptySearch strong {
+  color: var(--music-text);
+  font-weight: 580;
+}
+
+.loadMore {
+  justify-self: center;
+  color: var(--music-text);
+  border-color: var(--music-border-strong);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.mainLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.38fr);
+  align-items: start;
+  gap: clamp(2.5rem, 6vw, 6rem);
+}
+
+.libraryPanel {
+  min-width: 0;
+  display: grid;
+  gap: clamp(3.5rem, 7vw, 6.5rem);
+}
+
+.libraryGroup {
+  min-width: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.trackStrip {
+  display: grid;
+  grid-auto-columns: minmax(250px, 0.72fr);
+  grid-auto-flow: column;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.65rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.stripItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem;
+  border-radius: var(--music-radius);
+  background: rgba(255, 255, 255, 0.025);
+  scroll-snap-align: start;
+}
+
+.stripItem > img {
+  width: 64px;
+  height: 64px;
+  grid-row: 1 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.stripItem > div:not(.trackActions) {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.stripItem strong,
+.stripItem span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stripItem strong {
+  font-size: 0.87rem;
+  font-weight: 570;
+}
+
+.stripItem span {
+  color: var(--music-secondary);
+  font-size: 0.75rem;
+}
+
+.stripItem .trackActions {
+  grid-column: 2;
+}
+
+.libraryEmpty {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.25rem, 3vw, 2.5rem) 0;
+  border-top: 1px solid var(--music-border);
+}
+
+.libraryEmpty p,
+.playlistIntro p {
+  max-width: 54ch;
+  margin: 0.75rem 0 0;
+  color: var(--music-secondary);
+  line-height: 1.6;
+}
+
+.emptyArtwork {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-radius);
+  color: color-mix(in srgb, var(--music-accent) 68%, white);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--music-accent) 18%, transparent), transparent 64%),
+    var(--music-elevated);
+}
+
+.playlistSection {
+  display: grid;
+  gap: 2rem;
+}
+
+.playlistIntro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
+  align-items: end;
+  gap: 2rem;
+}
+
+.playlistIntro form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.playlistIntro form > div,
+.renameForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.playlistIntro input,
+.renameForm input {
+  min-width: 0;
+  min-height: 46px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--music-border-strong);
+  border-radius: 12px;
+  outline: 0;
+  color: var(--music-text);
+  background: var(--music-surface);
+}
+
+.playlistIntro input:focus,
+.renameForm input:focus {
+  border-color: color-mix(in srgb, var(--music-accent) 62%, white 10%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--music-accent) 16%, transparent);
+}
+
+.playlistList {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.playlist {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--music-border);
+}
+
+.playlistCover {
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--music-radius);
+  color: var(--music-muted);
+  background: var(--music-elevated);
+}
+
+.playlistCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlistContent {
+  min-width: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.playlistTitle h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 570;
+}
+
+.playlistTitle > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.playlistTitle > div:last-child,
+.playlistControls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.playlistTitle button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.playlistControls button {
+  min-height: 38px;
+  padding: 0.55rem 0.8rem;
+  color: var(--music-text);
+  border-color: var(--music-border);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.78rem;
+}
+
+.playlistTracks {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.playlistTracks li {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--music-secondary);
+  font-size: 0.82rem;
+}
+
+.playlistTracks li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlistTracks button {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--music-control-radius);
+  color: var(--music-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.playlistEmpty {
+  margin: 0;
+  color: var(--music-muted);
+  font-size: 0.82rem;
+}
+
+.queueAside {
+  position: sticky;
+  top: calc(var(--nav-height) + 2rem);
+}
+
+.queuePanel {
+  min-width: 0;
+  display: grid;
+  gap: 1.15rem;
+}
+
+.panelHeading button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.panelHeading > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.queueList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.queueList li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.queueList li:last-child {
+  border-bottom: 0;
+}
+
+.queueList .queueItemActive {
+  color: color-mix(in srgb, var(--music-accent) 62%, white);
+}
+
+.dragHandle {
+  color: var(--music-muted);
+  cursor: grab;
+}
+
+.queueMain {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.queueMain img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.queueMain > span {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.queueMain strong,
+.queueMain small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueMain strong {
+  font-size: 0.82rem;
+  font-weight: 570;
+}
+
+.queueMain small {
+  color: var(--music-muted);
+  font-size: 0.72rem;
+}
+
+.queueActions {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.queueActions button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-muted);
+}
+
+.queueActions button:hover:not(:disabled) {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.emptyPanel {
+  min-height: 210px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.018);
+  text-align: center;
+}
+
+.emptyPanel strong {
+  color: var(--music-text);
+  font-weight: 570;
+}
+
+.emptyPanel span {
+  max-width: 30ch;
+  color: var(--music-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.restoreSkeleton {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 1.5rem;
+}
+
+.restoreSkeleton span {
+  min-height: 230px;
+  border-radius: var(--music-radius);
+}
+
+.restoreSkeleton span:first-child {
+  grid-row: span 2;
+}
+
+.playerDock {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 40;
+  width: min(1220px, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  overflow: hidden;
+  border: 1px solid var(--music-border-strong);
+  border-radius: var(--music-radius);
+  background: rgba(9, 9, 11, 0.94);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.dockAmbient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--music-accent) 14%, transparent), transparent 34%);
+  transition: background 800ms ease;
+}
+
+.dockShell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem;
+}
+
+.videoColumn {
+  min-width: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.videoStage {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.videoMount {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: #090909;
+}
+
+.videoMount :global(iframe) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}
+
+.videoStatus {
+  min-height: 16px;
+  color: var(--music-muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+}
+
+.controlColumn {
+  min-width: 0;
+  display: grid;
+  gap: 0.55rem;
+  padding-right: 0.4rem;
+}
+
+.dockHeader {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nowPlaying {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.nowPlaying img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.nowPlaying > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.nowPlaying strong,
+.nowPlaying span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nowPlaying strong {
+  font-size: 0.88rem;
+  font-weight: 590;
+}
+
+.nowPlaying span {
+  color: var(--music-secondary);
+  font-size: 0.74rem;
+}
+
+.dockHeader > button,
+.dockUtilities > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  cursor: pointer;
+}
+
+.dockHeader > button:hover,
+.dockUtilities > button:hover,
+.transport button:hover:not(:disabled) {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.progressControl {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.progressControl input,
+.dockUtilities input {
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  border-radius: var(--music-control-radius);
+  outline: 0;
+  background: linear-gradient(90deg, var(--music-accent) var(--progress, 0%), rgba(255, 255, 255, 0.13) 0);
+  cursor: pointer;
+}
+
+.progressControl input::-webkit-slider-thumb,
+.dockUtilities input::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  appearance: none;
+  border: 2px solid #111114;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--music-accent) 64%, white);
+}
+
+.progressControl input::-moz-range-thumb,
+.dockUtilities input::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #111114;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--music-accent) 64%, white);
+}
+
+.progressControl > div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--music-muted);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.45rem, 2vw, 1rem);
+}
+
+.transport button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.transport button:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.transport .playButton {
+  width: 46px;
+  height: 46px;
+  color: #050505;
+  background: color-mix(in srgb, var(--music-accent) 60%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.transport .playButton:hover:not(:disabled) {
+  color: #050505;
+  background: color-mix(in srgb, var(--music-accent) 50%, white);
+}
+
+.dockUtilities {
+  display: grid;
+  grid-template-columns: auto 90px 1fr;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dockUtilities input {
+  --progress: 0%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.dockUtilities > span {
+  justify-self: end;
+  color: var(--music-muted);
+  font-size: 0.66rem;
+}
+
+.spinner {
+  animation: spin 900ms linear infinite;
+}
+
+.playerDockExpanded {
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 0;
+  background: #050505;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.playerDockExpanded .dockAmbient {
+  position: fixed;
+  background:
+    radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--music-accent) 20%, transparent), transparent 36rem),
+    radial-gradient(circle at 74% 72%, color-mix(in srgb, var(--music-accent) 9%, transparent), transparent 32rem);
+}
+
+.playerDockExpanded .dockShell {
+  width: min(100%, 1580px);
+  min-height: 100dvh;
+  margin-inline: auto;
+  grid-template-columns: minmax(420px, 1.15fr) minmax(300px, 0.66fr) minmax(340px, 0.78fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding: clamp(1.25rem, 3vw, 3rem);
+}
+
+.playerDockExpanded .videoMount {
+  border-radius: var(--music-radius);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--music-accent) 13%, rgba(0, 0, 0, 0.72));
+}
+
+.playerDockExpanded .videoStatus {
+  font-size: 0.7rem;
+}
+
+.playerDockExpanded .controlColumn {
+  align-self: center;
+  gap: 1.2rem;
+  padding: 0;
+}
+
+.playerDockExpanded .nowPlaying {
+  grid-template-columns: 62px minmax(0, 1fr);
+}
+
+.playerDockExpanded .nowPlaying img {
+  width: 62px;
+  height: 62px;
+  border-radius: 13px;
+}
+
+.playerDockExpanded .nowPlaying strong {
+  font-size: 1.05rem;
+}
+
+.playerDockExpanded .transport {
+  gap: 0.8rem;
+}
+
+.playerDockExpanded .transport .playButton {
+  width: 58px;
+  height: 58px;
+}
+
+.visualizer {
+  position: relative;
+  height: 86px;
+  overflow: hidden;
+  border-radius: var(--music-radius);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.visualizer canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.visualizer span {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.55rem;
+  color: var(--music-muted);
+  font-size: 0.62rem;
+}
+
+.expandedPanel {
+  min-width: 0;
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-radius);
+  background: rgba(11, 11, 13, 0.76);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.panelTabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.panelTabs button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 9px;
+  color: var(--music-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.panelTabs .tabActive {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.panelBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lyricsPanel {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+}
+
+.lyricsHeader {
+  align-items: center;
+}
+
+.lyricsHeader > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.lyricsHeader > div:first-child span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offsetControls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.offsetControls > span {
+  margin-right: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.offsetControls button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.syncedLyrics,
+.plainLyrics {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  mask-image: linear-gradient(transparent, black 8%, black 92%, transparent);
+}
+
+.syncedLyrics {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding-block: 42%;
+}
+
+.syncedLyrics button {
+  padding: 0.58rem 0.2rem;
+  border: 0;
+  color: var(--music-muted);
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: color 240ms ease, transform 240ms ease;
+}
+
+.syncedLyrics button:hover {
+  color: var(--music-secondary);
+}
+
+.syncedLyrics .lyricActive {
+  color: var(--music-text);
+  transform: translateX(6px);
+  font-size: 1.1rem;
+  font-weight: 590;
+}
+
+.plainLyrics {
+  padding-block: 1rem;
+}
+
+.plainLyrics p {
+  margin: 0 0 0.7rem;
+  color: var(--music-secondary);
+  line-height: 1.55;
+}
+
+.lyricsSkeleton {
+  display: grid;
+  align-content: center;
+  gap: 0.85rem;
+}
+
+.lyricsSkeleton span {
+  width: 82%;
+  height: 18px;
+  border-radius: var(--music-control-radius);
+}
+
+.lyricsSkeleton span:nth-child(2n) {
+  width: 62%;
+}
+
+.lyricsState {
+  min-height: 240px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.45rem;
+  color: var(--music-secondary);
+  text-align: center;
+}
+
+.lyricsState span {
+  color: var(--music-muted);
+  font-size: 0.82rem;
+}
+
+.resumeScroll {
+  justify-self: center;
+  min-height: 36px;
+  padding: 0.5rem 0.75rem;
+  color: var(--music-text);
+  border-color: var(--music-border);
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.75rem;
+}
+
+.toast {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 80;
+  width: min(390px, calc(100vw - 2rem));
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.85rem 0.85rem 1rem;
+  border: 1px solid var(--music-border-strong);
+  border-radius: var(--music-radius);
+  color: var(--music-text);
+  background: #161619;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.56);
+}
+
+.toast span {
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.toast button {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+@keyframes shimmer {
+  to { background-position: -120% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (min-width: 768px) {
+  .searchGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .searchGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1680px) {
+  .searchGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .searchHeading {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 2.25rem;
+  }
+
+  .searchHeading h1 {
+    max-width: 14ch;
+  }
+
+  .searchForm {
+    width: min(100%, 760px);
+  }
+
+  .mainLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .queueAside {
+    position: static;
+  }
+
+  .playerDockExpanded .dockShell {
+    grid-template-columns: minmax(380px, 1.1fr) minmax(300px, 0.8fr);
+    align-items: start;
+  }
+
+  .playerDockExpanded .expandedPanel {
+    grid-column: 1 / -1;
+    min-height: 520px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hub {
+    padding: calc(var(--nav-height) + 2rem) 1rem 5rem;
+  }
+
+  .hubWithPlayer {
+    padding-bottom: 12rem;
+  }
+
+  .searchHeading {
+    gap: 1.8rem;
+  }
+
+  .searchHeading h1 {
+    max-width: 11ch;
+    font-size: clamp(2.7rem, 13vw, 4.7rem);
+  }
+
+  .searchHeading > div > p:last-child {
+    font-size: 0.96rem;
+  }
+
+  .searchForm {
+    grid-template-columns: 1fr;
+  }
+
+  .searchForm > button {
+    width: 100%;
+  }
+
+  .suggestions {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .suggestions button {
+    flex: 0 1 auto;
+  }
+
+  .sectionHeading {
+    align-items: center;
+  }
+
+  .libraryEmpty,
+  .playlistIntro,
+  .playlist {
+    grid-template-columns: 1fr;
+  }
+
+  .emptyArtwork {
+    width: min(100%, 260px);
+  }
+
+  .playlistCover {
+    width: 112px;
+  }
+
+  .queueActions button:nth-child(-n + 2) {
+    display: none;
+  }
+
+  .playerDock {
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    width: calc(100vw - 1rem);
+  }
+
+  .dockShell {
+    grid-template-columns: minmax(200px, 0.62fr) minmax(0, 0.38fr);
+    align-items: start;
+    gap: 0.65rem;
+    padding: 0.55rem;
+  }
+
+  .controlColumn {
+    align-self: stretch;
+    gap: 0.42rem;
+    padding: 0;
+  }
+
+  .nowPlaying {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nowPlaying img,
+  .dockHeader > button:first-of-type,
+  .dockUtilities,
+  .transport button:nth-child(1),
+  .transport button:nth-child(2),
+  .transport button:nth-child(5) {
+    display: none;
+  }
+
+  .dockHeader {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .nowPlaying strong {
+    font-size: 0.76rem;
+  }
+
+  .nowPlaying span {
+    font-size: 0.66rem;
+  }
+
+  .transport {
+    justify-content: flex-start;
+    gap: 0.35rem;
+  }
+
+  .transport .playButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .playerDockExpanded {
+    width: 100%;
+    bottom: 0;
+  }
+
+  .playerDockExpanded .dockShell {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 1.4rem;
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      1rem
+      max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .playerDockExpanded .videoColumn,
+  .playerDockExpanded .controlColumn,
+  .playerDockExpanded .expandedPanel {
+    width: 100%;
+    grid-column: 1;
+  }
+
+  .playerDockExpanded .expandedPanel {
+    min-height: min(620px, 72dvh);
+  }
+
+  .playerDockExpanded .nowPlaying {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .playerDockExpanded .nowPlaying img,
+  .playerDockExpanded .dockHeader > button:first-of-type,
+  .playerDockExpanded .dockUtilities,
+  .playerDockExpanded .transport button {
+    display: grid;
+  }
+
+  .playerDockExpanded .dockUtilities {
+    grid-template-columns: auto minmax(70px, 120px) 1fr;
+  }
+
+  .playerDockExpanded .transport {
+    justify-content: center;
+  }
+
+  .toast {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: calc(100vw - 1.5rem);
+  }
+}
+
+@media (max-width: 420px) {
+  .searchGrid {
+    gap: 0.85rem;
+  }
+
+  .searchCardCopy strong {
+    font-size: 0.82rem;
+  }
+
+  .trackActions > button,
+  .actionMenuWrap > button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .trackActions > button:nth-child(2) {
+    display: none;
+  }
+
+  .dockShell {
+    grid-template-columns: minmax(200px, 0.64fr) minmax(0, 0.36fr);
+  }
+
+  .panelHeading button span {
+    display: none;
+  }
+
+  .lyricsHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 340px) {
+  .dockShell {
+    grid-template-columns: 1fr;
+  }
+
+  .hubWithPlayer {
+    padding-bottom: 22rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambientBackground,
+  .dockAmbient,
+  .searchCardMain img,
+  .syncedLyrics button,
+  .trackActions button,
+  .transport button {
+    transition: none;
+  }
+
+  .spinner,
+  .searchSkeleton,
+  .restoreSkeleton span,
+  .lyricsSkeleton span {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .playerDock,
+  .expandedPanel,
+  .searchControl {
+    background: #111114;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

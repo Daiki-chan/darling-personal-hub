@@ -1,65 +1,76 @@
 # Darling Personal Hub
 
-Một personal hub tối, điện ảnh và tối giản, được chia thành ba không gian độc lập cho ảnh, nhạc và công việc.
+Personal hub tối màu dùng Next.js App Router, gồm thư viện ảnh, Music Hub và portfolio.
 
-## Các trang
+## Các route chính
 
-- `/`: Cổng giới thiệu tương tác ba bước
-- `/thu-vien`: Thư viện những hình ảnh yêu thích
-- `/am-nhac`: Music Hub với player thu gọn, player toàn màn hình, tìm kiếm và lời đồng bộ
-- `/portfolio`: Dự án, quy trình và liên hệ công việc
+- `/`: cổng vào ba không gian
+- `/thu-vien`: thư viện ảnh
+- `/am-nhac`: YouTube-powered Personal Music Hub
+- `/portfolio`: dự án và thông tin liên hệ
 
-## Công nghệ
+## Kiến trúc Music Hub
 
-- Next.js 16 với App Router và Route Handler
-- React 19 và TypeScript
-- Framer Motion cho chuyển cảnh
-- Lucide React cho icon
-- Canvas và Web Audio API cho visualizer
-- YouTube Data API v3 cho tìm kiếm và YouTube IFrame API cho phát nhạc
-- LRCLIB cho lời bài hát
+```text
+YouTube Data API v3 -> /api/youtube/search -> metadata
+YouTube IFrame API -> YouTubeVideoStage -> playback chính thức
+MusicPlayerProvider -> queue, history, favorites, playlists, repeat, shuffle
+LRCLIB -> /api/music/lyrics -> synced hoặc plain lyrics
+IndexedDB -> player state và thư viện cá nhân
+Darling UI -> Obsidian AMOLED, ambient color, simulated visualizer
+```
+
+Music Hub chỉ dùng một YouTube IFrame Player instance. Iframe luôn hiển thị trong player dock hoặc expanded player và không có audio proxy, direct media URL hay thẻ `<audio>` cho nội dung YouTube.
 
 ## Chạy local
 
+Yêu cầu Node.js tương thích với Next.js hiện tại của repository.
+
 ```bash
 npm install
+```
+
+Tạo `.env.local` tại thư mục gốc:
+
+```env
+YOUTUBE_API_KEY=your-google-api-key
+```
+
+Khởi động:
+
+```bash
 npm run dev
 ```
 
-Mở `http://localhost:3000` trong trình duyệt.
+Mở `http://localhost:3000/am-nhac`.
 
-## Cấu hình Music Hub
-
-Tạo file `.env.local` ở thư mục gốc:
-
-```env
-YOUTUBE_DATA_API_KEY=your-google-api-key
-NEXT_PUBLIC_MUSIC_TRACK_ONE_URL=https://your-r2-domain.example/track-one.mp3
-NEXT_PUBLIC_MUSIC_TRACK_TWO_URL=https://your-r2-domain.example/track-two.flac
-```
-
-YouTube Data API key chỉ được dùng ở server route và cần đặt trong Vercel Environment Variables.
-
-Danh sách nhạc cá nhân nằm tại `lib/music.ts`. Mỗi track hỗ trợ URL MP3, FLAC hoặc định dạng audio mà trình duyệt có thể phát.
-
-Nếu dùng Cloudflare R2, hãy cho phép domain Vercel của bạn trong CORS. Visualizer cần header `Access-Control-Allow-Origin`, còn player cơ bản có thể phát mà không hiện waveform nếu header này thiếu.
-
-## Production build
+## Kiểm tra production
 
 ```bash
+npm run typecheck
 npm run build
 npm run start
 ```
 
-Website cần môi trường server Next.js vì các route `/api/youtube-search` và `/api/lyrics` chạy phía server. Vercel hỗ trợ cấu hình này trực tiếp. GitHub Pages không chạy được các Route Handler này.
+Repository hiện không cài ESLint hoặc test runner riêng. TypeScript strict và production build là hai cổng kiểm tra tĩnh đang được cấu hình.
 
-## Thay nội dung
+## Deploy Vercel
 
-- Ảnh thư viện và portfolio: cập nhật các vị trí `MediaPlaceholder` trong `app/thu-vien/page.tsx` và `app/portfolio/page.tsx`.
-- Cover và nhạc cá nhân: cập nhật `lib/music.ts` cùng các file trong `public/music/covers`.
-- YouTube Data API: đặt biến môi trường `YOUTUBE_DATA_API_KEY` trên Vercel.
-- YouTube IFrame API chạy trực tiếp trên trình duyệt, không cần audio proxy.
+1. Import repository vào Vercel.
+2. Thêm `YOUTUBE_API_KEY` trong Project Settings > Environment Variables.
+3. Deploy bằng preset Next.js mặc định.
+4. Hạn chế API key trong Google Cloud theo YouTube Data API v3 và quota phù hợp.
 
-## Theme
+Route Handler cần runtime server, vì vậy bản export tĩnh hoặc GitHub Pages không phù hợp.
 
-Toàn bộ website sử dụng một dark theme với nền obsidian, violet là màu tương tác chính và indigo là màu khí quyển hỗ trợ.
+## Giới hạn của YouTube IFrame
+
+- Trình duyệt có thể chặn autoplay cho đến khi người dùng tương tác.
+- Chủ video có thể tắt embed hoặc giới hạn theo khu vực.
+- Không thể truy cập PCM/FFT từ iframe. Visualizer trong giao diện là chuyển động mô phỏng có seed theo video.
+- YouTube giữ quyền hiển thị controls, quảng cáo và thông báo theo chính sách của họ.
+- Search phụ thuộc quota của YouTube Data API v3.
+
+## UI
+
+Trang nhạc dùng TasteSkill được cài tại `.agents/skills/design-taste-frontend/SKILL.md` theo hướng redesign audit-first. Theme `/am-nhac` khóa ở Obsidian AMOLED `#050505`; màu nhấn và ambient glow lấy từ thumbnail bài đang phát, có fallback xác định theo `videoId`.

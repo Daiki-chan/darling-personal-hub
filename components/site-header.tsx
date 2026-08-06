@@ -4,12 +4,13 @@ import { PortalBackGuard } from "@/components/portal-back-guard";
 
 type SiteHeaderProps = {
   active?: "gallery" | "music" | "portfolio";
+  guardInitialVisit?: boolean;
 };
 
-export function SiteHeader({ active }: SiteHeaderProps) {
+export function SiteHeader({ active, guardInitialVisit = true }: SiteHeaderProps) {
   return (
     <>
-      {active ? <PortalBackGuard /> : null}
+      {active && guardInitialVisit ? <PortalBackGuard /> : null}
       <header className="site-nav">
         <Link className="brand" href="/#portals" aria-label="Về màn hình chọn không gian">
           Darling
