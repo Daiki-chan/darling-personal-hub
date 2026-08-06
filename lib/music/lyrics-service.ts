@@ -1,43 +1,85 @@
-import { inferTrackAndArtist, parseSyncedLyrics } from "./format";
-import type { LyricsResult, MusicTrack } from "./types";
+import { lyricsRecordToResult, normalizeLyricsRecord } from "./lyrics";
+import { normalizeTrackMetadata } from "./metadata";
+import type { LyricsCandidate, LyricsRecord, LyricsResult, MusicTrack } from "./types";
 
-const memoryCache = new Map<string, LyricsResult>();
+type CacheEntry = { expiresAt: number; value: LyricsResult | null };
+const memoryCache = new Map<string, CacheEntry>();
+const SUCCESS_TTL = 24 * 60 * 60 * 1000;
+const NOT_FOUND_TTL = 30 * 60 * 1000;
 
-export async function fetchLyrics(track: MusicTrack, signal: AbortSignal) {
-  const known = memoryCache.get(track.videoId);
-  if (known) return known;
+function readCache(videoId: string) {
+  const known = memoryCache.get(videoId);
+  if (known && known.expiresAt > Date.now()) return known;
   try {
-    const cached = sessionStorage.getItem(`darling-lyrics:${track.videoId}`);
-    if (cached) {
-      const payload = JSON.parse(cached) as LyricsResult;
-      memoryCache.set(track.videoId, payload);
-      return payload;
-    }
+    const raw = sessionStorage.getItem(`darling-lyrics-v3:${videoId}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as CacheEntry;
+    if (!Number.isFinite(cached.expiresAt) || cached.expiresAt <= Date.now()) return null;
+    memoryCache.set(videoId, cached);
+    return cached;
   } catch {
-    // Session cache is an optimization only.
+    return null;
   }
+}
 
-  const inferred = inferTrackAndArtist(track.title, track.artist);
-  const params = new URLSearchParams({ track_name: inferred.track, artist_name: inferred.artist });
-  if (track.duration) params.set("duration", Math.round(track.duration).toString());
+function writeCache(videoId: string, value: LyricsResult | null) {
+  const entry = { expiresAt: Date.now() + (value ? SUCCESS_TTL : NOT_FOUND_TTL), value };
+  memoryCache.set(videoId, entry);
+  try {
+    sessionStorage.setItem(`darling-lyrics-v3:${videoId}`, JSON.stringify(entry));
+  } catch {
+    // Session cache is best effort only.
+  }
+}
+
+export async function fetchLyrics(track: MusicTrack, signal: AbortSignal, manualRecord?: LyricsRecord) {
+  if (manualRecord) return lyricsRecordToResult(manualRecord);
+  const cached = readCache(track.videoId);
+  if (cached) return cached.value;
+
+  const normalized = normalizeTrackMetadata(track);
+  const params = new URLSearchParams({ track_name: normalized.track, artist_name: normalized.artist });
+  if (track.duration && Number.isFinite(track.duration)) params.set("duration", Math.round(track.duration).toString());
   const response = await fetch(`/api/music/lyrics?${params}`, { signal });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error("Không thể tải lời bài hát.");
-  const raw = (await response.json()) as {
-    instrumental: boolean;
-    plainLyrics: string | null;
-    syncedLyrics: string | null;
-  };
-  const payload: LyricsResult = {
-    instrumental: raw.instrumental,
-    plainLyrics: raw.plainLyrics,
-    syncedLyrics: parseSyncedLyrics(raw.syncedLyrics),
-  };
-  memoryCache.set(track.videoId, payload);
-  try {
-    sessionStorage.setItem(`darling-lyrics:${track.videoId}`, JSON.stringify(payload));
-  } catch {
-    // Session cache is an optimization only.
+  if (response.status === 404) {
+    writeCache(track.videoId, null);
+    return null;
   }
-  return payload;
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Không thể tải lời bài hát.");
+  }
+  const payload = (await response.json()) as { selected?: unknown };
+  const record = normalizeLyricsRecord(payload.selected);
+  if (!record) {
+    writeCache(track.videoId, null);
+    return null;
+  }
+  const result = lyricsRecordToResult(record);
+  writeCache(track.videoId, result);
+  return result;
+}
+
+export async function searchLyricsCandidates(
+  input: { track: string; artist: string; duration?: number; query?: string },
+  signal: AbortSignal,
+) {
+  const params = new URLSearchParams({
+    manual: "1",
+    track_name: input.track.trim(),
+    artist_name: input.artist.trim(),
+  });
+  if (input.duration) params.set("duration", Math.round(input.duration).toString());
+  if (input.query?.trim()) params.set("q", input.query.trim());
+  const response = await fetch(`/api/music/lyrics?${params}`, { signal });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Không thể tìm phiên bản lời khác.");
+  }
+  const payload = (await response.json()) as { candidates?: LyricsCandidate[] };
+  return Array.isArray(payload.candidates) ? payload.candidates : [];
+}
+
+export function rememberLyricsSelection(videoId: string, record: LyricsRecord) {
+  writeCache(videoId, lyricsRecordToResult(record));
 }

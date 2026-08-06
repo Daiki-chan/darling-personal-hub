@@ -1746,3 +1746,409 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+.musicGlobal {
+  display: contents;
+}
+
+.musicHome {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 5rem);
+  margin-top: clamp(3rem, 7vw, 6rem);
+}
+
+.homeSection {
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.homeRail {
+  display: grid;
+  grid-auto-columns: minmax(230px, 290px);
+  grid-auto-flow: column;
+  gap: 0.9rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.75rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.homeTrack {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem 0.45rem;
+  scroll-snap-align: start;
+}
+
+.homeTrackPlay,
+.homeSkeleton {
+  position: relative;
+  grid-column: 1 / -1;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--music-radius);
+  background: var(--music-elevated);
+}
+
+.homeTrackPlay {
+  cursor: pointer;
+}
+
+.homeTrackPlay img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), filter 220ms ease;
+}
+
+.homeTrackPlay > span {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: #050505;
+  background: color-mix(in srgb, var(--music-accent) 58%, white);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+  transition: transform 180ms ease;
+}
+
+.homeTrackPlay:hover img {
+  transform: scale(1.025);
+  filter: brightness(0.82);
+}
+
+.homeTrackPlay:active > span {
+  transform: scale(0.93);
+}
+
+.homeTrackCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.homeTrackCopy strong,
+.homeTrackCopy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.homeTrackCopy strong {
+  font-size: 0.88rem;
+  font-weight: 590;
+}
+
+.homeTrackCopy span {
+  color: var(--music-secondary);
+  font-size: 0.76rem;
+}
+
+.homeSkeleton {
+  min-height: 190px;
+  background: linear-gradient(100deg, var(--music-elevated) 20%, rgba(255, 255, 255, 0.07) 42%, var(--music-elevated) 66%);
+  background-size: 220% 100%;
+  animation: shimmer 1.35s ease-in-out infinite;
+}
+
+.dockShell {
+  grid-template-columns: 356px minmax(0, 1fr);
+}
+
+.videoMount {
+  min-width: 200px;
+  min-height: 200px;
+  height: auto;
+}
+
+.dockUtilities input {
+  background: linear-gradient(90deg, var(--music-accent) var(--progress, 0%), rgba(255, 255, 255, 0.13) 0);
+}
+
+.playerDockExpanded {
+  padding: 1rem;
+  background: rgba(3, 3, 3, 0.88);
+}
+
+.playerDockExpanded .dockShell {
+  min-height: calc(100dvh - 2rem);
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-radius);
+  background: #070708;
+}
+
+.playerDockExpanded .videoMount {
+  min-height: 200px;
+}
+
+@media (max-width: 767px) {
+  .homeRail {
+    grid-auto-columns: minmax(210px, 78vw);
+  }
+
+  .dockShell {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .videoMount {
+    aspect-ratio: 1;
+  }
+
+  .transport button:nth-child(6) {
+    display: none;
+  }
+
+  .playerDockExpanded {
+    display: flex;
+    align-items: flex-end;
+    padding: 12dvh 0 0;
+    background: rgba(3, 3, 3, 0.78);
+  }
+
+  .playerDockExpanded .dockShell {
+    min-height: 0;
+    max-height: 88dvh;
+    margin: 0;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--music-radius) var(--music-radius) 0 0;
+  }
+
+  .playerDockExpanded .videoMount {
+    width: 100%;
+    min-height: 200px;
+    aspect-ratio: 16 / 9;
+  }
+
+  .playerDockExpanded .transport button:nth-child(6) {
+    display: grid;
+  }
+}
+
+@media (max-width: 340px) {
+  .dockShell {
+    grid-template-columns: 1fr;
+  }
+
+  .videoMount {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homeTrackPlay img,
+  .homeTrackPlay > span {
+    transition: none;
+  }
+
+  .homeSkeleton {
+    animation: none;
+  }
+}
+
+.lyricsPanel {
+  position: relative;
+}
+
+.offsetControls .findLyricsButton {
+  width: auto;
+  padding: 0 0.65rem;
+  gap: 0.35rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+}
+
+.offsetControls .findLyricsButton:hover {
+  color: var(--music-text);
+  border-color: var(--music-border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lyricsCorrection {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--music-border);
+  border-radius: var(--music-radius);
+  background: #0a0a0c;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+}
+
+.correctionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.correctionHeading > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.correctionHeading strong {
+  font-size: 1rem;
+}
+
+.correctionHeading span,
+.manualLyricsEmpty,
+.manualLyricsError {
+  color: var(--music-secondary);
+  font-size: 0.78rem;
+}
+
+.correctionHeading > button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--music-control-radius);
+  color: var(--music-secondary);
+  cursor: pointer;
+}
+
+.lyricsCorrection form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.45rem 0.65rem;
+}
+
+.lyricsCorrection form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--music-secondary);
+  font-size: 0.72rem;
+}
+
+.lyricsCorrection form label:nth-of-type(1) {
+  grid-column: 1;
+}
+
+.lyricsCorrection form label:nth-of-type(2) {
+  grid-column: 2;
+}
+
+.lyricsCorrection form input {
+  min-width: 0;
+  height: 42px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--music-border);
+  border-radius: 10px;
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.035);
+  outline: 0;
+}
+
+.lyricsCorrection form input:focus-visible {
+  border-color: color-mix(in srgb, var(--music-accent) 55%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--music-accent) 18%, transparent);
+}
+
+.lyricsCorrection form > button {
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.9rem;
+  border-radius: var(--music-control-radius);
+  color: #050505;
+  background: color-mix(in srgb, var(--music-accent) 55%, white);
+  cursor: pointer;
+}
+
+.lyricsCorrection form > button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lyricsCandidates {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.lyricsCandidates > button {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--music-border);
+  border-radius: 12px;
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.022);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lyricsCandidates > button:hover {
+  border-color: var(--music-border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lyricsCandidates > button > span {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.lyricsCandidates > button > span:last-child {
+  grid-template-columns: auto auto;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.lyricsCandidates strong,
+.lyricsCandidates small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lyricsCandidates small {
+  color: var(--music-secondary);
+  font-size: 0.72rem;
+}
+
+.manualLyricsError {
+  color: #efaaaa;
+}
+
+@media (max-width: 767px) {
+  .lyricsCorrection form {
+    grid-template-columns: 1fr;
+  }
+
+  .lyricsCorrection form label,
+  .lyricsCorrection form input,
+  .lyricsCorrection form > button {
+    grid-column: 1;
+  }
+
+  .lyricsCorrection form label:nth-of-type(2) {
+    grid-column: 1;
+  }
+
+  .lyricsCandidates > button {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

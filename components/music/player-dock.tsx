@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import {
   Captions,
@@ -10,6 +11,7 @@ import {
   LoaderCircle,
   Pause,
   Play,
+  Radio,
   Repeat,
   Repeat1,
   Shuffle,
@@ -38,7 +40,7 @@ function ProgressControl() {
         disabled={!duration}
         max={duration || 1}
         min="0"
-        onChange={(event) => seek(Number(event.currentTarget.value))}
+        onInput={(event) => seek(Number(event.currentTarget.value))}
         style={{ "--progress": `${progress}%` } as React.CSSProperties}
         type="range"
         value={Math.min(currentTime, duration || 1)}
@@ -57,6 +59,7 @@ export function PlayerDock() {
     setPanel,
     setVolume,
     state,
+    toggleAutoRadio,
     toggleFavorite,
     togglePlayback,
     toggleRepeat,
@@ -88,6 +91,15 @@ export function PlayerDock() {
       aria-label={state.expanded ? "Trình phát mở rộng" : "Trình phát thu gọn"}
       aria-modal={state.expanded || undefined}
       className={`${styles.playerDock} ${state.expanded ? styles.playerDockExpanded : ""}`}
+      data-expanded={state.expanded}
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (state.expanded && event.target === event.currentTarget) {
+          setExpanded(false);
+          return;
+        }
+        if (!state.expanded && !target.closest("button, input, a, iframe")) setExpanded(true);
+      }}
       role={state.expanded ? "dialog" : "region"}
     >
       <div className={styles.dockAmbient} aria-hidden="true" />
@@ -100,7 +112,7 @@ export function PlayerDock() {
         <div className={styles.controlColumn}>
           <div className={styles.dockHeader}>
             <div className={styles.nowPlaying}>
-              <img alt="" height="52" src={track.thumbnail} width="52" />
+              <Image alt="" height={52} sizes="52px" src={track.thumbnail} width={52} />
               <div>
                 <strong title={track.title}>{track.title}</strong>
                 <span>{track.artist}</span>
@@ -153,7 +165,7 @@ export function PlayerDock() {
                 <Play aria-hidden="true" fill="currentColor" size={24} />
               )}
             </button>
-            <button aria-label="Bài tiếp theo" disabled={!queueHasNavigation} onClick={() => next()} type="button">
+            <button aria-label="Bài tiếp theo" disabled={!queueHasNavigation} onClick={() => void next()} type="button">
               <SkipForward aria-hidden="true" fill="currentColor" size={22} />
             </button>
             <button
@@ -166,20 +178,33 @@ export function PlayerDock() {
             >
               {state.repeatMode === "one" ? <Repeat1 aria-hidden="true" size={18} /> : <Repeat aria-hidden="true" size={18} />}
             </button>
+            <button
+              aria-label={state.autoRadioEnabled ? "Tắt Auto Radio" : "Bật Auto Radio"}
+              aria-pressed={state.autoRadioEnabled}
+              className={state.autoRadioEnabled ? styles.controlActive : undefined}
+              onClick={toggleAutoRadio}
+              type="button"
+            ><Radio aria-hidden="true" size={18} /></button>
           </div>
 
           <div className={styles.dockUtilities}>
-            <button aria-label={state.isMuted ? "Bật âm thanh" : "Tắt âm thanh"} onClick={() => setMuted(!state.isMuted)} type="button">
-              {state.isMuted ? <VolumeX aria-hidden="true" size={17} /> : <Volume2 aria-hidden="true" size={17} />}
+            <button
+              aria-label={state.volume.muted ? "Bật âm thanh" : "Tắt âm thanh"}
+              onClick={() => setMuted(!state.volume.muted)}
+              type="button"
+            >
+              {state.volume.muted ? <VolumeX aria-hidden="true" size={17} /> : <Volume2 aria-hidden="true" size={17} />}
             </button>
             <input
               aria-label="Âm lượng"
-              max="1"
+              aria-valuetext={`${state.volume.volume}%`}
+              max="100"
               min="0"
-              onChange={(event) => setVolume(Number(event.currentTarget.value))}
-              step="0.01"
+              onInput={(event) => setVolume(Number(event.currentTarget.value))}
+              step="1"
+              style={{ "--progress": `${state.volume.volume}%` } as React.CSSProperties}
               type="range"
-              value={state.volume}
+              value={state.volume.volume}
             />
             <span>{state.status === "error" ? "Không thể phát" : state.status === "playing" ? "Đang phát" : "Sẵn sàng"}</span>
           </div>

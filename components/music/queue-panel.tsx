@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 import { ArrowDown, ArrowUp, GripVertical, ListMusic, Trash2, X } from "lucide-react";
 import { useMusicPlayer } from "./music-player-core";
@@ -52,7 +53,7 @@ export function QueuePanel({ compact = false }: { compact?: boolean }) {
                   onClick={() => playNow(track)}
                   type="button"
                 >
-                  <img alt="" height="48" loading="lazy" src={track.thumbnail} width="48" />
+                  <Image alt="" height={48} sizes="48px" src={track.thumbnail} width={48} />
                   <span>
                     <strong>{track.title}</strong>
                     <small>{unavailable ? "Không thể phát" : track.artist}</small>

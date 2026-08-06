@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { MusicShell } from "@/components/music/music-shell";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={outfit.variable}>
-      <body>{children}</body>
+      <body><MusicShell>{children}</MusicShell></body>
     </html>
   );
 }

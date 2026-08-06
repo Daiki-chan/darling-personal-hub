@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { clampVolume } from "@/lib/music/volume";
 import { useMusicPlayer } from "./music-player-core";
 import styles from "./music-app.module.css";
 
@@ -9,6 +10,8 @@ type YouTubePlayer = {
   destroy: () => void;
   getCurrentTime: () => number;
   getDuration: () => number;
+  getVolume: () => number;
+  isMuted: () => boolean;
   loadVideoById: (videoId: string) => void;
   mute: () => void;
   pauseVideo: () => void;
@@ -79,20 +82,17 @@ function loadYouTubeApi() {
 }
 
 export function YouTubeVideoStage() {
-  const {
-    clock,
-    handlePlaybackError,
-    next,
-    reportDuration,
-    reportPlayerStatus,
-    state,
-  } = useMusicPlayer();
+  const { clock, handlePlaybackError, next, reportDuration, reportPlayerStatus, state } = useMusicPlayer();
   const targetRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const readyRef = useRef(false);
   const loadedVideoIdRef = useRef<string | null>(null);
   const stateRef = useRef(state);
-  stateRef.current = state;
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     let active = true;
@@ -122,17 +122,35 @@ export function YouTubeVideoStage() {
             onReady: (event) => {
               readyRef.current = true;
               loadedVideoIdRef.current = stateRef.current.currentTrack?.videoId ?? null;
-              event.target.setVolume(Math.round(stateRef.current.volume * 100));
-              if (stateRef.current.isMuted) event.target.mute();
-              reportPlayerStatus("ready", false);
+              const desired = stateRef.current.volume;
+              event.target.setVolume(clampVolume(desired.volume));
+              if (desired.muted) event.target.mute();
+              else event.target.unMute();
+              if (clampVolume(event.target.getVolume()) !== clampVolume(desired.volume)) {
+                event.target.setVolume(clampVolume(desired.volume));
+              }
+              if (stageRef.current) {
+                stageRef.current.dataset.appliedVolume = String(clampVolume(event.target.getVolume()));
+                stageRef.current.dataset.appliedMuted = String(event.target.isMuted());
+              }
+              reportPlayerStatus("ready", stateRef.current.isPlaying);
               if (stateRef.current.isPlaying) event.target.playVideo();
+              window.setTimeout(() => {
+                if (!active || playerRef.current !== event.target) return;
+                const applied = clampVolume(event.target.getVolume());
+                if (applied !== clampVolume(desired.volume)) event.target.setVolume(clampVolume(desired.volume));
+                if (stageRef.current) {
+                  stageRef.current.dataset.appliedVolume = String(clampVolume(event.target.getVolume()));
+                  stageRef.current.dataset.appliedMuted = String(event.target.isMuted());
+                }
+              }, 120);
             },
             onStateChange: (event) => {
               if (event.data === YT.PlayerState.PLAYING) reportPlayerStatus("playing", true);
               else if (event.data === YT.PlayerState.PAUSED) reportPlayerStatus("paused", false);
               else if (event.data === YT.PlayerState.BUFFERING) reportPlayerStatus("buffering", true);
               else if (event.data === YT.PlayerState.CUED) reportPlayerStatus("ready", false);
-              else if (event.data === YT.PlayerState.ENDED) next(true);
+              else if (event.data === YT.PlayerState.ENDED) void next(true);
             },
             onError: (event) => {
               const blocked = event.data === 101 || event.data === 150;
@@ -156,7 +174,7 @@ export function YouTubeVideoStage() {
       try {
         playerRef.current?.destroy();
       } catch {
-        // The iframe may already be gone during route teardown.
+        // Route teardown may remove the iframe before the API callback runs.
       }
       playerRef.current = null;
     };
@@ -190,10 +208,24 @@ export function YouTubeVideoStage() {
   useEffect(() => {
     const player = playerRef.current;
     if (!player || !readyRef.current) return;
-    player.setVolume(Math.round(state.volume * 100));
-    if (state.isMuted) player.mute();
+    const desired = clampVolume(state.volume.volume);
+    player.setVolume(desired);
+    if (state.volume.muted) player.mute();
     else player.unMute();
-  }, [state.isMuted, state.volume]);
+    if (stageRef.current) {
+      stageRef.current.dataset.appliedVolume = String(clampVolume(player.getVolume()));
+      stageRef.current.dataset.appliedMuted = String(player.isMuted());
+    }
+    const verification = window.setTimeout(() => {
+      const applied = clampVolume(player.getVolume());
+      if (applied !== desired) player.setVolume(desired);
+      if (stageRef.current) {
+        stageRef.current.dataset.appliedVolume = String(clampVolume(player.getVolume()));
+        stageRef.current.dataset.appliedMuted = String(player.isMuted());
+      }
+    }, 120);
+    return () => window.clearTimeout(verification);
+  }, [state.volume]);
 
   useEffect(() => {
     const request = state.seekRequest;
@@ -218,7 +250,13 @@ export function YouTubeVideoStage() {
   }, [clock, reportDuration]);
 
   return (
-    <div className={styles.videoStage} data-player-status={state.status}>
+    <div
+      className={styles.videoStage}
+      data-muted={state.volume.muted}
+      data-player-status={state.status}
+      data-volume={state.volume.volume}
+      ref={stageRef}
+    >
       <div className={styles.videoMount} ref={targetRef} />
       <div className={styles.videoStatus} aria-live="polite">
         {state.status === "loading" || state.status === "buffering" ? "Đang kết nối video" : "YouTube Player"}

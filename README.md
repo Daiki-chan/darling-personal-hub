@@ -12,15 +12,19 @@ Personal hub tối màu dùng Next.js App Router, gồm thư viện ảnh, Music
 ## Kiến trúc Music Hub
 
 ```text
-YouTube Data API v3 -> /api/youtube/search -> metadata
+YouTube Data API v3 -> search, Trending Vietnam, Auto Radio
 YouTube IFrame API -> YouTubeVideoStage -> playback chính thức
-MusicPlayerProvider -> queue, history, favorites, playlists, repeat, shuffle
-LRCLIB -> /api/music/lyrics -> synced hoặc plain lyrics
+Root MusicShell + MusicPlayerProvider -> persistent player, queue, volume, radio
+LRCLIB -> staged exact/field/broad lookup -> scored lyrics candidates
 IndexedDB -> player state và thư viện cá nhân
 Darling UI -> Obsidian AMOLED, ambient color, simulated visualizer
 ```
 
 Music Hub chỉ dùng một YouTube IFrame Player instance. Iframe luôn hiển thị trong player dock hoặc expanded player và không có audio proxy, direct media URL hay thẻ `<audio>` cho nội dung YouTube.
+
+Player được mount trong root layout nên cùng iframe, queue và tiến trình phát tồn tại khi điều hướng SPA sang route khác. Dock compact hiển thị ngoài `/am-nhac`; expanded player và mobile bottom sheet dùng lại chính node player đó.
+
+Volume dùng thang 0-100 đồng nhất với YouTube IFrame API và lưu `previousVolume` để mute/unmute. Trending Vietnam cache 30 phút; Auto Radio chỉ chạy sau queue và repeat; lựa chọn lyrics thủ công được lưu theo từng `videoId`.
 
 ## Chạy local
 
@@ -48,11 +52,13 @@ Mở `http://localhost:3000/am-nhac`.
 
 ```bash
 npm run typecheck
+npm run lint
+npm run test
 npm run build
 npm run start
 ```
 
-Repository hiện không cài ESLint hoặc test runner riêng. TypeScript strict và production build là hai cổng kiểm tra tĩnh đang được cấu hình.
+ESLint dùng cấu hình Core Web Vitals và TypeScript của Next.js 16. Vitest kiểm tra volume, ranking, playback policy, cache Trending và LRCLIB parser/scoring.
 
 ## Deploy Vercel
 

@@ -9,16 +9,20 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import { extractAmbientColor } from "@/lib/music/ambient";
 import { clamp } from "@/lib/music/format";
+import { planPlaybackContinuation, selectAutoRadioCandidate } from "@/lib/music/playback-policy";
+import { fetchAutoRadioCandidates } from "@/lib/music/recommendation-service";
 import {
   cleanLegacyMusicStorage,
   loadPersistedMusicState,
   savePersistedMusicState,
 } from "@/lib/music/storage";
 import type {
+  LyricsRecord,
   MusicErrorCode,
   MusicHistoryEntry,
   MusicPlaylist,
@@ -26,19 +30,22 @@ import type {
   MusicTrack,
   PersistedMusicState,
   RepeatMode,
+  VolumeState,
 } from "@/lib/music/types";
+import { changeMuted, changeVolume, normalizeVolumeState } from "@/lib/music/volume";
 
 type PlayerStatus = "idle" | "loading" | "ready" | "playing" | "paused" | "buffering" | "error";
 
 type MusicPlayerState = {
   accent: string;
+  autoRadioEnabled: boolean;
   currentTrack: MusicTrack | null;
   duration: number;
   expanded: boolean;
   favorites: MusicTrack[];
   history: MusicHistoryEntry[];
-  isMuted: boolean;
   isPlaying: boolean;
+  lyricMappings: Record<string, LyricsRecord>;
   lyricOffsets: Record<string, number>;
   panel: "lyrics" | "queue";
   playlists: MusicPlaylist[];
@@ -50,7 +57,7 @@ type MusicPlayerState = {
   status: PlayerStatus;
   toast: MusicToast | null;
   unavailableVideoIds: string[];
-  volume: number;
+  volume: VolumeState;
 };
 
 type Action =
@@ -62,6 +69,7 @@ type Action =
   | { type: "SET_DURATION"; value: number }
   | { type: "SET_VOLUME"; value: number }
   | { type: "SET_MUTED"; value: boolean }
+  | { type: "SET_AUTO_RADIO"; value: boolean }
   | { type: "SET_REPEAT"; value: RepeatMode }
   | { type: "SET_SHUFFLE"; value: boolean }
   | { type: "SET_EXPANDED"; value: boolean }
@@ -75,6 +83,7 @@ type Action =
   | { type: "DELETE_PLAYLIST"; id: string }
   | { type: "ADD_TO_PLAYLIST"; id: string; track: MusicTrack }
   | { type: "REMOVE_FROM_PLAYLIST"; id: string; videoId: string }
+  | { type: "SET_LYRIC_MAPPING"; videoId: string; record: LyricsRecord }
   | { type: "SET_LYRIC_OFFSET"; videoId: string; value: number }
   | { type: "MARK_UNAVAILABLE"; videoId: string }
   | { type: "SHOW_TOAST"; toast: MusicToast }
@@ -104,13 +113,14 @@ function createPlaybackClock() {
 
 const initialState: MusicPlayerState = {
   accent: "#8f8a82",
+  autoRadioEnabled: true,
   currentTrack: null,
   duration: 0,
   expanded: false,
   favorites: [],
   history: [],
-  isMuted: false,
   isPlaying: false,
+  lyricMappings: {},
   lyricOffsets: {},
   panel: "lyrics",
   playlists: [],
@@ -122,7 +132,7 @@ const initialState: MusicPlayerState = {
   status: "idle",
   toast: null,
   unavailableVideoIds: [],
-  volume: 0.86,
+  volume: normalizeVolumeState(null),
 };
 
 function uniqueTracks(tracks: MusicTrack[]) {
@@ -138,10 +148,12 @@ function reducer(state: MusicPlayerState, action: Action): MusicPlayerState {
       const currentTrack = saved.currentTrack?.videoId ? saved.currentTrack : queue[0] ?? null;
       return {
         ...state,
+        autoRadioEnabled: saved.autoRadioEnabled !== false,
         currentTrack,
         duration: currentTrack?.duration ?? 0,
         favorites: uniqueTracks(Array.isArray(saved.favorites) ? saved.favorites : []),
         history: Array.isArray(saved.history) ? saved.history.slice(0, 60) : [],
+        lyricMappings: saved.lyricMappings ?? {},
         lyricOffsets: saved.lyricOffsets ?? {},
         playlists: Array.isArray(saved.playlists) ? saved.playlists : [],
         queue,
@@ -149,7 +161,7 @@ function reducer(state: MusicPlayerState, action: Action): MusicPlayerState {
         restored: true,
         status: currentTrack ? "ready" : "idle",
         shuffleEnabled: Boolean(saved.shuffleEnabled),
-        volume: clamp(Number(saved.volume) || 0.86, 0, 1),
+        volume: normalizeVolumeState(saved.volume),
       };
     }
     case "PLAY_TRACK":
@@ -171,9 +183,11 @@ function reducer(state: MusicPlayerState, action: Action): MusicPlayerState {
     case "SET_DURATION":
       return { ...state, duration: action.value };
     case "SET_VOLUME":
-      return { ...state, volume: clamp(action.value, 0, 1), isMuted: action.value <= 0 ? true : state.isMuted };
+      return { ...state, volume: changeVolume(state.volume, action.value) };
     case "SET_MUTED":
-      return { ...state, isMuted: action.value };
+      return { ...state, volume: changeMuted(state.volume, action.value) };
+    case "SET_AUTO_RADIO":
+      return { ...state, autoRadioEnabled: action.value };
     case "SET_REPEAT":
       return { ...state, repeatMode: action.value };
     case "SET_SHUFFLE":
@@ -231,8 +245,10 @@ function reducer(state: MusicPlayerState, action: Action): MusicPlayerState {
             : playlist,
         ),
       };
+    case "SET_LYRIC_MAPPING":
+      return { ...state, lyricMappings: { ...state.lyricMappings, [action.videoId]: action.record } };
     case "SET_LYRIC_OFFSET":
-      return { ...state, lyricOffsets: { ...state.lyricOffsets, [action.videoId]: action.value } };
+      return { ...state, lyricOffsets: { ...state.lyricOffsets, [action.videoId]: clamp(action.value, -10, 10) } };
     case "MARK_UNAVAILABLE":
       return {
         ...state,
@@ -261,7 +277,7 @@ type MusicPlayerContextValue = {
   deletePlaylist: (id: string) => void;
   dismissToast: () => void;
   handlePlaybackError: (code: MusicErrorCode, message: string) => void;
-  next: (fromEnded?: boolean) => void;
+  next: (fromEnded?: boolean) => Promise<void>;
   playCollection: (tracks: MusicTrack[], shuffle?: boolean) => void;
   playNext: (track: MusicTrack) => void;
   playNow: (track: MusicTrack) => void;
@@ -274,10 +290,12 @@ type MusicPlayerContextValue = {
   reportPlayerStatus: (status: PlayerStatus, playing?: boolean) => void;
   seek: (seconds: number) => void;
   setExpanded: (value: boolean) => void;
+  setLyricMapping: (videoId: string, record: LyricsRecord) => void;
   setLyricOffset: (videoId: string, value: number) => void;
   setMuted: (value: boolean) => void;
   setPanel: (value: "lyrics" | "queue") => void;
   setVolume: (value: number) => void;
+  toggleAutoRadio: () => void;
   toggleFavorite: (track: MusicTrack) => void;
   togglePlayback: () => void;
   toggleRepeat: () => void;
@@ -289,12 +307,15 @@ const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null);
 export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const stateRef = useRef(state);
-  const clockRef = useRef<ReturnType<typeof createPlaybackClock> | null>(null);
+  const [clock] = useState(createPlaybackClock);
+  const radioAbortRef = useRef<AbortController | null>(null);
+  const radioTrackRef = useRef<string | null>(null);
   const seekIdRef = useRef(0);
   const toastIdRef = useRef(0);
-  if (!clockRef.current) clockRef.current = createPlaybackClock();
-  const clock = clockRef.current;
-  stateRef.current = state;
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const showToast = useCallback((code: MusicErrorCode, message: string) => {
     const id = ++toastIdRef.current;
@@ -318,31 +339,70 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SEEK", seconds: value, id: ++seekIdRef.current });
   }, [clock]);
 
-  const next = useCallback((fromEnded = false) => {
+  const next = useCallback(async (fromEnded = false) => {
     const current = stateRef.current;
-    if (!current.currentTrack || !current.queue.length) return;
-    if (fromEnded && current.repeatMode === "one") {
+    const currentTrack = current.currentTrack;
+    if (!currentTrack) return;
+    const continuation = planPlaybackContinuation({
+      autoRadioEnabled: current.autoRadioEnabled,
+      currentTrack,
+      fromEnded,
+      history: current.history,
+      queue: current.queue,
+      repeatMode: current.repeatMode,
+      shuffleEnabled: current.shuffleEnabled,
+      unavailableVideoIds: current.unavailableVideoIds,
+    });
+
+    if (continuation.kind === "track") {
+      if (continuation.queue) dispatch({ type: "SET_QUEUE", queue: continuation.queue });
+      dispatch({ type: "PLAY_TRACK", track: continuation.track, queue: continuation.queue });
+      return;
+    }
+    if (continuation.kind === "restart") {
       seek(0);
       dispatch({ type: "SET_PLAYING", value: true });
       return;
     }
-    const available = current.queue.filter((track) => !current.unavailableVideoIds.includes(track.videoId));
-    if (!available.length) {
+    if (continuation.kind === "stop") {
       dispatch({ type: "SET_PLAYING", value: false });
       return;
     }
-    let candidate: MusicTrack | undefined;
-    if (current.shuffleEnabled && available.length > 1) {
-      const alternatives = available.filter((track) => track.videoId !== current.currentTrack?.videoId);
-      candidate = alternatives[Math.floor(Math.random() * alternatives.length)];
-    } else {
-      const index = current.queue.findIndex((track) => track.videoId === current.currentTrack?.videoId);
-      candidate = current.queue.slice(index + 1).find((track) => !current.unavailableVideoIds.includes(track.videoId));
-      if (!candidate && current.repeatMode === "all") candidate = available[0];
+
+    if (radioTrackRef.current === currentTrack.videoId) return;
+    radioAbortRef.current?.abort();
+    const controller = new AbortController();
+    radioAbortRef.current = controller;
+    radioTrackRef.current = currentTrack.videoId;
+    const recentVideoIds = uniqueTracks([
+      currentTrack,
+      ...current.history,
+    ]).slice(0, 30).map((track) => track.videoId);
+
+    try {
+      const candidates = await fetchAutoRadioCandidates(currentTrack, recentVideoIds, controller.signal);
+      if (stateRef.current.currentTrack?.videoId !== currentTrack.videoId) return;
+      const selected = selectAutoRadioCandidate(
+        candidates,
+        currentTrack.videoId,
+        recentVideoIds,
+        stateRef.current.unavailableVideoIds,
+      );
+      if (!selected) {
+        dispatch({ type: "SET_PLAYING", value: false });
+        return;
+      }
+      const queue = uniqueTracks([...stateRef.current.queue, selected]);
+      dispatch({ type: "PLAY_TRACK", track: selected, queue });
+      showToast("AUTO_RADIO", "Auto Radio đã chọn bài tiếp theo.");
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        dispatch({ type: "SET_PLAYING", value: false });
+      }
+    } finally {
+      if (radioTrackRef.current === currentTrack.videoId) radioTrackRef.current = null;
     }
-    if (candidate) dispatch({ type: "PLAY_TRACK", track: candidate });
-    else dispatch({ type: "SET_PLAYING", value: false });
-  }, [seek]);
+  }, [seek, showToast]);
 
   const previous = useCallback(() => {
     if (clock.getSnapshot().currentTime > 5) {
@@ -357,8 +417,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [clock, seek]);
 
   const addToQueue = useCallback((track: MusicTrack) => {
-    const current = stateRef.current;
-    dispatch({ type: "SET_QUEUE", queue: [...current.queue, track] });
+    dispatch({ type: "SET_QUEUE", queue: [...stateRef.current.queue, track] });
     showToast("PLAYER_NOT_READY", "Đã thêm vào cuối hàng đợi.");
   }, [showToast]);
 
@@ -375,7 +434,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const current = stateRef.current;
     const removingCurrent = current.currentTrack?.videoId === videoId;
     dispatch({ type: "SET_QUEUE", queue: current.queue.filter((track) => track.videoId !== videoId) });
-    if (removingCurrent) next();
+    if (removingCurrent) void next();
   }, [next]);
 
   const reorderQueue = useCallback((fromIndex: number, toIndex: number) => {
@@ -394,15 +453,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const current = stateRef.current.currentTrack;
     if (current) dispatch({ type: "MARK_UNAVAILABLE", videoId: current.videoId });
     showToast(code, message);
-    window.setTimeout(() => next(true), 700);
+    window.setTimeout(() => void next(true), 700);
   }, [next, showToast]);
 
   const reportPlayerStatus = useCallback((status: PlayerStatus, playing?: boolean) => {
     dispatch({ type: "SET_STATUS", status, playing });
     const current = stateRef.current.currentTrack;
-    if (status === "playing" && current) {
-      dispatch({ type: "ADD_HISTORY", track: current, playedAt: Date.now() });
-    }
+    if (status === "playing" && current) dispatch({ type: "ADD_HISTORY", track: current, playedAt: Date.now() });
   }, []);
 
   useEffect(() => {
@@ -416,6 +473,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "HYDRATE", payload: null });
         showToast("STORAGE_FAILED", "Không thể khôi phục thư viện cục bộ.");
       });
+    return () => radioAbortRef.current?.abort();
   }, [clock, showToast]);
 
   const persist = useCallback(() => {
@@ -423,10 +481,12 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (!current.restored) return Promise.resolve();
     const snapshot = clock.getSnapshot();
     return savePersistedMusicState({
+      autoRadioEnabled: current.autoRadioEnabled,
       currentTrack: current.currentTrack,
       currentTime: snapshot.currentTime,
       favorites: current.favorites,
       history: current.history,
+      lyricMappings: current.lyricMappings,
       lyricOffsets: current.lyricOffsets,
       playlists: current.playlists,
       queue: current.queue,
@@ -441,7 +501,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (!state.restored) return;
     const timeout = window.setTimeout(() => void persist().catch(() => undefined), 800);
     return () => window.clearTimeout(timeout);
-  }, [persist, state.currentTrack, state.favorites, state.history, state.lyricOffsets, state.playlists, state.queue, state.repeatMode, state.restored, state.shuffleEnabled, state.volume]);
+  }, [persist, state.autoRadioEnabled, state.currentTrack, state.favorites, state.history, state.lyricMappings, state.lyricOffsets, state.playlists, state.queue, state.repeatMode, state.restored, state.shuffleEnabled, state.volume]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -477,7 +537,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       navigator.mediaSession.playbackState = state.isPlaying ? "playing" : "paused";
       navigator.mediaSession.setActionHandler("play", () => dispatch({ type: "SET_PLAYING", value: true }));
       navigator.mediaSession.setActionHandler("pause", () => dispatch({ type: "SET_PLAYING", value: false }));
-      navigator.mediaSession.setActionHandler("nexttrack", () => next());
+      navigator.mediaSession.setActionHandler("nexttrack", () => void next());
       navigator.mediaSession.setActionHandler("previoustrack", previous);
       navigator.mediaSession.setActionHandler("seekto", (details) => {
         if (typeof details.seekTime === "number") seek(details.seekTime);
@@ -498,6 +558,12 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         seek(clock.getSnapshot().currentTime + 5);
       } else if (event.key === "ArrowLeft") {
         seek(clock.getSnapshot().currentTime - 5);
+      } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        const delta = event.key === "ArrowUp" ? 5 : -5;
+        dispatch({ type: "SET_VOLUME", value: stateRef.current.volume.volume + delta });
+      } else if (event.key.toLocaleLowerCase() === "m") {
+        dispatch({ type: "SET_MUTED", value: !stateRef.current.volume.muted });
       } else if (event.key === "Escape" && stateRef.current.expanded) {
         dispatch({ type: "SET_EXPANDED", value: false });
       }
@@ -536,11 +602,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     reportDuration: (duration) => dispatch({ type: "SET_DURATION", value: duration }),
     reportPlayerStatus,
     seek,
-    setExpanded: (value) => dispatch({ type: "SET_EXPANDED", value }),
-    setLyricOffset: (videoId, value) => dispatch({ type: "SET_LYRIC_OFFSET", videoId, value }),
-    setMuted: (value) => dispatch({ type: "SET_MUTED", value }),
-    setPanel: (value) => dispatch({ type: "SET_PANEL", value }),
-    setVolume: (value) => dispatch({ type: "SET_VOLUME", value }),
+    setExpanded: (expanded) => dispatch({ type: "SET_EXPANDED", value: expanded }),
+    setLyricMapping: (videoId, record) => dispatch({ type: "SET_LYRIC_MAPPING", videoId, record }),
+    setLyricOffset: (videoId, offset) => dispatch({ type: "SET_LYRIC_OFFSET", videoId, value: offset }),
+    setMuted: (muted) => dispatch({ type: "SET_MUTED", value: muted }),
+    setPanel: (panel) => dispatch({ type: "SET_PANEL", value: panel }),
+    setVolume: (volume) => dispatch({ type: "SET_VOLUME", value: volume }),
+    toggleAutoRadio: () => dispatch({ type: "SET_AUTO_RADIO", value: !state.autoRadioEnabled }),
     toggleFavorite: (track) => dispatch({ type: "TOGGLE_FAVORITE", track }),
     togglePlayback: () => state.currentTrack && dispatch({ type: "SET_PLAYING", value: !state.isPlaying }),
     toggleRepeat: () => {

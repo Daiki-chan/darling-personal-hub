@@ -1,3 +1,4 @@
+import { inferMusicMetadata, normalizeTrackLabel } from "./metadata";
 import type { SyncedLyricLine } from "./types";
 
 export function clamp(value: number, minimum: number, maximum: number) {
@@ -12,51 +13,45 @@ export function formatTime(value: number) {
 }
 
 export function normalizeYouTubeTitle(input: string) {
-  const removable = [
-    "official music video",
-    "official video",
-    "official audio",
-    "lyrics video",
-    "lyric video",
-    "visualizer",
-    "remastered",
-    "audio",
-    "4k",
-    "hd",
-    "mv",
-  ];
-  const pattern = new RegExp(`(?:\\(|\\[)\\s*(?:${removable.join("|")})[^\\]\\)]*(?:\\)|\\])`, "gi");
-
-  return input
-    .replace(pattern, " ")
-    .replace(/\s+-\s+(official music video|official video|official audio|lyrics? video|visualizer|audio)\s*$/gi, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return normalizeTrackLabel(input);
 }
 
 export function inferTrackAndArtist(title: string, fallbackArtist: string) {
-  const normalized = normalizeYouTubeTitle(title);
-  const parts = normalized.split(/\s[-|:]\s/).map((part) => part.trim()).filter(Boolean);
-  if (parts.length >= 2) return { artist: parts[0], track: parts.slice(1).join(" - ") };
-  return { artist: fallbackArtist, track: normalized };
+  return inferMusicMetadata(title, fallbackArtist);
 }
 
 export function parseSyncedLyrics(input: string | null): SyncedLyricLine[] {
   if (!input) return [];
+  const rawLines = input.split(/\r?\n/);
+  const offsetTag = rawLines
+    .map((line) => line.match(/^\s*\[offset\s*:\s*([+-]?\d+)\s*\]\s*$/i))
+    .find(Boolean);
+  const offsetSeconds = offsetTag ? Number(offsetTag[1]) / 1000 : 0;
+  const timestamp = /\[(\d{1,3}):(\d{2})(?:[.:](\d{2,3}))?\]/g;
   const lines: SyncedLyricLine[] = [];
-  const timestamp = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+  const seen = new Set<string>();
 
-  for (const rawLine of input.split(/\r?\n/)) {
+  for (const rawLine of rawLines) {
+    if (/^\s*\[(?:ar|al|ti|au|by|re|ve|length|offset)\s*:/i.test(rawLine)) continue;
+    const matches = [...rawLine.matchAll(timestamp)];
+    if (!matches.length) continue;
     const text = rawLine.replace(timestamp, "").trim();
-    for (const match of rawLine.matchAll(timestamp)) {
-      const fractionText = match[3] ?? "0";
-      lines.push({
-        time: Number(match[1]) * 60 + Number(match[2]) + Number(fractionText) / 10 ** fractionText.length,
-        text: text || "Nhạc dạo",
-      });
+
+    for (const match of matches) {
+      const minutes = Number(match[1]);
+      const seconds = Number(match[2]);
+      if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || seconds >= 60) continue;
+      const fraction = match[3] ?? "0";
+      const time = Math.max(0, minutes * 60 + seconds + Number(fraction) / 10 ** fraction.length + offsetSeconds);
+      if (!Number.isFinite(time)) continue;
+      const key = `${time.toFixed(3)}|${text}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      lines.push({ time, text });
     }
   }
-  return lines.sort((a, b) => a.time - b.time);
+
+  return lines.sort((left, right) => left.time - right.time || left.text.localeCompare(right.text, "vi"));
 }
 
 export function findActiveLyricIndex(lines: SyncedLyricLine[], time: number) {

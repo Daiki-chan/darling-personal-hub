@@ -45,7 +45,7 @@ export function SimulatedVisualizer() {
       lastPaint = timestamp;
       const { currentTime, duration } = clock.getSnapshot();
       const progress = duration ? currentTime / duration : 0;
-      const targetEnergy = state.isPlaying ? 0.55 + state.volume * 0.45 : 0.11;
+      const targetEnergy = state.isPlaying ? 0.55 + state.volume.volume / 100 * 0.45 : 0.11;
       energy += (targetEnergy - energy) * (state.isPlaying ? 0.08 : 0.035);
       context.clearRect(0, 0, width, height);
       const accent = getComputedStyle(canvas).getPropertyValue("--music-accent").trim() || "#8f8a82";

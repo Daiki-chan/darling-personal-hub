@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Search, X } from "lucide-react";
 import { searchYouTubeMusic } from "@/lib/music/search-service";
@@ -149,18 +150,22 @@ export function SearchPanel() {
             {items.map((track) => (
               <article className={styles.searchCard} key={track.videoId}>
                 <div className={styles.searchCardMain}>
-                  <img
+                  <Image
                     alt={`Thumbnail ${track.title}`}
-                    height="360"
-                    loading="lazy"
+                    height={360}
+                    sizes="(max-width: 767px) 100vw, (max-width: 1120px) 50vw, 33vw"
                     src={track.thumbnail}
-                    width="480"
+                    width={480}
                   />
                 </div>
                 <div className={styles.searchCardCopy}>
                   <strong title={track.title}>{track.title}</strong>
                   <span>{track.artist}</span>
-                  <small>{track.duration ? formatTime(track.duration) : "Thời lượng chưa rõ"}</small>
+                  <small
+                    title={track.ranking?.signals.map((signal) => `${signal.points > 0 ? "+" : ""}${signal.points} ${signal.label}`).join("\n")}
+                  >
+                    {track.duration ? formatTime(track.duration) : "Thời lượng chưa rõ"}{track.ranking ? ` · Điểm ưu tiên ${track.ranking.score}` : ""}
+                  </small>
                 </div>
                 <TrackActions track={track} />
               </article>

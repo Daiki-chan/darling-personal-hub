@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useState } from "react";
 import { Heart, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import type { MusicTrack } from "@/lib/music/types";
@@ -18,7 +19,7 @@ function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) 
       <div className={styles.trackStrip}>
         {tracks.slice(0, 8).map((track) => (
           <article className={styles.stripItem} key={track.videoId}>
-            <img alt={`Thumbnail ${track.title}`} height="80" loading="lazy" src={track.thumbnail} width="80" />
+            <Image alt={`Thumbnail ${track.title}`} height={80} sizes="80px" src={track.thumbnail} width={80} />
             <div><strong>{track.title}</strong><span>{track.artist}</span></div>
             <TrackActions track={track} />
           </article>
@@ -89,7 +90,7 @@ export function LibraryPanel() {
               <article className={styles.playlist} key={playlist.id}>
                 <div className={styles.playlistCover} aria-hidden="true">
                   {playlist.tracks.slice(0, 4).map((track) => (
-                    <img alt="" key={track.videoId} src={track.thumbnail} />
+                    <Image alt="" height={128} key={track.videoId} sizes="64px" src={track.thumbnail} width={128} />
                   ))}
                   {!playlist.tracks.length ? <Heart size={22} /> : null}
                 </div>
