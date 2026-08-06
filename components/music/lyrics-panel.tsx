@@ -1,9 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlignVerticalSpaceAround, Check, Minus, Plus, RotateCcw, Search, X } from "lucide-react";
 import { findActiveLyricIndex, formatTime } from "@/lib/music/format";
 import { lyricsRecordToResult } from "@/lib/music/lyrics";
+import { calculateCenteredLyricScrollTop, isLyricInsideSafeZone } from "@/lib/music/lyrics-scroll";
 import {
   fetchLyrics,
   rememberLyricsSelection,
@@ -31,7 +32,9 @@ export function LyricsPanel() {
   const [candidates, setCandidates] = useState<LyricsCandidate[]>([]);
   const activeRef = useRef<HTMLButtonElement>(null);
   const manualAbortRef = useRef<AbortController | null>(null);
-  const programmaticScrollRef = useRef(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollTimerRef = useRef<number | null>(null);
+  const smoothScrollTimerRef = useRef<number | null>(null);
   const track = state.currentTrack;
   const offset = track ? state.lyricOffsets[track.videoId] ?? 0 : 0;
   const mappedRecord = track ? state.lyricMappings[track.videoId] : undefined;
@@ -40,8 +43,42 @@ export function LyricsPanel() {
     [currentTime, lyrics?.syncedLyrics, offset],
   );
 
+  const stopSmoothScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (smoothScrollTimerRef.current !== null) {
+      window.clearTimeout(smoothScrollTimerRef.current);
+      smoothScrollTimerRef.current = null;
+    }
+    if (container) {
+      container.scrollTo({ top: container.scrollTop, behavior: "auto" });
+    }
+  }, []);
+
+  const resumeAutoScroll = useCallback(() => {
+    if (autoScrollTimerRef.current !== null) {
+      window.clearTimeout(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+    setAutoScroll(true);
+  }, []);
+
+  const pauseAutoScroll = useCallback(() => {
+    stopSmoothScroll();
+    setAutoScroll(false);
+    if (autoScrollTimerRef.current !== null) window.clearTimeout(autoScrollTimerRef.current);
+    autoScrollTimerRef.current = window.setTimeout(() => {
+      autoScrollTimerRef.current = null;
+      setAutoScroll(true);
+    }, 5000);
+  }, [stopSmoothScroll]);
+
   useEffect(() => {
     let disposed = false;
+    stopSmoothScroll();
+    if (autoScrollTimerRef.current !== null) {
+      window.clearTimeout(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
     if (!track) {
       queueMicrotask(() => {
         if (disposed) return;
@@ -81,18 +118,42 @@ export function LyricsPanel() {
       disposed = true;
       controller.abort();
     };
-  }, [mappedRecord, track]);
+  }, [mappedRecord, stopSmoothScroll, track]);
 
   useEffect(() => {
-    if (!autoScroll || activeIndex < 0 || !activeRef.current) return;
-    programmaticScrollRef.current = true;
+    if (!autoScroll || correctionOpen || activeIndex < 0) return;
+    const container = scrollContainerRef.current;
+    const activeLine = activeRef.current;
+    if (!container || !activeLine) return;
+    const containerRect = container.getBoundingClientRect();
+    const lineRect = activeLine.getBoundingClientRect();
+    const geometry = {
+      containerHeight: container.clientHeight,
+      containerScrollTop: container.scrollTop,
+      lineHeight: lineRect.height,
+      lineTop: lineRect.top - containerRect.top,
+      scrollHeight: container.scrollHeight,
+    };
+    if (isLyricInsideSafeZone(geometry)) return;
+    stopSmoothScroll();
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    activeRef.current.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-    const timeout = window.setTimeout(() => { programmaticScrollRef.current = false; }, 500);
-    return () => window.clearTimeout(timeout);
-  }, [activeIndex, autoScroll]);
+    const behavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
+    container.scrollTo({
+      top: calculateCenteredLyricScrollTop(geometry),
+      behavior,
+    });
+    if (behavior === "smooth") {
+      smoothScrollTimerRef.current = window.setTimeout(() => {
+        smoothScrollTimerRef.current = null;
+      }, 650);
+    }
+  }, [activeIndex, autoScroll, correctionOpen, stopSmoothScroll]);
 
-  useEffect(() => () => manualAbortRef.current?.abort(), []);
+  useEffect(() => () => {
+    manualAbortRef.current?.abort();
+    if (autoScrollTimerRef.current !== null) window.clearTimeout(autoScrollTimerRef.current);
+    if (smoothScrollTimerRef.current !== null) window.clearTimeout(smoothScrollTimerRef.current);
+  }, []);
 
   const runManualSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -207,10 +268,24 @@ export function LyricsPanel() {
 
       {status === "ready" && lyrics?.syncedLyrics.length ? (
         <div
+          aria-label="Lời bài hát đồng bộ"
           className={styles.syncedLyrics}
-          onScroll={() => {
-            if (!programmaticScrollRef.current) setAutoScroll(false);
+          data-auto-scroll={autoScroll}
+          onKeyDown={(event) => {
+            if ([" ", "ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp"].includes(event.key)) {
+              pauseAutoScroll();
+            }
           }}
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) pauseAutoScroll();
+          }}
+          onTouchMove={pauseAutoScroll}
+          onPointerMove={(event) => {
+            if (event.buttons) pauseAutoScroll();
+          }}
+          onWheel={pauseAutoScroll}
+          ref={scrollContainerRef}
+          tabIndex={0}
         >
           {lyrics.syncedLyrics.map((line, index) => (
             <button
@@ -233,8 +308,8 @@ export function LyricsPanel() {
       ) : null}
 
       {!autoScroll && status === "ready" && Boolean(lyrics?.syncedLyrics.length) ? (
-        <button className={styles.resumeScroll} onClick={() => setAutoScroll(true)} type="button">
-          <RotateCcw aria-hidden="true" size={15} />Theo dòng hiện tại
+        <button className={styles.resumeScroll} onClick={resumeAutoScroll} type="button">
+          <RotateCcw aria-hidden="true" size={15} />Tiếp tục tự cuộn
         </button>
       ) : null}
     </section>

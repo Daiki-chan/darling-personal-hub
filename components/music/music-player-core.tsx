@@ -462,6 +462,10 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (status === "playing" && current) dispatch({ type: "ADD_HISTORY", track: current, playedAt: Date.now() });
   }, []);
 
+  const setExpanded = useCallback((expanded: boolean) => {
+    dispatch({ type: "SET_EXPANDED", value: expanded });
+  }, []);
+
   useEffect(() => {
     cleanLegacyMusicStorage();
     loadPersistedMusicState()
@@ -564,8 +568,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "SET_VOLUME", value: stateRef.current.volume.volume + delta });
       } else if (event.key.toLocaleLowerCase() === "m") {
         dispatch({ type: "SET_MUTED", value: !stateRef.current.volume.muted });
-      } else if (event.key === "Escape" && stateRef.current.expanded) {
-        dispatch({ type: "SET_EXPANDED", value: false });
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -602,7 +604,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     reportDuration: (duration) => dispatch({ type: "SET_DURATION", value: duration }),
     reportPlayerStatus,
     seek,
-    setExpanded: (expanded) => dispatch({ type: "SET_EXPANDED", value: expanded }),
+    setExpanded,
     setLyricMapping: (videoId, record) => dispatch({ type: "SET_LYRIC_MAPPING", videoId, record }),
     setLyricOffset: (videoId, offset) => dispatch({ type: "SET_LYRIC_OFFSET", videoId, value: offset }),
     setMuted: (muted) => dispatch({ type: "SET_MUTED", value: muted }),
@@ -616,7 +618,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_REPEAT", value: modes[(modes.indexOf(state.repeatMode) + 1) % modes.length] });
     },
     toggleShuffle: () => dispatch({ type: "SET_SHUFFLE", value: !state.shuffleEnabled }),
-  }), [addToQueue, clearQueue, clock, handlePlaybackError, next, playCollection, playNext, playNow, previous, removeFromQueue, reorderQueue, reportPlayerStatus, seek, state]);
+  }), [addToQueue, clearQueue, clock, handlePlaybackError, next, playCollection, playNext, playNow, previous, removeFromQueue, reorderQueue, reportPlayerStatus, seek, setExpanded, state]);
 
   return <MusicPlayerContext.Provider value={value}>{children}</MusicPlayerContext.Provider>;
 }

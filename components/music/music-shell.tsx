@@ -2,18 +2,34 @@
 
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
+import { resolveMusicUIState, shouldMinimizeAfterNavigation } from "@/lib/music/player-ui";
 import { MusicPlayerProvider, useMusicPlayer } from "./music-player-core";
 import { PlayerDock } from "./player-dock";
 import styles from "./music-app.module.css";
 
 function PersistentMusicSurface({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { dismissToast, state } = useMusicPlayer();
+  const { dismissToast, setExpanded, state } = useMusicPlayer();
+  const previousPathnameRef = useRef(pathname);
+  const uiState = resolveMusicUIState(Boolean(state.currentTrack), state.expanded);
   const style = { "--music-accent": state.accent } as CSSProperties;
 
+  useEffect(() => {
+    const previousPathname = previousPathnameRef.current;
+    previousPathnameRef.current = pathname;
+    if (shouldMinimizeAfterNavigation(previousPathname, pathname, uiState)) {
+      setExpanded(false);
+    }
+  }, [pathname, setExpanded, uiState]);
+
   return (
-    <div className={styles.musicGlobal} data-music-page={pathname === "/am-nhac"} style={style}>
+    <div
+      className={styles.musicGlobal}
+      data-music-page={pathname === "/am-nhac"}
+      data-music-ui-state={uiState}
+      style={style}
+    >
       {children}
       <PlayerDock />
       {state.toast ? (

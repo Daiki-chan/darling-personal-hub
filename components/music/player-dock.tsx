@@ -21,6 +21,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { formatTime } from "@/lib/music/format";
+import { resolveMusicUIState } from "@/lib/music/player-ui";
 import { LyricsPanel } from "./lyrics-panel";
 import { useMusicPlayer, usePlaybackClock } from "./music-player-core";
 import { QueuePanel } from "./queue-panel";
@@ -69,44 +70,53 @@ export function PlayerDock() {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const track = state.currentTrack;
   const favorite = track ? state.favorites.some((item) => item.videoId === track.videoId) : false;
+  const uiState = resolveMusicUIState(Boolean(track), state.expanded);
+  const expanded = uiState === "expanded";
 
   useEffect(() => {
-    if (!state.expanded) return;
+    if (!expanded) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
     return () => {
+      window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
       restoreFocusRef.current?.focus();
     };
-  }, [state.expanded]);
+  }, [expanded, setExpanded]);
 
   if (!track) return null;
   const queueHasNavigation = state.queue.length > 1;
   const buffering = state.status === "loading" || state.status === "buffering";
 
   return (
+    <>
+      {expanded ? (
+        <div
+          aria-hidden="true"
+          className={styles.expandedBackdrop}
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) setExpanded(false);
+          }}
+        />
+      ) : null}
     <section
-      aria-label={state.expanded ? "Trình phát mở rộng" : "Trình phát thu gọn"}
-      aria-modal={state.expanded || undefined}
-      className={`${styles.playerDock} ${state.expanded ? styles.playerDockExpanded : ""}`}
-      data-expanded={state.expanded}
-      onClick={(event) => {
-        const target = event.target as HTMLElement;
-        if (state.expanded && event.target === event.currentTarget) {
-          setExpanded(false);
-          return;
-        }
-        if (!state.expanded && !target.closest("button, input, a, iframe")) setExpanded(true);
-      }}
-      role={state.expanded ? "dialog" : "region"}
+      aria-label={expanded ? "Trình phát mở rộng" : "Trình phát thu gọn"}
+      aria-modal={expanded || undefined}
+      className={`${styles.playerDock} ${expanded ? styles.playerDockExpanded : ""}`}
+      data-ui-state={uiState}
+      role={expanded ? "dialog" : "region"}
     >
       <div className={styles.dockAmbient} aria-hidden="true" />
       <div className={styles.dockShell}>
         <div className={styles.videoColumn}>
           <YouTubeVideoStage />
-          {state.expanded ? <SimulatedVisualizer /> : null}
+          {expanded ? <SimulatedVisualizer /> : null}
         </div>
 
         <div className={styles.controlColumn}>
@@ -128,12 +138,12 @@ export function PlayerDock() {
               <Heart aria-hidden="true" fill={favorite ? "currentColor" : "none"} size={18} />
             </button>
             <button
-              aria-label={state.expanded ? "Thu gọn trình phát" : "Mở trình phát"}
-              onClick={() => setExpanded(!state.expanded)}
+              aria-label={expanded ? "Thu gọn trình phát" : "Mở trình phát"}
+              onClick={() => setExpanded(!expanded)}
               ref={closeButtonRef}
               type="button"
             >
-              {state.expanded ? <ChevronDown aria-hidden="true" size={21} /> : <ChevronUp aria-hidden="true" size={21} />}
+              {expanded ? <ChevronDown aria-hidden="true" size={21} /> : <ChevronUp aria-hidden="true" size={21} />}
             </button>
           </div>
 
@@ -210,7 +220,7 @@ export function PlayerDock() {
           </div>
         </div>
 
-        {state.expanded ? (
+        {expanded ? (
           <div className={styles.expandedPanel}>
             <div className={styles.panelTabs} role="tablist" aria-label="Nội dung trình phát">
               <button
@@ -235,5 +245,6 @@ export function PlayerDock() {
         ) : null}
       </div>
     </section>
+    </>
   );
 }
