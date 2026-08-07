@@ -1,9 +1,14 @@
-import Link from "next/link";
-import { ArrowLeft, Images } from "lucide-react";
+import type { Metadata } from "next";
+import { Images } from "lucide-react";
 import { MediaPlaceholder } from "@/components/media-placeholder";
 import { Reveal } from "@/components/reveal";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+
+export const metadata: Metadata = {
+  title: "Thư viện | Darling",
+  description: "Bộ sưu tập khoảnh khắc, góc nhìn và hình ảnh đời thường.",
+};
 
 const favoriteImages = [
   { label: "Ảnh yêu thích placeholder 01", caption: "Chân dung", aspect: "portrait" as const, tone: "violet" as const },
@@ -53,10 +58,6 @@ export default function GalleryPage() {
         <section className="section-shell library-note" aria-label="Ghi chú thư viện">
           <Reveal>
             <p>Không cần một chủ đề cố định. Chỉ cần đó là bức ảnh bạn muốn giữ.</p>
-            <Link className="text-link" href="/#portals">
-              <ArrowLeft aria-hidden="true" size={18} strokeWidth={1.5} />
-              Trở về cổng chính
-            </Link>
           </Reveal>
         </section>
       </main>

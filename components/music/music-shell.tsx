@@ -12,7 +12,9 @@ function PersistentMusicSurface({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { dismissToast, setExpanded, state } = useMusicPlayer();
   const previousPathnameRef = useRef(pathname);
+  const pageContentRef = useRef<HTMLDivElement>(null);
   const uiState = resolveMusicUIState(Boolean(state.currentTrack), state.expanded);
+  const expanded = uiState === "expanded";
   const style = { "--music-accent": state.accent } as CSSProperties;
 
   useEffect(() => {
@@ -23,6 +25,36 @@ function PersistentMusicSurface({ children }: { children: ReactNode }) {
     }
   }, [pathname, setExpanded, uiState]);
 
+  // Focus trap / inert management on page content wrapper
+  useEffect(() => {
+    const contentNode = pageContentRef.current;
+    if (!contentNode) return;
+
+    const hadInert = contentNode.hasAttribute("inert");
+    const initialAriaHidden = contentNode.getAttribute("aria-hidden");
+
+    if (expanded) {
+      contentNode.setAttribute("inert", "");
+      contentNode.setAttribute("aria-hidden", "true");
+    } else {
+      if (!hadInert) contentNode.removeAttribute("inert");
+      if (initialAriaHidden !== null) {
+        contentNode.setAttribute("aria-hidden", initialAriaHidden);
+      } else {
+        contentNode.removeAttribute("aria-hidden");
+      }
+    }
+
+    return () => {
+      if (!hadInert) contentNode.removeAttribute("inert");
+      if (initialAriaHidden !== null) {
+        contentNode.setAttribute("aria-hidden", initialAriaHidden);
+      } else {
+        contentNode.removeAttribute("aria-hidden");
+      }
+    };
+  }, [expanded]);
+
   return (
     <div
       className={styles.musicGlobal}
@@ -30,7 +62,9 @@ function PersistentMusicSurface({ children }: { children: ReactNode }) {
       data-music-ui-state={uiState}
       style={style}
     >
-      {children}
+      <div className="page-content-wrapper" ref={pageContentRef}>
+        {children}
+      </div>
       <PlayerDock />
       {state.toast ? (
         <div className={styles.toast} role="status">
