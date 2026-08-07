@@ -32,9 +32,8 @@ import { uniqueTracks } from "@/lib/music/track-utils";
 import type {
   LyricsRecord,
   MusicErrorCode,
-  MusicPlaylist,
-  MusicToast,
   MusicTrack,
+  RepeatMode,
 } from "@/lib/music/types";
 
 type ClockSnapshot = { currentTime: number; duration: number };

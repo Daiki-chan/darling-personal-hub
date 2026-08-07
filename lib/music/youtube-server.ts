@@ -92,7 +92,7 @@ function toTrack(videoId: string, detail: VideoItem, fallback?: YouTubeSnippet):
   };
 }
 
-async function hydrateVideos(ids: string[], fallbacks: Map<string, YouTubeSnippet>, revalidate = 300) {
+async function hydrateVideos(ids: string[], fallbacks: Map<string, YouTubeSnippet>) {
   if (!ids.length) return [];
   const url = new URL("https://www.googleapis.com/youtube/v3/videos");
   url.searchParams.set("part", "snippet,contentDetails,status");
@@ -129,7 +129,7 @@ export async function searchYouTubeCandidates(
     fallbacks.set(id, item.snippet);
   }
   return {
-    items: await hydrateVideos(ids, fallbacks, options.revalidate ?? 300),
+    items: await hydrateVideos(ids, fallbacks),
     nextPageToken: payload.nextPageToken ?? null,
   };
 }
