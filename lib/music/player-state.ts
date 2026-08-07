@@ -224,7 +224,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     case "SET_SHUFFLE":
       return { ...state, shuffleEnabled: action.value };
     case "SET_EXPANDED":
-      return { ...state, expanded: action.isShutdown ? false : action.value };
+      return { ...state, expanded: state.isShutdown ? false : action.value };
     case "SET_PANEL":
       return { ...state, panel: action.value };
     case "SEEK":
