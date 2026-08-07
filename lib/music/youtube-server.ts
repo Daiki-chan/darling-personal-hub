@@ -50,9 +50,9 @@ export function parseIsoDuration(value: string | undefined) {
   return Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
 }
 
-async function fetchYouTube<T>(url: URL, revalidate: number): Promise<T> {
+async function fetchYouTube<T>(url: URL): Promise<T> {
   const response = await fetch(url, {
-    next: { revalidate },
+    cache: "no-store",
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
@@ -92,13 +92,13 @@ function toTrack(videoId: string, detail: VideoItem, fallback?: YouTubeSnippet):
   };
 }
 
-async function hydrateVideos(ids: string[], fallbacks: Map<string, YouTubeSnippet>, revalidate: number) {
+async function hydrateVideos(ids: string[], fallbacks: Map<string, YouTubeSnippet>, revalidate = 300) {
   if (!ids.length) return [];
   const url = new URL("https://www.googleapis.com/youtube/v3/videos");
   url.searchParams.set("part", "snippet,contentDetails,status");
   url.searchParams.set("id", ids.join(","));
   url.searchParams.set("key", getYouTubeApiKey());
-  const payload = await fetchYouTube<{ items?: VideoItem[] }>(url, revalidate);
+  const payload = await fetchYouTube<{ items?: VideoItem[] }>(url);
   const byId = new Map((payload.items ?? []).filter((item) => item.id).map((item) => [item.id as string, item]));
   return ids.flatMap((id) => {
     const detail = byId.get(id);
@@ -119,8 +119,7 @@ export async function searchYouTubeCandidates(
   url.searchParams.set("q", query);
   url.searchParams.set("key", getYouTubeApiKey());
   if (options.pageToken) url.searchParams.set("pageToken", options.pageToken);
-  const revalidate = options.revalidate ?? 300;
-  const payload = await fetchYouTube<{ items?: SearchItem[]; nextPageToken?: string }>(url, revalidate);
+  const payload = await fetchYouTube<{ items?: SearchItem[]; nextPageToken?: string }>(url);
   const fallbacks = new Map<string, YouTubeSnippet>();
   const ids: string[] = [];
   for (const item of payload.items ?? []) {
@@ -130,7 +129,7 @@ export async function searchYouTubeCandidates(
     fallbacks.set(id, item.snippet);
   }
   return {
-    items: await hydrateVideos(ids, fallbacks, revalidate),
+    items: await hydrateVideos(ids, fallbacks, options.revalidate ?? 300),
     nextPageToken: payload.nextPageToken ?? null,
   };
 }
@@ -143,7 +142,7 @@ export async function trendingYouTubeMusic() {
   url.searchParams.set("videoCategoryId", "10");
   url.searchParams.set("maxResults", "24");
   url.searchParams.set("key", getYouTubeApiKey());
-  const payload = await fetchYouTube<{ items?: VideoItem[] }>(url, 1800);
+  const payload = await fetchYouTube<{ items?: VideoItem[] }>(url);
   return (payload.items ?? []).flatMap((item) => {
     const id = item.id;
     const track = id ? toTrack(id, item) : null;
