@@ -6,6 +6,7 @@ import { AlertCircle, Search, X } from "lucide-react";
 import { searchYouTubeMusic } from "@/lib/music/search-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { formatTime } from "@/lib/music/format";
+import { mergeUniqueTracks } from "@/lib/music/track-utils";
 import { TrackActions } from "./track-actions";
 import styles from "./music-app.module.css";
 
@@ -19,8 +20,9 @@ export function SearchPanel() {
   const [status, setStatus] = useState<SearchStatus>("idle");
   const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
-  const requestRef = useRef(0);
-  const lastQueryRef = useRef("");
+  const requestGenerationRef = useRef(0);
+  const lastSuccessfulQueryRef = useRef("");
+  const suppressedDebounceQueryRef = useRef<string | null>(null);
 
   const runSearch = useCallback(async (searchQuery: string, append = false) => {
     const cleanQuery = searchQuery.trim();
@@ -32,20 +34,20 @@ export function SearchPanel() {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    const requestId = ++requestRef.current;
+    const generation = ++requestGenerationRef.current;
     setStatus("loading");
     setError("");
     const pageToken = append ? nextPageToken : null;
     try {
       const payload = await searchYouTubeMusic(cleanQuery, pageToken, controller.signal);
-      if (requestId !== requestRef.current) return;
-      setItems((current) => append ? [...current, ...payload.items] : payload.items);
+      if (generation !== requestGenerationRef.current) return;
+      setItems((current) => append ? mergeUniqueTracks(current, payload.items) : payload.items);
       setNextPageToken(payload.nextPageToken);
       setStatus(payload.items.length || append ? "ready" : "empty");
-      lastQueryRef.current = cleanQuery;
+      lastSuccessfulQueryRef.current = cleanQuery;
     } catch (reason) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
-      if (requestId !== requestRef.current) return;
+      if (generation !== requestGenerationRef.current) return;
       setError(reason instanceof Error ? reason.message : "Không thể tải kết quả tìm kiếm.");
       setStatus("error");
     }
@@ -53,12 +55,30 @@ export function SearchPanel() {
 
   useEffect(() => {
     const cleanQuery = query.trim();
-    if (cleanQuery.length < 3 || cleanQuery === lastQueryRef.current) return;
+    if (cleanQuery.length < 3 || cleanQuery === lastSuccessfulQueryRef.current) return;
+
+    if (suppressedDebounceQueryRef.current !== null && suppressedDebounceQueryRef.current === cleanQuery) {
+      suppressedDebounceQueryRef.current = null;
+      return;
+    }
+
     const timeout = window.setTimeout(() => void runSearch(cleanQuery), 650);
     return () => window.clearTimeout(timeout);
   }, [query, runSearch]);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => {
+    return () => {
+      requestGenerationRef.current += 1;
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const handleSuggestionClick = (suggestion: string) => {
+    const cleanSuggestion = suggestion.trim();
+    suppressedDebounceQueryRef.current = cleanSuggestion;
+    setQuery(suggestion);
+    void runSearch(cleanSuggestion);
+  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,8 +87,9 @@ export function SearchPanel() {
 
   const reset = () => {
     abortRef.current?.abort();
-    requestRef.current += 1;
-    lastQueryRef.current = "";
+    requestGenerationRef.current += 1;
+    lastSuccessfulQueryRef.current = "";
+    suppressedDebounceQueryRef.current = null;
     setQuery("");
     setItems([]);
     setNextPageToken(null);
@@ -111,7 +132,7 @@ export function SearchPanel() {
       {status === "idle" ? (
         <div className={styles.suggestions} aria-label="Gợi ý tìm kiếm">
           {suggestions.map((suggestion) => (
-            <button key={suggestion} onClick={() => { setQuery(suggestion); void runSearch(suggestion); }} type="button">
+            <button key={suggestion} onClick={() => handleSuggestionClick(suggestion)} type="button">
               {suggestion}
             </button>
           ))}
@@ -175,7 +196,7 @@ export function SearchPanel() {
             <button
               className={styles.loadMore}
               disabled={status === "loading"}
-              onClick={() => void runSearch(lastQueryRef.current || query, true)}
+              onClick={() => void runSearch(lastSuccessfulQueryRef.current || query, true)}
               type="button"
             >
               {status === "loading" ? "Đang tải thêm" : "Tải thêm kết quả"}
