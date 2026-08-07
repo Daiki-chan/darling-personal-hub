@@ -218,20 +218,36 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     else seek(0);
   }, [clock, seek]);
 
+  const pendingAddToQueueRef = useRef<Set<string>>(new Set());
+
   const addToQueue = useCallback((track: MusicTrack) => {
-    const alreadyExisted = stateRef.current.queue.some((item) => item.videoId === track.videoId);
-    dispatch({ type: "ADD_TO_QUEUE", track });
+    const videoId = track.videoId;
+    if (pendingAddToQueueRef.current.has(videoId)) return;
+
+    const alreadyExisted = stateRef.current.queue.some((item) => item.videoId === videoId);
     if (alreadyExisted) {
       showToast("PLAYER_NOT_READY", "Bài hát đã có trong hàng đợi.");
-    } else {
-      showToast("PLAYER_NOT_READY", "Đã thêm vào cuối hàng đợi.");
+      return;
     }
+
+    pendingAddToQueueRef.current.add(videoId);
+    dispatch({ type: "ADD_TO_QUEUE", track });
+    showToast("PLAYER_NOT_READY", "Đã thêm vào cuối hàng đợi.");
   }, [showToast]);
+
+  useEffect(() => {
+    for (const videoId of Array.from(pendingAddToQueueRef.current)) {
+      if (state.queue.some((item) => item.videoId === videoId)) {
+        pendingAddToQueueRef.current.delete(videoId);
+      }
+    }
+  }, [state.queue]);
 
   const playNext = useCallback((track: MusicTrack) => {
     dispatch({ type: "PLAY_NEXT", track });
     showToast("PLAYER_NOT_READY", "Bài hát sẽ phát tiếp theo.");
   }, [showToast]);
+
 
   const removeFromQueue = useCallback((videoId: string) => {
     dispatch({ type: "REMOVE_TRACK_AND_ADVANCE", videoId });

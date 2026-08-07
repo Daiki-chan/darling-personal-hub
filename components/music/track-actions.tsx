@@ -5,21 +5,49 @@ import { createPortal } from "react-dom";
 import { Heart, ListEnd, ListMusic, ListPlus, MoreHorizontal } from "lucide-react";
 import type { MusicTrack } from "@/lib/music/types";
 import { useMusicPlayer } from "./music-player-core";
+import { useTrackMenu } from "./track-menu-context";
 import styles from "./music-app.module.css";
 
-export function TrackActions({ track }: { track: MusicTrack }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+export function TrackFavoriteAction({ track }: { track: MusicTrack }) {
+  const { state, toggleFavorite } = useMusicPlayer();
+  const favorite = state.favorites.some((item) => item.videoId === track.videoId);
+
+  return (
+    <button
+      aria-label={favorite ? `Bỏ yêu thích ${track.title}` : `Thêm ${track.title} vào yêu thích`}
+      aria-pressed={favorite}
+      className={`${styles.cardFavoriteBtn} ${favorite ? styles.actionActive : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleFavorite(track);
+      }}
+      type="button"
+    >
+      <Heart aria-hidden="true" fill={favorite ? "currentColor" : "none"} size={16} />
+    </button>
+  );
+}
+
+export function TrackMenuTrigger({ surface, track }: { surface: string; track: MusicTrack }) {
+  const instanceId = `${surface}:${track.videoId}`;
+  const { openMenuInstanceId, setOpenMenuInstanceId } = useTrackMenu();
+  const menuOpen = openMenuInstanceId === instanceId;
+  const openMenuInstanceIdRef = useRef(openMenuInstanceId);
+
+  useEffect(() => {
+    openMenuInstanceIdRef.current = openMenuInstanceId;
+  }, [openMenuInstanceId]);
+
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [menuCoords, setMenuCoords] = useState<{ top: number; left: number; alignRight: boolean }>({ top: 0, left: 0, alignRight: true });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { addToPlaylist, addToQueue, playNext, state, toggleFavorite } = useMusicPlayer();
-  const favorite = state.favorites.some((item) => item.videoId === track.videoId);
+  const { addToPlaylist, addToQueue, playNext, state } = useMusicPlayer();
 
   const closeMenu = useCallback(() => {
-    setMenuOpen(false);
+    setOpenMenuInstanceId(null);
     setShowPlaylists(false);
-  }, []);
+  }, [setOpenMenuInstanceId]);
 
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
@@ -49,10 +77,18 @@ export function TrackActions({ track }: { track: MusicTrack }) {
       closeMenu();
     } else {
       updatePosition();
-      setMenuOpen(true);
+      setOpenMenuInstanceId(instanceId);
       setShowPlaylists(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (openMenuInstanceIdRef.current === instanceId) {
+        setOpenMenuInstanceId(null);
+      }
+    };
+  }, [instanceId, setOpenMenuInstanceId]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -118,20 +154,7 @@ export function TrackActions({ track }: { track: MusicTrack }) {
   };
 
   return (
-    <div className={styles.trackCardActions}>
-      <button
-        aria-label={favorite ? `Bỏ yêu thích ${track.title}` : `Thêm ${track.title} vào yêu thích`}
-        aria-pressed={favorite}
-        className={`${styles.cardFavoriteBtn} ${favorite ? styles.actionActive : ""}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFavorite(track);
-        }}
-        type="button"
-      >
-        <Heart aria-hidden="true" fill={favorite ? "currentColor" : "none"} size={16} />
-      </button>
-
+    <>
       <button
         aria-expanded={menuOpen}
         aria-haspopup="menu"
@@ -227,6 +250,15 @@ export function TrackActions({ track }: { track: MusicTrack }) {
             document.body,
           )
         : null}
+    </>
+  );
+}
+
+export function TrackActions({ surface, track }: { surface: string; track: MusicTrack }) {
+  return (
+    <div className={styles.trackCardActions}>
+      <TrackFavoriteAction track={track} />
+      <TrackMenuTrigger surface={surface} track={track} />
     </div>
   );
 }

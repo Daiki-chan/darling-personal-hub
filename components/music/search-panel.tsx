@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Play, Search, X } from "lucide-react";
-import { searchYouTubeMusic } from "@/lib/music/search-service";
+import { searchYouTubeMusic, SearchApiError } from "@/lib/music/search-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { formatTime } from "@/lib/music/format";
 import { mergeUniqueTracks } from "@/lib/music/track-utils";
@@ -21,83 +21,165 @@ export function SearchPanel() {
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [status, setStatus] = useState<SearchStatus>("idle");
   const [error, setError] = useState("");
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
   const abortRef = useRef<AbortController | null>(null);
-  const requestGenerationRef = useRef(0);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextDebounceQueryRef = useRef<string | null>(null);
+  const cooldownUntilRef = useRef<number>(0);
+  const searchGenerationRef = useRef(0);
+  const activePageRequestKeysRef = useRef<Set<string>>(new Set());
   const lastSuccessfulQueryRef = useRef("");
-  const suppressedDebounceQueryRef = useRef<string | null>(null);
+
+  const clearDebounceTimer = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+  }, []);
+
+  // Cooldown countdown effect based on deadline
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntilRef.current - Date.now()) / 1000));
+      setCooldownRemaining(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownRemaining]);
 
   const runSearch = useCallback(async (searchQuery: string, append = false) => {
     const cleanQuery = searchQuery.trim();
     if (cleanQuery.length < 2) {
-      setError("Nhập ít nhất 2 ký tự để tìm kiếm.");
+      setError("Từ khóa cần có từ 2 đến 120 ký tự.");
       setStatus("error");
       return;
     }
-    abortRef.current?.abort();
+
+    if (Date.now() < cooldownUntilRef.current) {
+      const remaining = Math.max(1, Math.ceil((cooldownUntilRef.current - Date.now()) / 1000));
+      setCooldownRemaining(remaining);
+      setError(`Bạn thao tác hơi nhanh. Vui lòng thử lại sau ${remaining} giây.`);
+      setStatus("error");
+      return;
+    }
+
+    const pageToken = append ? nextPageToken : null;
+    const pageKey = `${cleanQuery.toLowerCase()}::${pageToken ?? "first"}`;
+
+    if (append) {
+      if (activePageRequestKeysRef.current.has(pageKey)) return;
+      activePageRequestKeysRef.current.add(pageKey);
+    } else {
+      activePageRequestKeysRef.current.clear();
+      abortRef.current?.abort();
+    }
+
     const controller = new AbortController();
-    abortRef.current = controller;
-    const generation = ++requestGenerationRef.current;
+    if (!append) abortRef.current = controller;
+    const generation = ++searchGenerationRef.current;
+
     setStatus("loading");
     setError("");
-    const pageToken = append ? nextPageToken : null;
+
     try {
       const payload = await searchYouTubeMusic(cleanQuery, pageToken, controller.signal);
-      if (generation !== requestGenerationRef.current) return;
-      setItems((current) => append ? mergeUniqueTracks(current, payload.items) : payload.items);
+      if (generation !== searchGenerationRef.current) return;
+
+      setItems((current) => (append ? mergeUniqueTracks(current, payload.items) : payload.items));
       setNextPageToken(payload.nextPageToken);
       setStatus(payload.items.length || append ? "ready" : "empty");
       lastSuccessfulQueryRef.current = cleanQuery;
     } catch (reason) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
-      if (generation !== requestGenerationRef.current) return;
-      setError(reason instanceof Error ? reason.message : "Không thể tải kết quả tìm kiếm.");
+      if (generation !== searchGenerationRef.current) return;
+
+      if (reason instanceof SearchApiError && reason.code === "RATE_LIMITED") {
+        const retrySec = reason.retryAfter || 6;
+        cooldownUntilRef.current = Date.now() + retrySec * 1000;
+        setCooldownRemaining(retrySec);
+        setError(`Bạn thao tác hơi nhanh. Vui lòng thử lại sau ${retrySec} giây.`);
+      } else {
+        setError(reason instanceof Error ? reason.message : "Không thể tải kết quả tìm kiếm.");
+      }
       setStatus("error");
+    } finally {
+      if (append) {
+        activePageRequestKeysRef.current.delete(pageKey);
+      }
     }
   }, [nextPageToken]);
+
+  const triggerSearch = useCallback((searchQuery: string, append = false) => {
+    clearDebounceTimer();
+    void runSearch(searchQuery, append);
+  }, [clearDebounceTimer, runSearch]);
 
   useEffect(() => {
     const cleanQuery = query.trim();
     if (cleanQuery.length < 3 || cleanQuery === lastSuccessfulQueryRef.current) return;
 
-    if (suppressedDebounceQueryRef.current !== null && suppressedDebounceQueryRef.current === cleanQuery) {
-      suppressedDebounceQueryRef.current = null;
-      return;
+    if (skipNextDebounceQueryRef.current !== null) {
+      if (skipNextDebounceQueryRef.current === cleanQuery) {
+        skipNextDebounceQueryRef.current = null;
+        return;
+      }
+      skipNextDebounceQueryRef.current = null;
     }
 
-    const timeout = window.setTimeout(() => void runSearch(cleanQuery), 650);
-    return () => window.clearTimeout(timeout);
-  }, [query, runSearch]);
+    clearDebounceTimer();
+    debounceTimerRef.current = setTimeout(() => {
+      void runSearch(cleanQuery);
+    }, 650);
+
+    return () => clearDebounceTimer();
+  }, [query, runSearch, clearDebounceTimer]);
 
   useEffect(() => {
     return () => {
-      requestGenerationRef.current += 1;
+      clearDebounceTimer();
+      searchGenerationRef.current += 1;
       abortRef.current?.abort();
     };
-  }, []);
+  }, [clearDebounceTimer]);
 
   const handleSuggestionClick = (suggestion: string) => {
     const cleanSuggestion = suggestion.trim();
-    suppressedDebounceQueryRef.current = cleanSuggestion;
-    setQuery(suggestion);
-    void runSearch(cleanSuggestion);
+    clearDebounceTimer();
+    if (cleanSuggestion !== query.trim()) {
+      skipNextDebounceQueryRef.current = cleanSuggestion;
+      setQuery(suggestion);
+    } else {
+      skipNextDebounceQueryRef.current = null;
+    }
+    triggerSearch(cleanSuggestion);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void runSearch(query);
+    triggerSearch(query);
   };
 
   const reset = () => {
+    clearDebounceTimer();
     abortRef.current?.abort();
-    requestGenerationRef.current += 1;
+    searchGenerationRef.current += 1;
+    activePageRequestKeysRef.current.clear();
     lastSuccessfulQueryRef.current = "";
-    suppressedDebounceQueryRef.current = null;
+    skipNextDebounceQueryRef.current = null;
     setQuery("");
     setItems([]);
     setNextPageToken(null);
     setError("");
     setStatus("idle");
+    setCooldownRemaining(0);
+    cooldownUntilRef.current = 0;
   };
+
+  const isButtonDisabled = query.trim().length < 2 || status === "loading" || cooldownRemaining > 0;
 
   return (
     <section aria-labelledby="music-search-title" className={styles.searchSection}>
@@ -107,7 +189,7 @@ export function SearchPanel() {
           <h1 id="music-search-title">Âm nhạc cho khoảng riêng.</h1>
           <p>Tìm một bài hát, giữ lại những gì đáng nghe và để Darling lo phần còn lại.</p>
         </div>
-        <form className={styles.searchForm} onSubmit={submit} role="search">
+        <form className={styles.searchForm} onSubmit={handleSubmit} role="search">
           <label htmlFor="music-search">Tìm bài hát hoặc nghệ sĩ</label>
           <div className={styles.searchControl}>
             <Search aria-hidden="true" size={20} />
@@ -125,8 +207,8 @@ export function SearchPanel() {
               </button>
             ) : null}
           </div>
-          <button disabled={query.trim().length < 2 || status === "loading"} type="submit">
-            {status === "loading" ? "Đang tìm" : "Tìm nhạc"}
+          <button disabled={isButtonDisabled} type="submit">
+            {status === "loading" ? "Đang tìm" : cooldownRemaining > 0 ? `Chờ ${cooldownRemaining}s` : "Tìm nhạc"}
           </button>
         </form>
       </div>
@@ -151,7 +233,7 @@ export function SearchPanel() {
         <div className={styles.inlineState} role="alert">
           <AlertCircle aria-hidden="true" size={20} />
           <div><strong>Chưa thể tìm kiếm</strong><span>{error}</span></div>
-          <button onClick={() => void runSearch(query)} type="button">Thử lại</button>
+          <button disabled={cooldownRemaining > 0} onClick={() => triggerSearch(query)} type="button">Thử lại</button>
         </div>
       ) : null}
 
@@ -198,7 +280,7 @@ export function SearchPanel() {
                       <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
                       <span className={styles.trackArtist}>{track.artist}</span>
                     </div>
-                    <TrackActions track={track} />
+                    <TrackActions surface={`search:${track.videoId}`} track={track} />
                   </div>
                   <small
                     title={track.ranking?.signals.map((signal) => `${signal.points > 0 ? "+" : ""}${signal.points} ${signal.label}`).join("\n")}
@@ -212,8 +294,8 @@ export function SearchPanel() {
           {nextPageToken ? (
             <button
               className={styles.loadMore}
-              disabled={status === "loading"}
-              onClick={() => void runSearch(lastSuccessfulQueryRef.current || query, true)}
+              disabled={status === "loading" || cooldownRemaining > 0}
+              onClick={() => triggerSearch(lastSuccessfulQueryRef.current || query, true)}
               type="button"
             >
               {status === "loading" ? "Đang tải thêm" : "Tải thêm kết quả"}

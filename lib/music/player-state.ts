@@ -110,7 +110,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     case "HYDRATE": {
       const saved = action.payload;
       if (!saved) return { ...state, restored: true };
-      const queue = uniqueTracks(Array.isArray(saved.queue) ? saved.queue : []).slice(0, 30);
+      const queue = uniqueTracks(Array.isArray(saved.queue) ? saved.queue : []);
       const currentTrack = saved.currentTrack?.videoId ? saved.currentTrack : queue[0] ?? null;
       const savedTime = typeof saved.currentTime === "number" ? saved.currentTime : 0;
       const duration = currentTrack?.duration ?? 0;
@@ -138,7 +138,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     }
     case "PLAY_TRACK": {
       const isNewQueue = Boolean(action.queue);
-      const nextQueue = uniqueTracks(action.queue ?? [...state.queue, action.track]).slice(0, 30);
+      const nextQueue = uniqueTracks(action.queue ?? [...state.queue, action.track]);
       return {
         ...state,
         consecutiveFailures: 0,
@@ -162,7 +162,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
       return { ...state, queue: nextQueue };
     }
     case "SET_QUEUE":
-      return { ...state, queue: uniqueTracks(action.queue).slice(0, 30) };
+      return { ...state, queue: uniqueTracks(action.queue) };
 
     case "REMOVE_TRACK_AND_ADVANCE": {
       const nextQueue = state.queue.filter((item) => item.videoId !== action.videoId);
@@ -288,7 +288,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     case "SET_LYRIC_MAPPING":
       return { ...state, lyricMappings: { ...state.lyricMappings, [action.videoId]: action.record } };
     case "SET_LYRIC_OFFSET":
-      return { ...state, lyricOffsets: { ...state.lyricOffsets, [action.videoId]: clamp(action.value, -10, 10) } };
+      return { ...state, lyricOffsets: { ...state.lyricOffsets, [action.value]: clamp(action.value, -10, 10) } };
     case "MARK_UNAVAILABLE":
       return {
         ...state,

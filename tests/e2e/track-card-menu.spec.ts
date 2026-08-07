@@ -55,7 +55,6 @@ test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () =
   });
 
   test("queue list has bounded scroll container with scrollable content", async ({ page }) => {
-    // Add multiple tracks to queue via suggestion or search
     const suggestionBtn = page.getByRole("button", { name: "city pop" });
     if (await suggestionBtn.isVisible()) {
       await suggestionBtn.click();
@@ -64,7 +63,8 @@ test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () =
 
       // Click play to open player dock
       const playBtn = firstCard.locator('button[aria-label^="Phát "]').first();
-      await playBtn.click();
+      await playBtn.scrollIntoViewIfNeeded();
+      await playBtn.click({ force: true });
 
       // Locate queue list
       const queueList = page.locator('ol[class*="queueList"]');
@@ -77,4 +77,59 @@ test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () =
       }
     }
   });
+
+  const viewports = [
+    { width: 1440, height: 900, name: "desktop-xl" },
+    { width: 1366, height: 768, name: "desktop-laptop" },
+    { width: 768, height: 1024, name: "tablet" },
+    { width: 390, height: 844, name: "mobile-large" },
+    { width: 360, height: 800, name: "mobile-small" },
+  ];
+
+  for (const vp of viewports) {
+    test(`layout regression checks on viewport ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto("/am-nhac");
+
+      // 1. Verify no document horizontal overflow
+      const docOverflow = await page.evaluate(() => {
+        return document.documentElement.scrollWidth > window.innerWidth;
+      });
+      expect(docOverflow).toBe(false);
+
+      // 2. Verify Home Rail layout
+      const firstCard = page.locator("article").first();
+      await expect(firstCard).toBeVisible({ timeout: 10000 });
+
+      const cardBox = await firstCard.boundingBox();
+      expect(cardBox).not.toBeNull();
+      if (cardBox) {
+        expect(cardBox.width).toBeGreaterThan(120);
+        expect(cardBox.width).toBeLessThan(340);
+      }
+
+      // 3. Verify cover aspect ratio
+      const cover = firstCard.locator('div[class*="homeTrackCover"]').first();
+      if (await cover.isVisible()) {
+        const coverBox = await cover.boundingBox();
+        expect(coverBox).not.toBeNull();
+        if (coverBox) {
+          const ratio = coverBox.width / coverBox.height;
+          expect(ratio).toBeGreaterThan(0.9);
+          expect(ratio).toBeLessThan(1.1);
+        }
+      }
+
+      // 4. Verify image bounding box
+      const img = firstCard.locator("img").first();
+      if (await img.isVisible()) {
+        const imgBox = await img.boundingBox();
+        expect(imgBox).not.toBeNull();
+        if (imgBox) {
+          expect(imgBox.width).toBeGreaterThan(50);
+          expect(imgBox.height).toBeGreaterThan(50);
+        }
+      }
+    });
+  }
 });

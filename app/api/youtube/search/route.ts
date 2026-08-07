@@ -13,8 +13,29 @@ import type { SearchResponse } from "@/lib/music/types";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function errorResponse(message: string, status: number, headers?: Record<string, string>) {
-  return Response.json({ error: message }, { status, headers });
+function errorResponse(
+  code: string,
+  message: string,
+  status: number,
+  retryAfter?: number,
+  headers?: Record<string, string>,
+) {
+  return Response.json(
+    {
+      error: {
+        code,
+        message,
+        ...(retryAfter ? { retryAfter } : {}),
+      },
+    },
+    {
+      status,
+      headers: {
+        "Cache-Control": "private, no-store",
+        ...headers,
+      },
+    },
+  );
 }
 
 export async function GET(request: Request) {
@@ -22,33 +43,41 @@ export async function GET(request: Request) {
   const query = params.get("q")?.trim() ?? "";
   const pageToken = params.get("pageToken")?.trim() ?? "";
 
+  // 1. Validation BEFORE rate limit to avoid consuming tokens on bad input
   if (query.length < 2 || query.length > 120) {
-    return errorResponse("Từ khóa cần có từ 2 đến 120 ký tự.", 400);
+    return errorResponse("INVALID_QUERY", "Từ khóa cần có từ 2 đến 120 ký tự.", 400);
   }
   if (pageToken && !/^[A-Za-z0-9_-]{1,180}$/.test(pageToken)) {
-    return errorResponse("Mã phân trang không hợp lệ.", 400);
+    return errorResponse("INVALID_PAGE_TOKEN", "Mã phân trang không hợp lệ.", 400);
   }
 
-  // 1. Rate Limit Check (Prior to cache lookup to prevent spam abuse)
+  // 2. Rate Limit Check
   const rlResult = await checkRateLimit(request, { type: "search" });
   const rlHeaders = buildRateLimitHeaders(rlResult);
 
   if (!rlResult.success) {
     return errorResponse(
-      "Bạn thao tác hơi nhanh. Vui lòng thử lại sau ít giây.",
+      "RATE_LIMITED",
+      "Bạn thao tác hơi nhanh.",
       429,
+      rlResult.retryAfter,
       rlHeaders,
     );
   }
 
-  // 2. Redis Cache Lookup
+  // 3. Redis Cache Lookup
   const cacheKey = buildSearchCacheKey(query, pageToken || null, 18);
   const cached = await getCachedData<SearchResponse>(cacheKey);
   if (cached) {
-    return Response.json(cached, { headers: rlHeaders });
+    return Response.json(cached, {
+      headers: {
+        "Cache-Control": "private, no-store",
+        ...rlHeaders,
+      },
+    });
   }
 
-  // 3. Single-Flight & Upstream Fetch
+  // 4. Single-Flight & Upstream Fetch
   try {
     const result = await fetchWithSingleFlight(cacheKey, async () => {
       const payload = await searchYouTubeCandidates(query, { pageToken, maxResults: 18 });
@@ -65,11 +94,17 @@ export async function GET(request: Request) {
     // Write to Redis cache (TTL 15 min = 900 seconds)
     await setCachedData(cacheKey, result, 900);
 
-    return Response.json(result, { headers: rlHeaders });
+    return Response.json(result, {
+      headers: {
+        "Cache-Control": "private, no-store",
+        ...rlHeaders,
+      },
+    });
   } catch (error) {
     if (error instanceof YouTubeUpstreamError) {
-      return errorResponse(error.message, error.status, rlHeaders);
+      const errCode = error.status === 403 ? "UPSTREAM_QUOTA_EXCEEDED" : "UPSTREAM_UNAVAILABLE";
+      return errorResponse(errCode, error.message, error.status, undefined, rlHeaders);
     }
-    return errorResponse("Không thể kết nối YouTube Data API.", 502, rlHeaders);
+    return errorResponse("SERVICE_UNAVAILABLE", "Không thể kết nối dịch vụ nguồn nhạc.", 502, undefined, rlHeaders);
   }
 }

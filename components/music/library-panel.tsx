@@ -39,7 +39,7 @@ function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) 
                 <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
                 <span className={styles.trackArtist}>{track.artist}</span>
               </div>
-              <TrackActions track={track} />
+              <TrackActions surface={`library-strip:${title}:${track.videoId}`} track={track} />
             </div>
           </article>
         ))}
@@ -47,6 +47,7 @@ function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) 
     </section>
   );
 }
+
 
 export function LibraryPanel() {
   const {

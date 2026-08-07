@@ -30,7 +30,32 @@ export function mergeUniqueTracks(existing: MusicTrack[], incoming: MusicTrack[]
       result.push(track);
     }
   }
-  return result.slice(0, 30);
+  return result;
+}
+
+export function insertTrackNext(
+  queue: MusicTrack[],
+  currentVideoId: string | null,
+  track: MusicTrack,
+): MusicTrack[] {
+  if (!track || !track.videoId) return queue;
+  if (track.videoId === currentVideoId) {
+    return queue;
+  }
+
+  const cleanQueue = queue.filter((item) => item.videoId !== track.videoId);
+  if (!currentVideoId) {
+    return [track, ...cleanQueue];
+  }
+
+  const currentIndex = cleanQueue.findIndex((item) => item.videoId === currentVideoId);
+  if (currentIndex === -1) {
+    return [track, ...cleanQueue];
+  }
+
+  const result = [...cleanQueue];
+  result.splice(currentIndex + 1, 0, track);
+  return result;
 }
 
 export function insertPlayNextTrack(
@@ -40,29 +65,11 @@ export function insertPlayNextTrack(
 ): { nextQueue: MusicTrack[]; alreadyExisted: boolean } {
   const targetId = getTrackIdentity(trackToInsert);
   const alreadyExisted = queue.some((item) => getTrackIdentity(item) === targetId);
-  const cleanedQueue = queue.filter((item) => getTrackIdentity(item) !== targetId);
+  const currentId = currentTrack ? getTrackIdentity(currentTrack) : null;
+  const nextQueue = insertTrackNext(queue, currentId, trackToInsert);
 
-  if (!currentTrack) {
-    return {
-      nextQueue: [trackToInsert, ...cleanedQueue].slice(0, 30),
-      alreadyExisted,
-    };
-  }
-
-  const currentId = getTrackIdentity(currentTrack);
-  const currentIndex = cleanedQueue.findIndex((item) => getTrackIdentity(item) === currentId);
-
-  if (currentIndex === -1) {
-    return {
-      nextQueue: [currentTrack, trackToInsert, ...cleanedQueue].slice(0, 30),
-      alreadyExisted,
-    };
-  }
-
-  const result = [...cleanedQueue];
-  result.splice(currentIndex + 1, 0, trackToInsert);
   return {
-    nextQueue: result.slice(0, 30),
+    nextQueue,
     alreadyExisted,
   };
 }

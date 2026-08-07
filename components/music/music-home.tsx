@@ -7,39 +7,53 @@ import { rankMusicTracks } from "@/lib/music/ranking";
 import { fetchTrendingMusic } from "@/lib/music/trending-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { useMusicPlayer } from "./music-player-core";
-import { TrackActions } from "./track-actions";
+import { TrackFavoriteAction, TrackMenuTrigger } from "./track-actions";
 import styles from "./music-app.module.css";
 
 type TrendingStatus = "loading" | "ready" | "empty" | "error";
 
-function TrackRail({ tracks, label }: { tracks: MusicTrack[]; label: string }) {
+function TrackRail({ tracks, label, surface = "home-rail" }: { tracks: MusicTrack[]; label: string; surface?: string }) {
   const { playNow } = useMusicPlayer();
   if (!tracks.length) return null;
   return (
     <div className={styles.homeRail} aria-label={label}>
       {tracks.slice(0, 12).map((track) => (
         <article className={styles.homeTrack} key={track.videoId}>
-          <div className={styles.homeTrackMain}>
-            <Image alt={`Thumbnail ${track.title}`} height={360} sizes="(max-width: 767px) 78vw, 290px" src={track.thumbnail} width={480} />
+          <div className={styles.homeTrackCover}>
+            <Image
+              alt={`Thumbnail ${track.title}`}
+              className={styles.homeTrackImage}
+              height={360}
+              sizes="(max-width: 767px) 78vw, 240px"
+              src={track.thumbnail}
+              width={360}
+            />
             <button
               aria-label={`Phát ${track.title}`}
-              className={styles.cardOverlayPlay}
+              className={styles.homeTrackPlay}
               onClick={(e) => {
                 e.stopPropagation();
                 playNow(track);
               }}
               type="button"
             >
-              <Play fill="currentColor" size={18} />
+              <Play aria-hidden="true" fill="currentColor" size={20} />
             </button>
           </div>
-          <div className={styles.homeTrackCopy}>
-            <div className={styles.trackHeading}>
-              <div className={styles.trackMeta}>
-                <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
-                <span className={styles.trackArtist}>{track.artist}</span>
-              </div>
-              <TrackActions track={track} />
+
+          <div className={styles.homeTrackMeta}>
+            <div className={styles.homeTrackHeading}>
+              <strong className={styles.trackTitle} title={track.title}>
+                {track.title}
+              </strong>
+              <TrackMenuTrigger surface={`${surface}:${track.videoId}`} track={track} />
+            </div>
+
+            <div className={styles.homeTrackSubline}>
+              <span className={styles.trackArtist}>
+                {track.artist}
+              </span>
+              <TrackFavoriteAction track={track} />
             </div>
           </div>
         </article>

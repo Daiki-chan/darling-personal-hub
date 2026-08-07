@@ -22,7 +22,7 @@ export type RateLimitConfig = {
   ipResolver?: (request: Request) => string;
 };
 
-// Memory fallback store for local dev
+// Memory fallback store for local dev & telemetry
 type MemoryRecord = { count: number; expiresAt: number };
 const memoryStore = new Map<string, MemoryRecord>();
 
@@ -93,53 +93,67 @@ export async function checkRateLimit(
         prefix: `${namespace}:min`,
       });
 
+      // Sequential evaluation (Option A): evaluate minute window first
+      const minRes = await minRatelimit.limit(hashedIp);
+      if (!minRes.success) {
+        const retryAfter = Math.max(1, Math.ceil(Math.max(0, minRes.reset - nowMs) / 1000));
+        return {
+          success: false,
+          limit: minuteLimit,
+          remaining: 0,
+          reset: retryAfter,
+          retryAfter,
+          environment: env,
+        };
+      }
+
+      // If minute window passes, evaluate 1-hour window
       const hourRatelimit = new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(hourlyLimit, "1 h"),
         prefix: `${namespace}:hour`,
       });
 
-      const [minRes, hourRes] = await Promise.all([
-        minRatelimit.limit(hashedIp),
-        hourRatelimit.limit(hashedIp),
-      ]);
+      const hourRes = await hourRatelimit.limit(hashedIp);
+      if (!hourRes.success) {
+        const retryAfter = Math.max(1, Math.ceil(Math.max(0, hourRes.reset - nowMs) / 1000));
+        return {
+          success: false,
+          limit: hourlyLimit,
+          remaining: 0,
+          reset: retryAfter,
+          retryAfter,
+          environment: env,
+        };
+      }
 
-      const success = minRes.success && hourRes.success;
-      const minRetry = minRes.success ? 0 : Math.ceil(Math.max(0, minRes.reset - nowMs) / 1000);
-      const hourRetry = hourRes.success ? 0 : Math.ceil(Math.max(0, hourRes.reset - nowMs) / 1000);
-      const retryAfter = Math.max(minRetry, hourRetry, success ? 0 : 1);
-
-      const minRemaining = minRes.remaining;
-      const hourRemaining = hourRes.remaining;
-      const remaining = Math.min(minRemaining, hourRemaining);
-
+      const remaining = Math.min(minRes.remaining, hourRes.remaining);
       const minResetSec = Math.ceil(Math.max(0, minRes.reset - nowMs) / 1000);
       const hourResetSec = Math.ceil(Math.max(0, hourRes.reset - nowMs) / 1000);
-      const reset = minRemaining <= hourRemaining ? minResetSec : hourResetSec;
+      const reset = Math.max(1, minRes.remaining <= hourRes.remaining ? minResetSec : hourResetSec);
 
       return {
-        success,
-        limit: minRemaining <= hourRemaining ? minuteLimit : hourlyLimit,
+        success: true,
+        limit: minRes.remaining <= hourRes.remaining ? minuteLimit : hourlyLimit,
         remaining: Math.max(0, remaining),
-        reset: Math.max(1, reset),
-        retryAfter,
+        reset,
+        retryAfter: 0,
         environment: env,
       };
     } catch (err) {
       console.error("[Redis RateLimit Error]", err);
-      // Fallback behavior
     }
   }
 
-  // Fallback for Development, Preview or Fail-Closed in Production
+  // Production Controlled Fail-Open when Redis is unconfigured or failing
   if (env === "production" && !redis) {
-    console.error("[CRITICAL] Upstash Redis environment variables missing in Production!");
+    console.error("[CRITICAL] Upstash Redis environment variables missing in Production! Failing open.");
     return {
-      success: false,
+      success: true,
       limit: minuteLimit,
-      remaining: 0,
+      remaining: minuteLimit,
       reset: 60,
-      retryAfter: 60,
+      retryAfter: 0,
       environment: env,
     };
   }
@@ -159,32 +173,48 @@ export async function checkRateLimit(
   };
 
   const minState = checkWindow(minKey, minuteLimit, 60000);
-  const hourState = checkWindow(hourKey, hourlyLimit, 3600000);
-
-  const success = minState.success && hourState.success;
-  if (success) {
-    memoryStore.set(minKey, { count: minState.count + 1, expiresAt: minState.expiresAt });
-    memoryStore.set(hourKey, { count: hourState.count + 1, expiresAt: hourState.expiresAt });
+  if (!minState.success) {
+    const retryAfter = Math.max(1, Math.ceil((minState.expiresAt - nowMs) / 1000));
+    return {
+      success: false,
+      limit: minuteLimit,
+      remaining: 0,
+      reset: retryAfter,
+      retryAfter,
+      environment: env,
+    };
   }
 
-  const minRetry = minState.success ? 0 : Math.ceil((minState.expiresAt - nowMs) / 1000);
-  const hourRetry = hourState.success ? 0 : Math.ceil((hourState.expiresAt - nowMs) / 1000);
-  const retryAfter = Math.max(minRetry, hourRetry, success ? 0 : 1);
+  const hourState = checkWindow(hourKey, hourlyLimit, 3600000);
+  if (!hourState.success) {
+    const retryAfter = Math.max(1, Math.ceil((hourState.expiresAt - nowMs) / 1000));
+    return {
+      success: false,
+      limit: hourlyLimit,
+      remaining: 0,
+      reset: retryAfter,
+      retryAfter,
+      environment: env,
+    };
+  }
 
-  const minRem = Math.max(0, minState.remaining - (success ? 1 : 0));
-  const hourRem = Math.max(0, hourState.remaining - (success ? 1 : 0));
+  memoryStore.set(minKey, { count: minState.count + 1, expiresAt: minState.expiresAt });
+  memoryStore.set(hourKey, { count: hourState.count + 1, expiresAt: hourState.expiresAt });
+
+  const minRem = Math.max(0, minState.remaining - 1);
+  const hourRem = Math.max(0, hourState.remaining - 1);
   const remaining = Math.min(minRem, hourRem);
 
-  const reset = minRem <= hourRem
+  const reset = Math.max(1, minRem <= hourRem
     ? Math.ceil((minState.expiresAt - nowMs) / 1000)
-    : Math.ceil((hourState.expiresAt - nowMs) / 1000);
+    : Math.ceil((hourState.expiresAt - nowMs) / 1000));
 
   return {
-    success,
+    success: true,
     limit: minRem <= hourRem ? minuteLimit : hourlyLimit,
     remaining,
-    reset: Math.max(1, reset),
-    retryAfter,
+    reset,
+    retryAfter: 0,
     environment: env,
   };
 }
