@@ -40,6 +40,31 @@ export async function savePersistedMusicState(state: PersistedMusicState) {
   });
 }
 
+export async function clearPersistedPlaybackSession(): Promise<void> {
+  if (typeof window === "undefined" || !("indexedDB" in window)) return;
+  try {
+    const existing = await loadPersistedMusicState();
+    const sanitized: PersistedMusicState = {
+      autoRadioEnabled: existing?.autoRadioEnabled !== false,
+      currentTrack: null,
+      currentTime: 0,
+      favorites: Array.isArray(existing?.favorites) ? existing.favorites : [],
+      history: [],
+      lyricMappings: existing?.lyricMappings ?? {},
+      lyricOffsets: existing?.lyricOffsets ?? {},
+      playlists: Array.isArray(existing?.playlists) ? existing.playlists : [],
+      queue: [],
+      repeatMode: existing?.repeatMode ?? "off",
+      shuffleEnabled: Boolean(existing?.shuffleEnabled),
+      updatedAt: Date.now(),
+      volume: existing?.volume ?? { volume: 80, previousVolume: 80, muted: false },
+    };
+    await savePersistedMusicState(sanitized);
+  } catch (error) {
+    console.error("[Storage Clear Session Error]", error);
+  }
+}
+
 export function cleanLegacyMusicStorage() {
   if (typeof window === "undefined") return;
   try {

@@ -16,6 +16,7 @@ type YouTubePlayer = {
   mute: () => void;
   pauseVideo: () => void;
   playVideo: () => void;
+  stopVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
   setVolume: (volume: number) => void;
   unMute: () => void;
@@ -50,6 +51,18 @@ type YouTubeWindow = Window & {
 
 let apiPromise: Promise<YouTubeApi> | null = null;
 
+function resetYouTubeApiScript() {
+  apiPromise = null;
+  const existing = document.getElementById("youtube-iframe-api");
+  if (existing) {
+    try {
+      existing.remove();
+    } catch {
+      // Ignore if element is already detached
+    }
+  }
+}
+
 function loadYouTubeApi() {
   const youtubeWindow = window as YouTubeWindow;
   if (youtubeWindow.YT?.Player) return Promise.resolve(youtubeWindow.YT);
@@ -57,12 +70,19 @@ function loadYouTubeApi() {
 
   apiPromise = new Promise<YouTubeApi>((resolve, reject) => {
     const previousReady = youtubeWindow.onYouTubeIframeAPIReady;
-    const timeout = window.setTimeout(() => reject(new Error("YouTube IFrame API timeout.")), 15000);
+    const timeout = window.setTimeout(() => {
+      resetYouTubeApiScript();
+      reject(new Error("YouTube IFrame API timeout."));
+    }, 15000);
+
     youtubeWindow.onYouTubeIframeAPIReady = () => {
       previousReady?.();
       window.clearTimeout(timeout);
       if (youtubeWindow.YT) resolve(youtubeWindow.YT);
-      else reject(new Error("YouTube IFrame API unavailable."));
+      else {
+        resetYouTubeApiScript();
+        reject(new Error("YouTube IFrame API unavailable."));
+      }
     };
 
     const existing = document.getElementById("youtube-iframe-api");
@@ -73,6 +93,7 @@ function loadYouTubeApi() {
     script.async = true;
     script.onerror = () => {
       window.clearTimeout(timeout);
+      resetYouTubeApiScript();
       reject(new Error("YouTube IFrame API failed to load."));
     };
     document.head.appendChild(script);
@@ -88,22 +109,48 @@ export function YouTubeVideoStage() {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const readyRef = useRef(false);
   const loadedVideoIdRef = useRef<string | null>(null);
+  const playerGenerationRef = useRef(0);
+  const resumeHandledRef = useRef(false);
   const stateRef = useRef(state);
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
+  // Teardown when shutdown action is dispatched
   useEffect(() => {
+    if (state.isShutdown) {
+      playerGenerationRef.current += 1;
+      readyRef.current = false;
+      loadedVideoIdRef.current = null;
+      resumeHandledRef.current = false;
+      try {
+        playerRef.current?.stopVideo();
+      } catch {
+        // Player may already be stopped
+      }
+      try {
+        playerRef.current?.destroy();
+      } catch {
+        // Player may already be destroyed
+      }
+      playerRef.current = null;
+    }
+  }, [state.isShutdown, state.shutdownGeneration]);
+
+  useEffect(() => {
+    if (stateRef.current.isShutdown) return;
     let active = true;
     const target = targetRef.current;
     const track = stateRef.current.currentTrack;
     if (!target || !track) return;
 
+    const generation = ++playerGenerationRef.current;
     reportPlayerStatus("loading", stateRef.current.isPlaying);
+
     loadYouTubeApi()
       .then((YT) => {
-        if (!active || playerRef.current || !targetRef.current) return;
+        if (!active || generation !== playerGenerationRef.current || playerRef.current || !targetRef.current) return;
         playerRef.current = new YT.Player(targetRef.current, {
           videoId: track.videoId,
           playerVars: {
@@ -120,32 +167,28 @@ export function YouTubeVideoStage() {
           },
           events: {
             onReady: (event) => {
+              if (generation !== playerGenerationRef.current) return;
               readyRef.current = true;
               loadedVideoIdRef.current = stateRef.current.currentTrack?.videoId ?? null;
+
+              // Handle resume seek if valid
+              const resumeSec = stateRef.current.resumeSeconds;
+              if (resumeSec && resumeSec > 0 && !resumeHandledRef.current) {
+                resumeHandledRef.current = true;
+                event.target.seekTo(resumeSec, true);
+                clock.set(resumeSec, track.duration ?? 0);
+              }
+
               const desired = stateRef.current.volume;
               event.target.setVolume(clampVolume(desired.volume));
               if (desired.muted) event.target.mute();
               else event.target.unMute();
-              if (clampVolume(event.target.getVolume()) !== clampVolume(desired.volume)) {
-                event.target.setVolume(clampVolume(desired.volume));
-              }
-              if (stageRef.current) {
-                stageRef.current.dataset.appliedVolume = String(clampVolume(event.target.getVolume()));
-                stageRef.current.dataset.appliedMuted = String(event.target.isMuted());
-              }
+
               reportPlayerStatus("ready", stateRef.current.isPlaying);
               if (stateRef.current.isPlaying) event.target.playVideo();
-              window.setTimeout(() => {
-                if (!active || playerRef.current !== event.target) return;
-                const applied = clampVolume(event.target.getVolume());
-                if (applied !== clampVolume(desired.volume)) event.target.setVolume(clampVolume(desired.volume));
-                if (stageRef.current) {
-                  stageRef.current.dataset.appliedVolume = String(clampVolume(event.target.getVolume()));
-                  stageRef.current.dataset.appliedMuted = String(event.target.isMuted());
-                }
-              }, 120);
             },
             onStateChange: (event) => {
+              if (generation !== playerGenerationRef.current) return;
               if (event.data === YT.PlayerState.PLAYING) reportPlayerStatus("playing", true);
               else if (event.data === YT.PlayerState.PAUSED) reportPlayerStatus("paused", false);
               else if (event.data === YT.PlayerState.BUFFERING) reportPlayerStatus("buffering", true);
@@ -153,6 +196,7 @@ export function YouTubeVideoStage() {
               else if (event.data === YT.PlayerState.ENDED) void next(true);
             },
             onError: (event) => {
+              if (generation !== playerGenerationRef.current) return;
               const blocked = event.data === 101 || event.data === 150;
               handlePlaybackError(
                 blocked ? "VIDEO_NOT_EMBEDDABLE" : "VIDEO_UNAVAILABLE",
@@ -165,7 +209,9 @@ export function YouTubeVideoStage() {
         });
       })
       .catch(() => {
-        if (active) handlePlaybackError("NETWORK_ERROR", "Không thể tải YouTube Player. Kiểm tra kết nối và thử lại.");
+        if (active && generation === playerGenerationRef.current) {
+          handlePlaybackError("NETWORK_ERROR", "Không thể tải YouTube Player. Kiểm tra kết nối và thử lại.");
+        }
       });
 
     return () => {
@@ -174,16 +220,16 @@ export function YouTubeVideoStage() {
       try {
         playerRef.current?.destroy();
       } catch {
-        // Route teardown may remove the iframe before the API callback runs.
+        // Route teardown may remove the iframe
       }
       playerRef.current = null;
     };
-  }, [handlePlaybackError, next, reportPlayerStatus]);
+  }, [handlePlaybackError, next, reportPlayerStatus, state.currentTrack?.videoId, state.isShutdown]);
 
   useEffect(() => {
     const track = state.currentTrack;
     const player = playerRef.current;
-    if (!track || !player || !readyRef.current || loadedVideoIdRef.current === track.videoId) return;
+    if (state.isShutdown || !track || !player || !readyRef.current || loadedVideoIdRef.current === track.videoId) return;
     loadedVideoIdRef.current = track.videoId;
     clock.set(0, track.duration ?? 0);
     try {
@@ -192,50 +238,37 @@ export function YouTubeVideoStage() {
     } catch {
       handlePlaybackError("PLAYER_NOT_READY", "YouTube Player chưa sẵn sàng. Vui lòng thử lại.");
     }
-  }, [clock, handlePlaybackError, state.currentTrack, state.isPlaying]);
+  }, [clock, handlePlaybackError, state.currentTrack, state.isPlaying, state.isShutdown]);
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!player || !readyRef.current) return;
+    if (state.isShutdown || !player || !readyRef.current) return;
     try {
       if (state.isPlaying) player.playVideo();
       else player.pauseVideo();
     } catch {
       handlePlaybackError("PLAYER_NOT_READY", "YouTube Player chưa sẵn sàng. Vui lòng thử lại.");
     }
-  }, [handlePlaybackError, state.isPlaying]);
+  }, [handlePlaybackError, state.isPlaying, state.isShutdown]);
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!player || !readyRef.current) return;
+    if (state.isShutdown || !player || !readyRef.current) return;
     const desired = clampVolume(state.volume.volume);
     player.setVolume(desired);
     if (state.volume.muted) player.mute();
     else player.unMute();
-    if (stageRef.current) {
-      stageRef.current.dataset.appliedVolume = String(clampVolume(player.getVolume()));
-      stageRef.current.dataset.appliedMuted = String(player.isMuted());
-    }
-    const verification = window.setTimeout(() => {
-      const applied = clampVolume(player.getVolume());
-      if (applied !== desired) player.setVolume(desired);
-      if (stageRef.current) {
-        stageRef.current.dataset.appliedVolume = String(clampVolume(player.getVolume()));
-        stageRef.current.dataset.appliedMuted = String(player.isMuted());
-      }
-    }, 120);
-    return () => window.clearTimeout(verification);
-  }, [state.volume]);
+  }, [state.volume, state.isShutdown]);
 
   useEffect(() => {
     const request = state.seekRequest;
-    if (!request || !playerRef.current || !readyRef.current) return;
+    if (state.isShutdown || !request || !playerRef.current || !readyRef.current) return;
     playerRef.current.seekTo(request.seconds, true);
-  }, [state.seekRequest]);
+  }, [state.seekRequest, state.isShutdown]);
 
   useEffect(() => {
     const syncClock = () => {
-      if (document.hidden) return;
+      if (document.hidden || stateRef.current.isShutdown) return;
       const player = playerRef.current;
       if (!player || !readyRef.current) return;
       try {
@@ -244,7 +277,7 @@ export function YouTubeVideoStage() {
         clock.set(currentTime, duration);
         if (duration > 0 && Math.abs(duration - stateRef.current.duration) > 0.5) reportDuration(duration);
       } catch {
-        // A transient iframe navigation can make getters unavailable for one tick.
+        // Transient getter unavailabilities
       }
     };
     const interval = window.setInterval(syncClock, 750);
@@ -255,6 +288,8 @@ export function YouTubeVideoStage() {
       document.removeEventListener("visibilitychange", syncClock);
     };
   }, [clock, reportDuration]);
+
+  if (state.isShutdown || !state.currentTrack) return null;
 
   return (
     <div
