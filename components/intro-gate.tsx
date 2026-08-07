@@ -113,7 +113,7 @@ export const IntroGate = memo(function IntroGate() {
                       animate={floatingMotion}
                       transition={{ duration: 8.8, repeat: Infinity, ease: floatEase }}
                     >
-                      Darling Ohayo
+                      Darling, ohayō
                     </motion.h1>
                     <p>Click anywhere to step inside</p>
                   </motion.div>
