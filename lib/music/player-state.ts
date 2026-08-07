@@ -9,7 +9,7 @@ import type {
   VolumeState,
 } from "./types";
 import { clamp } from "./format";
-import { uniqueTracks } from "./track-utils";
+import { insertPlayNextTrack, mergeUniqueTracks, uniqueTracks } from "./track-utils";
 import { changeMuted, changeVolume, normalizeVolumeState } from "./volume";
 
 export type PlayerStatus = "idle" | "loading" | "ready" | "playing" | "paused" | "buffering" | "error";
@@ -45,6 +45,8 @@ export type MusicPlayerState = {
 export type Action =
   | { type: "HYDRATE"; payload: PersistedMusicState | null }
   | { type: "PLAY_TRACK"; track: MusicTrack; queue?: MusicTrack[] }
+  | { type: "PLAY_NEXT"; track: MusicTrack }
+  | { type: "ADD_TO_QUEUE"; track: MusicTrack }
   | { type: "SET_QUEUE"; queue: MusicTrack[] }
   | { type: "REMOVE_TRACK_AND_ADVANCE"; videoId: string }
   | { type: "SHUTDOWN_PLAYER" }
@@ -108,11 +110,10 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     case "HYDRATE": {
       const saved = action.payload;
       if (!saved) return { ...state, restored: true };
-      const queue = uniqueTracks(Array.isArray(saved.queue) ? saved.queue : []);
+      const queue = uniqueTracks(Array.isArray(saved.queue) ? saved.queue : []).slice(0, 30);
       const currentTrack = saved.currentTrack?.videoId ? saved.currentTrack : queue[0] ?? null;
       const savedTime = typeof saved.currentTime === "number" ? saved.currentTime : 0;
       const duration = currentTrack?.duration ?? 0;
-      // Do not resume if saved time is too close to end of track
       const validResumeTime = (duration > 0 && savedTime > duration - 5) ? null : (savedTime > 2 ? savedTime : null);
 
       return {
@@ -137,7 +138,7 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
     }
     case "PLAY_TRACK": {
       const isNewQueue = Boolean(action.queue);
-      const nextQueue = uniqueTracks(action.queue ?? [...state.queue, action.track]);
+      const nextQueue = uniqueTracks(action.queue ?? [...state.queue, action.track]).slice(0, 30);
       return {
         ...state,
         consecutiveFailures: 0,
@@ -152,8 +153,16 @@ export function musicPlayerReducer(state: MusicPlayerState, action: Action): Mus
         unavailableVideoIds: isNewQueue ? [] : state.unavailableVideoIds,
       };
     }
+    case "PLAY_NEXT": {
+      const { nextQueue } = insertPlayNextTrack(state.queue, state.currentTrack, action.track);
+      return { ...state, queue: nextQueue };
+    }
+    case "ADD_TO_QUEUE": {
+      const nextQueue = mergeUniqueTracks(state.queue, [action.track]);
+      return { ...state, queue: nextQueue };
+    }
     case "SET_QUEUE":
-      return { ...state, queue: uniqueTracks(action.queue) };
+      return { ...state, queue: uniqueTracks(action.queue).slice(0, 30) };
 
     case "REMOVE_TRACK_AND_ADVANCE": {
       const nextQueue = state.queue.filter((item) => item.videoId !== action.videoId);

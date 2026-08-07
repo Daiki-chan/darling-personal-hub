@@ -20,8 +20,17 @@ const mockTrack2: MusicTrack = {
   thumbnail: "https://example.com/2.jpg",
 };
 
+const mockTrack3: MusicTrack = {
+  videoId: "vid3",
+  title: "Track 3",
+  artist: "Artist 3",
+  channelTitle: "Artist 3",
+  duration: 210,
+  thumbnail: "https://example.com/3.jpg",
+};
+
 describe("musicPlayerReducer", () => {
-  it("HYDRATE sets valid resumeSeconds when savedTime is appropriate", () => {
+  it("HYDRATE sets valid resumeSeconds when savedTime is appropriate and deduplicates queue", () => {
     const savedState = {
       autoRadioEnabled: true,
       currentTrack: mockTrack1,
@@ -31,7 +40,7 @@ describe("musicPlayerReducer", () => {
       lyricMappings: {},
       lyricOffsets: {},
       playlists: [],
-      queue: [mockTrack1],
+      queue: [mockTrack1, mockTrack1, mockTrack2],
       repeatMode: "off" as const,
       shuffleEnabled: false,
       updatedAt: Date.now(),
@@ -41,6 +50,7 @@ describe("musicPlayerReducer", () => {
     const hydrated = musicPlayerReducer(initialState, { type: "HYDRATE", payload: savedState });
     expect(hydrated.resumeSeconds).toBe(45);
     expect(hydrated.currentTrack?.videoId).toBe("vid1");
+    expect(hydrated.queue.map((t) => t.videoId)).toEqual(["vid1", "vid2"]);
   });
 
   it("HYDRATE ignores resumeSeconds if savedTime is within 5 seconds of track end", () => {
@@ -62,6 +72,34 @@ describe("musicPlayerReducer", () => {
 
     const hydrated = musicPlayerReducer(initialState, { type: "HYDRATE", payload: savedState });
     expect(hydrated.resumeSeconds).toBeNull();
+  });
+
+  it("ADD_TO_QUEUE appends track without creating duplicate entry", () => {
+    const stateWithQueue = {
+      ...initialState,
+      currentTrack: mockTrack1,
+      queue: [mockTrack1, mockTrack2],
+    };
+
+    // Adding mockTrack2 again should not create duplicate
+    const state1 = musicPlayerReducer(stateWithQueue, { type: "ADD_TO_QUEUE", track: mockTrack2 });
+    expect(state1.queue.map((t) => t.videoId)).toEqual(["vid1", "vid2"]);
+
+    // Adding mockTrack3 should append to end
+    const state2 = musicPlayerReducer(state1, { type: "ADD_TO_QUEUE", track: mockTrack3 });
+    expect(state2.queue.map((t) => t.videoId)).toEqual(["vid1", "vid2", "vid3"]);
+  });
+
+  it("PLAY_NEXT moves existing track to position right after current track", () => {
+    const stateWithQueue = {
+      ...initialState,
+      currentTrack: mockTrack1,
+      queue: [mockTrack1, mockTrack2, mockTrack3],
+    };
+
+    // Playing mockTrack3 next should move it after mockTrack1 without duplicating
+    const state1 = musicPlayerReducer(stateWithQueue, { type: "PLAY_NEXT", track: mockTrack3 });
+    expect(state1.queue.map((t) => t.videoId)).toEqual(["vid1", "vid3", "vid2"]);
   });
 
   it("REMOVE_TRACK_AND_ADVANCE advances track cleanly when current track is removed", () => {

@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Search, X } from "lucide-react";
+import { AlertCircle, Play, Search, X } from "lucide-react";
 import { searchYouTubeMusic } from "@/lib/music/search-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { formatTime } from "@/lib/music/format";
 import { mergeUniqueTracks } from "@/lib/music/track-utils";
+import { useMusicPlayer } from "./music-player-core";
 import { TrackActions } from "./track-actions";
 import styles from "./music-app.module.css";
 
@@ -14,6 +15,7 @@ type SearchStatus = "idle" | "loading" | "ready" | "empty" | "error";
 const suggestions = ["nhạc Việt đêm khuya", "lofi acoustic", "city pop", "indie chill"];
 
 export function SearchPanel() {
+  const { playNow } = useMusicPlayer();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<MusicTrack[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
@@ -178,17 +180,32 @@ export function SearchPanel() {
                     src={track.thumbnail}
                     width={480}
                   />
+                  <button
+                    aria-label={`Phát ${track.title}`}
+                    className={styles.cardOverlayPlay}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playNow(track);
+                    }}
+                    type="button"
+                  >
+                    <Play fill="currentColor" size={20} />
+                  </button>
                 </div>
                 <div className={styles.searchCardCopy}>
-                  <strong title={track.title}>{track.title}</strong>
-                  <span>{track.artist}</span>
+                  <div className={styles.trackHeading}>
+                    <div className={styles.trackMeta}>
+                      <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
+                      <span className={styles.trackArtist}>{track.artist}</span>
+                    </div>
+                    <TrackActions track={track} />
+                  </div>
                   <small
                     title={track.ranking?.signals.map((signal) => `${signal.points > 0 ? "+" : ""}${signal.points} ${signal.label}`).join("\n")}
                   >
                     {track.duration ? formatTime(track.duration) : "Thời lượng chưa rõ"}{track.ranking ? ` · Điểm ưu tiên ${track.ranking.score}` : ""}
                   </small>
                 </div>
-                <TrackActions track={track} />
               </article>
             ))}
           </div>

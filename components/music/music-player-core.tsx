@@ -219,16 +219,17 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [clock, seek]);
 
   const addToQueue = useCallback((track: MusicTrack) => {
-    dispatch({ type: "SET_QUEUE", queue: [...stateRef.current.queue, track] });
-    showToast("PLAYER_NOT_READY", "Đã thêm vào cuối hàng đợi.");
+    const alreadyExisted = stateRef.current.queue.some((item) => item.videoId === track.videoId);
+    dispatch({ type: "ADD_TO_QUEUE", track });
+    if (alreadyExisted) {
+      showToast("PLAYER_NOT_READY", "Bài hát đã có trong hàng đợi.");
+    } else {
+      showToast("PLAYER_NOT_READY", "Đã thêm vào cuối hàng đợi.");
+    }
   }, [showToast]);
 
   const playNext = useCallback((track: MusicTrack) => {
-    const current = stateRef.current;
-    const queue = current.queue.filter((item) => item.videoId !== track.videoId);
-    const index = Math.max(0, queue.findIndex((item) => item.videoId === current.currentTrack?.videoId));
-    queue.splice(index + 1, 0, track);
-    dispatch({ type: "SET_QUEUE", queue });
+    dispatch({ type: "PLAY_NEXT", track });
     showToast("PLAYER_NOT_READY", "Bài hát sẽ phát tiếp theo.");
   }, [showToast]);
 

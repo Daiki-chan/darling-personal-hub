@@ -16,34 +16,35 @@ function TrackRail({ tracks, label }: { tracks: MusicTrack[]; label: string }) {
   const { playNow } = useMusicPlayer();
   if (!tracks.length) return null;
   return (
-      <div className={styles.homeRail} aria-label={label}>
-        {tracks.slice(0, 12).map((track) => (
-          <article className={styles.homeTrack} key={track.videoId}>
-            <button className={styles.homeTrackPlay} onClick={() => playNow(track)} type="button">
-              <Image alt={`Thumbnail ${track.title}`} height={360} sizes="(max-width: 767px) 78vw, 290px" src={track.thumbnail} width={480} />
-              <span aria-hidden="true"><Play fill="currentColor" size={18} /></span>
+    <div className={styles.homeRail} aria-label={label}>
+      {tracks.slice(0, 12).map((track) => (
+        <article className={styles.homeTrack} key={track.videoId}>
+          <div className={styles.homeTrackMain}>
+            <Image alt={`Thumbnail ${track.title}`} height={360} sizes="(max-width: 767px) 78vw, 290px" src={track.thumbnail} width={480} />
+            <button
+              aria-label={`Phát ${track.title}`}
+              className={styles.cardOverlayPlay}
+              onClick={(e) => {
+                e.stopPropagation();
+                playNow(track);
+              }}
+              type="button"
+            >
+              <Play fill="currentColor" size={18} />
             </button>
-            <div className={styles.homeTrackCopy}>
-              <strong title={track.title}>{track.title}</strong>
-              <span>{track.artist}</span>
+          </div>
+          <div className={styles.homeTrackCopy}>
+            <div className={styles.trackHeading}>
+              <div className={styles.trackMeta}>
+                <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
+                <span className={styles.trackArtist}>{track.artist}</span>
+              </div>
+              <TrackActions track={track} />
             </div>
-            <TrackActions track={track} />
-          </article>
-        ))}
-      </div>
-  );
-}
-
-function MusicRail({ title, tracks }: { title: string; tracks: MusicTrack[] }) {
-  if (!tracks.length) return null;
-  return (
-    <section className={styles.homeSection} aria-label={title}>
-      <div className={styles.sectionHeading}>
-        <h2>{title}</h2>
-        <span>{tracks.length} bài</span>
-      </div>
-      <TrackRail label={title} tracks={tracks} />
-    </section>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -81,8 +82,6 @@ export function MusicHome() {
 
   return (
     <div className={styles.musicHome}>
-      {state.currentTrack ? <MusicRail title="Tiếp tục nghe" tracks={[state.currentTrack]} /> : null}
-
       <section className={styles.homeSection} aria-labelledby="trending-vn-title">
         <div className={styles.sectionHeading}>
           <h2 id="trending-vn-title">Thịnh hành tại Việt Nam</h2>
@@ -109,9 +108,14 @@ export function MusicHome() {
         {trending.length ? <TrackRail label="Phổ biến hôm nay" tracks={trending} /> : null}
       </section>
 
-      <MusicRail title="Dành cho bạn" tracks={recommended} />
-      <MusicRail title="Nghe gần đây" tracks={state.history} />
-      <MusicRail title="Yêu thích" tracks={state.favorites} />
+      {/* Primary and ONLY "Dành cho bạn" section */}
+      <section id="for-you-section" className={styles.homeSection} aria-labelledby="for-you-title">
+        <div className={styles.sectionHeading}>
+          <h2 id="for-you-title">Dành cho bạn</h2>
+          <span>{recommended.length} bài gợi ý</span>
+        </div>
+        <TrackRail label="Gợi ý dành cho bạn" tracks={recommended} />
+      </section>
     </div>
   );
 }

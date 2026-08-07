@@ -9,6 +9,7 @@ import { TrackActions } from "./track-actions";
 import styles from "./music-app.module.css";
 
 function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) {
+  const { playNow } = useMusicPlayer();
   if (!tracks.length) return null;
   return (
     <section className={styles.libraryGroup}>
@@ -19,9 +20,27 @@ function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) 
       <div className={styles.trackStrip}>
         {tracks.slice(0, 8).map((track) => (
           <article className={styles.stripItem} key={track.videoId}>
-            <Image alt={`Thumbnail ${track.title}`} height={80} sizes="80px" src={track.thumbnail} width={80} />
-            <div><strong>{track.title}</strong><span>{track.artist}</span></div>
-            <TrackActions track={track} />
+            <div className={styles.stripItemImageWrap}>
+              <Image alt={`Thumbnail ${track.title}`} height={80} sizes="80px" src={track.thumbnail} width={80} />
+              <button
+                aria-label={`Phát ${track.title}`}
+                className={styles.cardOverlayPlay}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playNow(track);
+                }}
+                type="button"
+              >
+                <Play fill="currentColor" size={16} />
+              </button>
+            </div>
+            <div className={styles.trackHeading}>
+              <div className={styles.trackMeta}>
+                <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
+                <span className={styles.trackArtist}>{track.artist}</span>
+              </div>
+              <TrackActions track={track} />
+            </div>
           </article>
         ))}
       </div>

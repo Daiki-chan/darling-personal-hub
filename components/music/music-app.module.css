@@ -346,32 +346,157 @@
   color: var(--music-muted);
 }
 
-.trackActions {
+.trackHeading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.4rem;
+}
+
+.trackMeta {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.trackTitle {
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: 0.91rem;
+  font-weight: 580;
+  line-height: 1.35;
+}
+
+.trackArtist {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--music-secondary);
+}
+
+.cardOverlayPlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  opacity: 0;
+  transition: opacity 200ms ease, background 200ms ease;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.searchCardMain:hover .cardOverlayPlay,
+.homeTrackMain:hover .cardOverlayPlay,
+.stripItemImageWrap:hover .cardOverlayPlay {
+  opacity: 1;
+}
+
+.homeTrackMain,
+.stripItemImageWrap {
   position: relative;
+  overflow: hidden;
+  border-radius: var(--music-radius);
+}
+
+.trackCardActions {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.trackActions > button,
-.actionMenuWrap > button {
+.cardFavoriteBtn,
+.cardMenuBtn {
+  min-width: 34px;
+  min-height: 34px;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
+  border: 0;
   border-radius: var(--music-control-radius);
   color: var(--music-secondary);
   background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
   transition: color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
-.trackActions button:hover:not(:disabled) {
+.cardFavoriteBtn:hover,
+.cardMenuBtn:hover {
   color: var(--music-text);
   background: rgba(255, 255, 255, 0.085);
 }
 
-.trackActions button:active:not(:disabled) {
+.cardFavoriteBtn:active,
+.cardMenuBtn:active {
   transform: scale(0.94);
+}
+
+.portalActionMenu {
+  width: 210px;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--music-border-strong);
+  border-radius: 12px;
+  background: #151518;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+  animation: menuFadeIn 150ms ease;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portalActionMenu button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 38px;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  color: var(--music-secondary);
+  background: transparent;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.portalActionMenu button:hover,
+.portalActionMenu button:focus-visible {
+  color: var(--music-text);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.playlistSubMenu {
+  display: grid;
+  gap: 0.2rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.2rem;
 }
 
 .trackActions .actionActive,
@@ -767,6 +892,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  max-height: clamp(240px, 42dvh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.queueList::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .queueList li {
