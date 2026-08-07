@@ -8,22 +8,31 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "framer-motion": "latest",
-    "lucide-react": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "@upstash/ratelimit": "2.0.8",
+    "@upstash/redis": "1.38.2",
+    "@vercel/functions": "3.8.0",
+    "framer-motion": "12.43.0",
+    "lucide-react": "1.28.0",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "0.0.1"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.0",
-    "typescript": "latest",
+    "typescript": "6.0.3",
     "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
