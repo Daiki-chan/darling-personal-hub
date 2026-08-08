@@ -12,13 +12,13 @@ import styles from "./music-app.module.css";
 
 type TrendingStatus = "loading" | "ready" | "empty" | "error";
 
-function TrackRail({ tracks, label, surface = "home-rail" }: { tracks: MusicTrack[]; label: string; surface?: string }) {
+function TrackRail({ tracks, label, surface }: { tracks: MusicTrack[]; label: string; surface: string }) {
   const { playNow } = useMusicPlayer();
   if (!tracks.length) return null;
   return (
     <div className={styles.homeRail} aria-label={label}>
       {tracks.slice(0, 12).map((track) => (
-        <article className={styles.homeTrack} key={track.videoId}>
+        <article className={styles.homeTrack} key={`${surface}:${track.videoId}`}>
           <div className={styles.homeTrackCover}>
             <Image
               alt={`Thumbnail ${track.title}`}
@@ -46,7 +46,7 @@ function TrackRail({ tracks, label, surface = "home-rail" }: { tracks: MusicTrac
               <strong className={styles.trackTitle} title={track.title}>
                 {track.title}
               </strong>
-              <TrackMenuTrigger surface={`${surface}:${track.videoId}`} track={track} />
+              <TrackMenuTrigger surface={surface} track={track} />
             </div>
 
             <div className={styles.homeTrackSubline}>
@@ -119,7 +119,7 @@ export function MusicHome() {
         {status === "empty" ? (
           <div className={styles.emptySearch}><strong>Chưa có dữ liệu thịnh hành</strong><span>Hãy thử lại sau hoặc tìm một nghệ sĩ bạn yêu thích.</span></div>
         ) : null}
-        {trending.length ? <TrackRail label="Phổ biến hôm nay" tracks={trending} /> : null}
+        {trending.length ? <TrackRail label="Phổ biến hôm nay" surface="home-trending" tracks={trending} /> : null}
       </section>
 
       {/* Primary and ONLY "Dành cho bạn" section */}
@@ -128,7 +128,7 @@ export function MusicHome() {
           <h2 id="for-you-title">Dành cho bạn</h2>
           <span>{recommended.length} bài gợi ý</span>
         </div>
-        <TrackRail label="Gợi ý dành cho bạn" tracks={recommended} />
+        <TrackRail label="Gợi ý dành cho bạn" surface="home-recommended" tracks={recommended} />
       </section>
     </div>
   );

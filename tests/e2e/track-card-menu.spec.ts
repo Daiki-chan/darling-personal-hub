@@ -6,44 +6,90 @@ test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () =
   });
 
   test("each card has exactly one play button on cover and one 3-dot menu button", async ({ page }) => {
-    // Wait for trending tracks or search section
     const firstCard = page.locator("article").first();
     await expect(firstCard).toBeVisible({ timeout: 10000 });
 
-    // Overlay play button on cover image
     const playBtn = firstCard.locator('button[aria-label^="Phát "]');
     await expect(playBtn).toBeVisible();
 
-    // 3-dot menu button
     const menuBtn = firstCard.locator('button[aria-label^="Mở tùy chọn cho "]');
     await expect(menuBtn).toBeVisible();
 
-    // Verify "Phát tiếp theo" and "Thêm vào hàng đợi" are NOT directly visible on card outside menu
     await expect(firstCard.getByRole("button", { name: "Phát tiếp theo" })).toBeHidden();
     await expect(firstCard.getByRole("button", { name: "Thêm vào hàng đợi" })).toBeHidden();
   });
 
-  test("clicking 3-dot menu opens portal menu with options and handles Escape / outside click", async ({ page }) => {
+  test("clicking 3-dot menu opens exactly one portal menu with single items and handles Escape / outside click", async ({ page }) => {
     const firstCard = page.locator("article").first();
     await expect(firstCard).toBeVisible();
 
     const menuBtn = firstCard.locator('button[aria-label^="Mở tùy chọn cho "]');
     await menuBtn.click();
 
-    // Portal menu should be visible in body
-    const portalMenu = page.locator('div[role="menu"]');
-    await expect(portalMenu).toBeVisible();
+    // Verify EXACTLY one menu exists in DOM
+    const menus = page.getByRole("menu");
+    await expect(menus).toHaveCount(1);
 
-    // Menu options
-    const playNextBtn = portalMenu.getByRole("menuitem", { name: "Phát tiếp theo" });
-    const addToQueueBtn = portalMenu.getByRole("menuitem", { name: "Thêm vào hàng đợi" });
-    await expect(playNextBtn).toBeVisible();
-    await expect(addToQueueBtn).toBeVisible();
+    // Verify menu items have count 1
+    await expect(page.getByRole("menuitem", { name: "Phát tiếp theo" })).toHaveCount(1);
+    await expect(page.getByRole("menuitem", { name: "Thêm vào hàng đợi" })).toHaveCount(1);
+
+    // Verify trigger aria-expanded
+    await expect(menuBtn).toHaveAttribute("aria-expanded", "true");
 
     // Press Escape to close menu and return focus to trigger button
     await page.keyboard.press("Escape");
-    await expect(portalMenu).toBeHidden();
+    await expect(menus).toHaveCount(0);
     await expect(menuBtn).toBeFocused();
+    await expect(menuBtn).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("clicking 3-dot menu in 'Dành cho bạn' maintains scroll position without jumping to top", async ({ page }) => {
+    const forYouSection = page.locator("#for-you-section");
+    await expect(forYouSection).toBeVisible({ timeout: 10000 });
+    await forYouSection.scrollIntoViewIfNeeded();
+
+    const initialScrollY = await page.evaluate(() => window.scrollY);
+    expect(initialScrollY).toBeGreaterThan(0);
+
+    const cardInForYou = forYouSection.locator("article").first();
+    const menuBtn = cardInForYou.locator('button[aria-label^="Mở tùy chọn cho "]');
+    await expect(menuBtn).toBeVisible();
+
+    await menuBtn.click();
+
+    // Verify EXACTLY ONE menu in DOM
+    const menus = page.getByRole("menu");
+    await expect(menus).toHaveCount(1);
+    await expect(page.getByRole("menuitem", { name: "Phát tiếp theo" })).toHaveCount(1);
+
+    const currentScrollY = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(currentScrollY - initialScrollY)).toBeLessThan(3);
+    const hash = await page.evaluate(() => window.location.hash);
+    expect(hash).toBe("");
+  });
+
+  test("opening menu on card A then card B unmounts menu A and keeps total menu count at 1", async ({ page }) => {
+    const firstCard = page.locator("article").nth(0);
+    const secondCard = page.locator("article").nth(1);
+
+    await expect(firstCard).toBeVisible({ timeout: 10000 });
+    await expect(secondCard).toBeVisible();
+
+    const menuBtn1 = firstCard.locator('button[aria-label^="Mở tùy chọn cho "]');
+    const menuBtn2 = secondCard.locator('button[aria-label^="Mở tùy chọn cho "]');
+
+    // Click trigger A
+    await menuBtn1.click();
+    await expect(page.getByRole("menu")).toHaveCount(1);
+    await expect(menuBtn1).toHaveAttribute("aria-expanded", "true");
+    await expect(menuBtn2).toHaveAttribute("aria-expanded", "false");
+
+    // Click trigger B
+    await menuBtn2.click();
+    await expect(page.getByRole("menu")).toHaveCount(1);
+    await expect(menuBtn1).toHaveAttribute("aria-expanded", "false");
+    await expect(menuBtn2).toHaveAttribute("aria-expanded", "true");
   });
 
   test("page has exactly one 'Dành cho bạn' section in DOM", async ({ page }) => {

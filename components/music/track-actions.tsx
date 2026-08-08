@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Heart, ListEnd, ListMusic, ListPlus, MoreHorizontal } from "lucide-react";
 import type { MusicTrack } from "@/lib/music/types";
@@ -39,7 +39,7 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
   }, [openMenuInstanceId]);
 
   const [showPlaylists, setShowPlaylists] = useState(false);
-  const [menuCoords, setMenuCoords] = useState<{ top: number; left: number; alignRight: boolean }>({ top: 0, left: 0, alignRight: true });
+  const [menuCoords, setMenuCoords] = useState<{ top: number; left: number }>({ top: -9999, left: -9999 });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { addToPlaylist, addToQueue, playNext, state } = useMusicPlayer();
@@ -52,23 +52,34 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+
     const menuWidth = 210;
+    const menuHeight = 180;
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
     let left = rect.right - menuWidth;
-    let alignRight = true;
-
     if (left < 10) {
       left = Math.max(10, rect.left);
-      alignRight = false;
     }
     if (left + menuWidth > viewportWidth - 10) {
       left = Math.max(10, viewportWidth - menuWidth - 10);
     }
 
-    const top = rect.bottom + window.scrollY + 6;
-    setMenuCoords({ top, left, alignRight });
+    let top = rect.bottom + 6;
+    if (top + menuHeight > viewportHeight - 10 && rect.top - menuHeight - 6 > 10) {
+      top = rect.top - menuHeight - 6;
+    }
+
+    setMenuCoords({ top, left });
   }, []);
+
+  useLayoutEffect(() => {
+    if (menuOpen) {
+      updatePosition();
+    }
+  }, [menuOpen, updatePosition]);
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -110,7 +121,7 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
         e.preventDefault();
         e.stopPropagation();
         closeMenu();
-        triggerRef.current?.focus();
+        triggerRef.current?.focus({ preventScroll: true });
       }
     };
 
@@ -127,13 +138,13 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
     };
   }, [menuOpen, closeMenu, updatePosition]);
 
-  // Focus management when menu opens
+  // Focus management when menu opens (only after position is calculated)
   useEffect(() => {
-    if (menuOpen && menuRef.current) {
+    if (menuOpen && menuRef.current && menuCoords.top > -9000) {
       const firstItem = menuRef.current.querySelector<HTMLElement>('[role="menuitem"]');
-      firstItem?.focus();
+      firstItem?.focus({ preventScroll: true });
     }
-  }, [menuOpen]);
+  }, [menuOpen, menuCoords.top]);
 
   const handleMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (!menuRef.current) return;
@@ -145,11 +156,11 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
     if (e.key === "ArrowDown") {
       e.preventDefault();
       const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
-      items[nextIndex]?.focus();
+      items[nextIndex]?.focus({ preventScroll: true });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
-      items[prevIndex]?.focus();
+      items[prevIndex]?.focus({ preventScroll: true });
     }
   };
 
@@ -176,7 +187,7 @@ export function TrackMenuTrigger({ surface, track }: { surface: string; track: M
               ref={menuRef}
               role="menu"
               style={{
-                position: "absolute",
+                position: "fixed",
                 top: `${menuCoords.top}px`,
                 left: `${menuCoords.left}px`,
                 zIndex: 99999,

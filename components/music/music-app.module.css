@@ -447,6 +447,7 @@
 }
 
 .portalActionMenu {
+  position: fixed;
   width: 210px;
   display: grid;
   gap: 0.25rem;

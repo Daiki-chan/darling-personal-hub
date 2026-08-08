@@ -14,7 +14,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
   test("submitting search form triggers search without duplicate request", async ({ page }) => {
     let searchRequestCount = 0;
 
-    await page.route("**/api/youtube/search*", (route) => {
+    await page.route(/\/api\/youtube\/search/, (route) => {
       searchRequestCount++;
       void route.fulfill({
         status: 200,
@@ -50,7 +50,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
   test("clicking search suggestion triggers search without secondary debounced request", async ({ page }) => {
     let searchRequestCount = 0;
 
-    await page.route("**/api/youtube/search*", (route) => {
+    await page.route(/\/api\/youtube\/search/, (route) => {
       searchRequestCount++;
       void route.fulfill({
         status: 200,
@@ -82,7 +82,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
   });
 
   test("handles 429 rate limit response and displays countdown timer", async ({ page }) => {
-    await page.route("**/api/youtube/search*", (route) => {
+    await page.route(/\/api\/youtube\/search/, (route) => {
       void route.fulfill({
         status: 429,
         contentType: "application/json",
