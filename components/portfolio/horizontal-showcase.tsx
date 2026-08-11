@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -15,7 +15,7 @@ export function HorizontalShowcase() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const progressDotRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const progressCounterRef = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
@@ -32,7 +32,7 @@ export function HorizontalShowcase() {
 
       const getScrollDistance = () => track.scrollWidth - window.innerWidth;
 
-      // Pinned Horizontal Showcase Tween
+      // 1. Primary ScrollTrigger: Pure Horizontal X Translation (Pinned & Vertically Stable)
       const horizontalTween = gsap.to(track, {
         x: () => -getScrollDistance(),
         ease: "none",
@@ -44,33 +44,115 @@ export function HorizontalShowcase() {
           scrub: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
+            // Update progress dot position & counter (01/03, 02/03, 03/03)
             if (progressDotRef.current) {
               gsap.to(progressDotRef.current, {
                 xPercent: self.progress * 200,
-                duration: 0.2,
+                duration: 0.1,
                 overwrite: "auto",
               });
             }
 
-            const projectCount = FEATURED_PROJECTS.length;
-            const newIndex = Math.min(
-              projectCount - 1,
-              Math.floor(self.progress * projectCount)
-            );
-            setActiveIndex(newIndex);
+            if (progressCounterRef.current) {
+              const num = Math.min(3, Math.max(1, Math.ceil(self.progress * 3.2)));
+              progressCounterRef.current.textContent = `0${num} / 03`;
+            }
           },
         },
       });
 
-      // Spatial depth parallax for background, content, and giant foreground numbers
+      // 2. Project Active/Inactive Scale & Opacity via ContainerAnimation (Continuous 0-85% Horizontal Journey)
       const projectEls = gsap.utils.toArray<HTMLElement>(".phuc-showcase-project");
-      projectEls.forEach((proj) => {
+      projectEls.forEach((proj, idx) => {
         const bg = proj.querySelector(".phuc-proj-bg-layer");
         const num = proj.querySelector(".phuc-proj-fg-num");
+        const body = proj.querySelector(".phuc-proj-summary");
+        const metrics = proj.querySelector(".phuc-proj-metrics-row");
+        const title = proj.querySelector(".phuc-proj-title");
 
+        // Entrance: project approaches viewport center -> opacity 1, scale 1
+        gsap.fromTo(
+          proj,
+          { opacity: 0.4, scale: 0.94 },
+          {
+            opacity: 1,
+            scale: 1,
+            ease: "power1.out",
+            scrollTrigger: {
+              trigger: proj,
+              containerAnimation: horizontalTween,
+              start: "left 85%",
+              end: "center center",
+              scrub: true,
+            },
+          }
+        );
+
+        // Exit phase for Projects 01 & 02: project leaves center -> opacity 0.4, scale 0.94
+        if (idx < projectEls.length - 1) {
+          gsap.fromTo(
+            proj,
+            { opacity: 1, scale: 1 },
+            {
+              opacity: 0.4,
+              scale: 0.94,
+              ease: "power1.in",
+              scrollTrigger: {
+                trigger: proj,
+                containerAnimation: horizontalTween,
+                start: "center center",
+                end: "right 15%",
+                scrub: true,
+              },
+            }
+          );
+        } else {
+          // Phase B — 85-92%: Project 03 Outro (Local element fade, NO outer panel vertical translation!)
+          if (body && metrics && title) {
+            gsap.to(body, {
+              opacity: 0.2,
+              y: -12,
+              ease: "power1.inOut",
+              scrollTrigger: {
+                trigger: proj,
+                containerAnimation: horizontalTween,
+                start: "center center",
+                end: "right 35%",
+                scrub: true,
+              },
+            });
+
+            gsap.to(metrics, {
+              opacity: 0.25,
+              ease: "power1.inOut",
+              scrollTrigger: {
+                trigger: proj,
+                containerAnimation: horizontalTween,
+                start: "center center",
+                end: "right 30%",
+                scrub: true,
+              },
+            });
+
+            gsap.to(title, {
+              opacity: 0.4,
+              y: -8,
+              ease: "power1.inOut",
+              scrollTrigger: {
+                trigger: proj,
+                containerAnimation: horizontalTween,
+                start: "center center",
+                end: "right 20%",
+                scrub: true,
+              },
+            });
+          }
+        }
+
+        // Small local X parallax for background and giant index number
         if (bg) {
           gsap.to(bg, {
-            x: -40,
+            x: -30,
             ease: "none",
             scrollTrigger: {
               trigger: proj,
@@ -84,7 +166,7 @@ export function HorizontalShowcase() {
 
         if (num) {
           gsap.to(num, {
-            x: 60,
+            x: 50,
             ease: "none",
             scrollTrigger: {
               trigger: proj,
@@ -111,14 +193,14 @@ export function HorizontalShowcase() {
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
 
-    const rotX = (y / rect.height) * -1.6;
-    const rotY = (x / rect.width) * 2.4;
+    const rotX = (y / rect.height) * -1.4;
+    const rotY = (x / rect.width) * 2.2;
 
     gsap.to(card, {
       rotateX: rotX,
       rotateY: rotY,
-      x: x * 0.05,
-      y: y * 0.05,
+      x: x * 0.04,
+      y: y * 0.04,
       duration: 0.4,
       ease: "power2.out",
     });
@@ -151,16 +233,10 @@ export function HorizontalShowcase() {
 
         {/* Featured Projects List */}
         {FEATURED_PROJECTS.map((project: Project, idx: number) => {
-          const isActive = activeIndex === idx;
           const layoutClass = `phuc-showcase-project--layout-${idx + 1}`;
 
           return (
-            <article
-              key={project.slug}
-              className={`phuc-showcase-project ${layoutClass} ${
-                isActive ? "phuc-showcase-project--active" : ""
-              }`}
-            >
+            <article key={project.slug} className={`phuc-showcase-project ${layoutClass}`}>
               <div className="phuc-proj-bg-layer" aria-hidden="true" />
 
               <Link
@@ -224,7 +300,9 @@ export function HorizontalShowcase() {
           <div ref={progressDotRef} className="phuc-progress-dot" />
         </div>
         <span className="phuc-progress-step">03</span>
-        <span className="phuc-progress-counter">0{activeIndex + 1} / 03</span>
+        <span ref={progressCounterRef} className="phuc-progress-counter">
+          01 / 03
+        </span>
       </div>
     </section>
   );

@@ -1,14 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ARCHIVE_PROJECTS, savePortfolioNavigationState, type Project } from "@/lib/portfolio-data";
 import { PortfolioMediaPlaceholder } from "./portfolio-media-placeholder";
 import { setGlobalCursor } from "./custom-cursor";
 
+gsap.registerPlugin(ScrollTrigger);
+
 export function PortfolioArchive() {
+  const containerRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"index" | "grid">("index");
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      // Phase C Bridge & Takeover: Archive heading ghost-in then takeover as horizontal unpins
+      if (headerRef.current) {
+        gsap.fromTo(
+          headerRef.current,
+          { opacity: 0.15, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 85%",
+              end: "top 50%",
+              scrub: true,
+            },
+          }
+        );
+      }
+
+      // Archive rows enter LATER (only after horizontal unpin is complete and header is primary)
+      if (listRef.current) {
+        const items = listRef.current.children;
+        gsap.fromTo(
+          items,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.06,
+            duration: 0.6,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 55%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+    },
+    { scope: containerRef, dependencies: [viewMode] }
+  );
 
   const handleProjectClick = () => {
     savePortfolioNavigationState(viewMode);
@@ -32,8 +88,8 @@ export function PortfolioArchive() {
   };
 
   return (
-    <section id="archive" className="phuc-archive section-shell section-space" aria-labelledby="archive-title">
-      <div className="phuc-archive__header">
+    <section ref={containerRef} id="archive" className="phuc-archive section-shell section-space" aria-labelledby="archive-title">
+      <div ref={headerRef} className="phuc-archive__header">
         <div>
           <span className="phuc-label">02 / KHO LƯU TRỮ</span>
           <h2 id="archive-title" className="phuc-archive__headline">
@@ -64,7 +120,7 @@ export function PortfolioArchive() {
       </div>
 
       {viewMode === "index" && (
-        <div className="phuc-archive__index-list" role="list">
+        <div ref={listRef} className="phuc-archive__index-list" role="list">
           {ARCHIVE_PROJECTS.map((proj) => {
             const isHovered = hoveredSlug === proj.slug;
             const isOtherDimmed = hoveredSlug !== null && !isHovered;
@@ -95,7 +151,7 @@ export function PortfolioArchive() {
       )}
 
       {viewMode === "grid" && (
-        <div className="phuc-archive__grid-matrix">
+        <div ref={listRef} className="phuc-archive__grid-matrix">
           {ARCHIVE_PROJECTS.map((proj) => (
             <Link
               key={proj.slug}
