@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ARCHIVE_PROJECTS, type Project } from "@/lib/portfolio-data";
+import { ARCHIVE_PROJECTS, savePortfolioNavigationState, type Project } from "@/lib/portfolio-data";
 import { PortfolioMediaPlaceholder } from "./portfolio-media-placeholder";
 import { setGlobalCursor } from "./custom-cursor";
 
 export function PortfolioArchive() {
   const [viewMode, setViewMode] = useState<"index" | "grid">("index");
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
+
+  const handleProjectClick = () => {
+    savePortfolioNavigationState(viewMode);
+  };
 
   const handleRowMouseEnter = (project: Project) => {
     setHoveredSlug(project.slug);
@@ -72,6 +76,7 @@ export function PortfolioArchive() {
                 className={`phuc-archive-row ${isHovered ? "phuc-archive-row--hover" : ""} ${
                   isOtherDimmed ? "phuc-archive-row--dim" : ""
                 }`}
+                onClick={handleProjectClick}
                 onMouseEnter={() => handleRowMouseEnter(proj)}
                 onMouseLeave={handleRowMouseLeave}
                 role="listitem"
@@ -96,6 +101,7 @@ export function PortfolioArchive() {
               key={proj.slug}
               href={`/portfolio/${proj.slug}`}
               className="phuc-archive-grid-card"
+              onClick={handleProjectClick}
               onMouseEnter={() => setGlobalCursor({ active: true, text: "ĐỌC CASE STUDY" })}
               onMouseLeave={() => setGlobalCursor({ active: false })}
             >

@@ -38,9 +38,10 @@ export function PortfolioHero() {
     () => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const tl = gsap.timeline({ defaults: { ease: "power4.out", duration: 1.1 } });
+      // 1. Initial clip-path text reveal timeline
+      const revealTl = gsap.timeline({ defaults: { ease: "power4.out", duration: 1.1 } });
 
-      tl.fromTo(
+      revealTl.fromTo(
         [line1Ref.current, line2Ref.current, line3Ref.current],
         { yPercent: 120, opacity: 0, clipPath: "polygon(0 0, 100% 0, 100% 0, 0 0)" },
         {
@@ -52,6 +53,7 @@ export function PortfolioHero() {
         }
       );
 
+      // 2. Pointer inertia on active word
       if (growthSpanRef.current && !window.matchMedia("(pointer: coarse)").matches) {
         const growth = growthSpanRef.current;
         const gX = gsap.quickTo(growth, "x", { duration: 0.8, ease: "power2.out" });
@@ -70,10 +72,8 @@ export function PortfolioHero() {
         window.addEventListener("mousemove", handleGrowthMove, { passive: true });
       }
 
-      gsap.to([line1Ref.current, line2Ref.current], {
-        y: -60,
-        opacity: 0.2,
-        scale: 0.95,
+      // 3. Scroll Exit Parallax & Ghost Typography Timeline (Rules 3, 4, 5)
+      const heroScrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
@@ -82,17 +82,43 @@ export function PortfolioHero() {
         },
       });
 
-      gsap.to(line3Ref.current, {
-        y: -20,
-        scale: 1.05,
-        letterSpacing: "0.02em",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
+      // 0-65% scroll: Lines 1 & 2 transition to readable Ghost Typography
+      heroScrollTl
+        .to(
+          [line1Ref.current, line2Ref.current],
+          {
+            y: -25,
+            opacity: 0.16,
+            scale: 0.985,
+            ease: "power1.out",
+            duration: 0.65,
+          },
+          0
+        )
+        // 65-100% scroll: Ghost lines fade gently out as hero exits
+        .to(
+          [line1Ref.current, line2Ref.current],
+          {
+            y: -45,
+            opacity: 0,
+            ease: "power1.in",
+            duration: 0.35,
+          },
+          0.65
+        );
+
+      // Line 3 (TĂNG TRƯỞNG.) shifts upward 6vh to compose with ghost text above
+      heroScrollTl.to(
+        line3Ref.current,
+        {
+          y: "-6vh",
+          scale: 1.04,
+          letterSpacing: "0.015em",
+          ease: "none",
+          duration: 1,
         },
-      });
+        0
+      );
     },
     { scope: containerRef }
   );
@@ -114,12 +140,12 @@ export function PortfolioHero() {
       <div className="phuc-hero__center section-shell">
         <h1 className="phuc-hero__title">
           <div className="phuc-hero__mask">
-            <div ref={line1Ref} className="phuc-hero__line">
+            <div ref={line1Ref} className="phuc-hero__line phuc-hero__line--ghostable">
               TÔI BIẾN
             </div>
           </div>
           <div className="phuc-hero__mask">
-            <div ref={line2Ref} className="phuc-hero__line">
+            <div ref={line2Ref} className="phuc-hero__line phuc-hero__line--ghostable">
               TÌM KIẾM THÀNH
             </div>
           </div>

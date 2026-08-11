@@ -3521,3 +3521,134 @@ figcaption {
   }
 }
 
+/* Editorial Process Timeline System (Rules 18, 19) */
+.phuc-approach__timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 5rem;
+  border-top: 1px solid var(--line);
+}
+
+.phuc-editorial-step {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2.5rem;
+  padding-block: 2.2rem;
+  border-bottom: 1px solid var(--line);
+  transition: border-color 220ms ease;
+}
+
+.phuc-editorial-step:hover {
+  border-bottom-color: var(--accent);
+}
+
+.phuc-step-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+}
+
+.phuc-step-index {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+.phuc-step-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.phuc-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.phuc-step-sub {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: #a78bfa;
+  letter-spacing: 0.08em;
+}
+
+.phuc-step-desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Editorial Statistics Composition (Rule 20) */
+.phuc-numbers__editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  padding-block: 3.5rem;
+  border-y: 1px solid var(--line);
+}
+
+.phuc-editorial-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-inline: 1rem;
+  border-left: 1px solid var(--line);
+}
+
+.phuc-editorial-stat:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.phuc-stat-val {
+  font-size: clamp(3.2rem, 5.5vw, 5.2rem);
+  font-weight: 700;
+  line-height: 0.95;
+  color: #ddd6fe;
+  letter-spacing: -0.05em;
+}
+
+.phuc-stat-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Horizontal Showcase Orientation Hint & Exit Cue (Rules 9, 13) */
+.phuc-intro-scroll-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #c4b5fd;
+}
+
+.phuc-hint-arrow {
+  display: inline-block;
+  animation: phuc-bounce-right 1.8s infinite ease-in-out;
+}
+
+@keyframes phuc-bounce-right {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
+}
+
+.phuc-exit-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+}
+
+

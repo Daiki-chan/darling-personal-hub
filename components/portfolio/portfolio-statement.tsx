@@ -21,7 +21,7 @@ export function PortfolioStatement() {
 
       gsap.fromTo(
         lines,
-        { opacity: 0.15, y: 30, letterSpacing: "-0.04em" },
+        { opacity: 0.38, y: 24, letterSpacing: "-0.04em" },
         {
           opacity: 1,
           y: 0,
@@ -29,8 +29,8 @@ export function PortfolioStatement() {
           stagger: 0.2,
           scrollTrigger: {
             trigger: containerRef.current,
-            start: "top 75%",
-            end: "bottom 30%",
+            start: "top 80%",
+            end: "bottom 35%",
             scrub: true,
           },
         }

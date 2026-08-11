@@ -6,6 +6,23 @@ export interface Metric {
   label: string;
 }
 
+export function savePortfolioNavigationState(archiveView?: "index" | "grid") {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(
+      "portfolio:return-state",
+      JSON.stringify({
+        scrollY: window.scrollY,
+        timestamp: Date.now(),
+        archiveView: archiveView || "index",
+        source: "portfolio",
+      })
+    );
+  } catch {
+    // Ignore storage quota or disabled errors gracefully
+  }
+}
+
 export interface CaseStudySection {
   title: string;
   content: string;

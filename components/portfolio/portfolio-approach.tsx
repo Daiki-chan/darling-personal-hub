@@ -18,13 +18,18 @@ export function PortfolioApproach() {
         </p>
       </div>
 
-      <div className="phuc-approach__steps-grid">
+      {/* Editorial Process Timeline System (SaaS Cards Removed) */}
+      <div className="phuc-approach__timeline-list">
         {APPROACH_STEPS.map((step) => (
-          <div key={step.number} className="phuc-step-card">
-            <span className="phuc-step-num">{step.number}</span>
-            <h3 className="phuc-step-title">{step.title}</h3>
-            <span className="phuc-step-sub">{step.subtitle}</span>
-            <p className="phuc-step-desc">{step.details}</p>
+          <div key={step.number} className="phuc-editorial-step">
+            <div className="phuc-step-header">
+              <span className="phuc-step-index">{step.number}</span>
+              <h3 className="phuc-step-title">{step.title}</h3>
+            </div>
+            <div className="phuc-step-body">
+              <span className="phuc-step-sub">{step.subtitle}</span>
+              <p className="phuc-step-desc">{step.details}</p>
+            </div>
           </div>
         ))}
       </div>

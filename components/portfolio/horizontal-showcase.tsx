@@ -5,7 +5,7 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { FEATURED_PROJECTS, type Project } from "@/lib/portfolio-data";
+import { FEATURED_PROJECTS, savePortfolioNavigationState, type Project } from "@/lib/portfolio-data";
 import { PortfolioMediaPlaceholder } from "./portfolio-media-placeholder";
 import { setGlobalCursor } from "./custom-cursor";
 
@@ -32,6 +32,7 @@ export function HorizontalShowcase() {
 
       const getScrollDistance = () => track.scrollWidth - window.innerWidth;
 
+      // Pinned Horizontal Showcase Tween
       const horizontalTween = gsap.to(track, {
         x: () => -getScrollDistance(),
         ease: "none",
@@ -61,6 +62,7 @@ export function HorizontalShowcase() {
         },
       });
 
+      // Spatial depth parallax for background, content, and giant foreground numbers
       const projectEls = gsap.utils.toArray<HTMLElement>(".phuc-showcase-project");
       projectEls.forEach((proj) => {
         const bg = proj.querySelector(".phuc-proj-bg-layer");
@@ -97,6 +99,10 @@ export function HorizontalShowcase() {
     },
     { scope: sectionRef }
   );
+
+  const handleProjectClick = () => {
+    savePortfolioNavigationState();
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (window.matchMedia("(pointer: coarse)").matches) return;
@@ -137,7 +143,10 @@ export function HorizontalShowcase() {
         <div className="phuc-showcase-intro-card">
           <span className="phuc-tag">KHÔNG GIAN LƯU TRỮ NỔI BẬT</span>
           <h2>NHỮNG HÀNH TRÌNH TÌM KIẾM & CHUYỂN ĐỔI.</h2>
-          <p>Cuộn xuống để khám phá các case study nổi bật theo chiều ngang.</p>
+          <div className="phuc-intro-scroll-hint">
+            <span>CUỘN ĐỂ DI CHUYỂN</span>
+            <span className="phuc-hint-arrow">→</span>
+          </div>
         </div>
 
         {/* Featured Projects List */}
@@ -157,6 +166,7 @@ export function HorizontalShowcase() {
               <Link
                 href={`/portfolio/${project.slug}`}
                 className="phuc-proj-content-layer"
+                onClick={handleProjectClick}
                 onMouseMove={handleMouseMove}
                 onMouseEnter={() => setGlobalCursor({ active: true, text: "XEM CASE STUDY" })}
                 onMouseLeave={handleMouseLeave}
@@ -197,14 +207,17 @@ export function HorizontalShowcase() {
           );
         })}
 
-        {/* Track Exit Transition Card */}
+        {/* Track Exit Transition Card - Secondary Bridge Cue */}
         <div className="phuc-showcase-exit-card">
-          <span className="phuc-tag">KẾT THÚC KHÔNG GIAN TRÌNH DIỄN</span>
-          <h3>KHO LƯU TRỮ TOÀN BỘ PHÍA TRƯỚC</h3>
-          <p>Đang trở lại luồng cuộn dọc của trang...</p>
+          <span className="phuc-tag-sub">CHUYỂN TIẾP KHÔNG GIAN</span>
+          <div className="phuc-exit-cue">
+            <span>KHO LƯU TRỮ PHÍA TRƯỚC</span>
+            <span className="arrow">↘</span>
+          </div>
         </div>
       </div>
 
+      {/* Showcase Progress Motif */}
       <div className="phuc-showcase-progress-bar">
         <span className="phuc-progress-step">01</span>
         <div className="phuc-progress-track">
