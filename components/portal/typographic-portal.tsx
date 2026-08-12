@@ -251,8 +251,21 @@ export const TypographicPortal = memo(function TypographicPortal() {
       const line1 = intro02Ref.current?.querySelector(".typo-jp-line--1");
       const line2 = intro02Ref.current?.querySelector(".typo-jp-line--2");
 
-      if (intro02Ref.current) {
-        gsap.set(intro02Ref.current, { willChange: "transform, opacity" });
+      // Pre-set initial hidden transforms at t=0 BEFORE revealing portal container to prevent first-paint flash
+      if (identityRef.current) {
+        const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
+        gsap.set(glyphs, { opacity: 0, scale: 0.86, y: 40, willChange: "transform, opacity" });
+      }
+      if (navRef.current) {
+        const words = navRef.current.querySelectorAll(".dest-word");
+        gsap.set(words, { opacity: 0, y: 35, willChange: "transform, opacity" });
+      }
+      if (portalDesktopRef.current) {
+        gsap.set(portalDesktopRef.current, {
+          display: "grid",
+          opacity: 1,
+          pointerEvents: "none",
+        });
       }
 
       // Phase A: Controlled Editorial Deconstruction & Baseline Separation (0.0s - 0.65s)
@@ -265,21 +278,10 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
       // Phase B: COEXISTENCE PHASE! (0.2s - 0.7s)
       // While Japanese lines are separated & visible, FUJIWARA DAIKI emerges through the spatial gap!
-      if (portalDesktopRef.current) {
-        gsap.set(portalDesktopRef.current, {
-          display: "grid",
-          opacity: 1,
-          pointerEvents: "auto",
-        });
-      }
-
       if (identityRef.current) {
         const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
-        gsap.set(identityRef.current, { willChange: "transform, opacity" });
-
-        tl.fromTo(
+        tl.to(
           glyphs,
-          { opacity: 0, scale: 0.86, y: 40 },
           { opacity: 1, scale: 1, y: 0, duration: 0.8, stagger: 0.03 },
           0.2
         );
@@ -293,11 +295,8 @@ export const TypographicPortal = memo(function TypographicPortal() {
       // Phase D: Destination Words stagger in (0.65s - 1.1s)
       if (navRef.current) {
         const words = navRef.current.querySelectorAll(".dest-word");
-        gsap.set(navRef.current, { willChange: "transform, opacity" });
-
-        tl.fromTo(
+        tl.to(
           words,
-          { opacity: 0, y: 35 },
           { opacity: 1, y: 0, duration: 0.7, stagger: 0.09 },
           0.65
         );
@@ -306,6 +305,9 @@ export const TypographicPortal = memo(function TypographicPortal() {
       // Portal becomes interactive at ~0.95s while residual motion settles
       tl.add(() => {
         setStep(2);
+        if (portalDesktopRef.current) {
+          gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
+        }
       }, 0.95);
     }
   }, [isLeaving, isRouteReady, reduceMotion, step]);

@@ -3981,6 +3981,14 @@ figcaption {
   will-change: transform, opacity;
 }
 
+/* Pre-formation hidden CSS rules to prevent first-paint flash during Intro stages */
+.typo-portal-root[data-step="0"] .identity-glyph,
+.typo-portal-root[data-step="1"] .identity-glyph,
+.typo-portal-root[data-step="0"] .dest-word,
+.typo-portal-root[data-step="1"] .dest-word {
+  opacity: 0;
+}
+
 /* 3. Typographic World Desktop Layout */
 .typo-world-desktop {
   position: absolute;
