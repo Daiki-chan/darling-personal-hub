@@ -12,11 +12,10 @@ import { GlyphWindow } from "./glyph-window";
 import { IdentityAnchor } from "./identity-anchor";
 import { MobileChapters } from "./mobile-chapters";
 
-// Module-level scoped Japanese font loader (preload disabled to prevent payload bloat)
+// Module-level scoped Japanese font loader
 const zenKakuGothic = Zen_Kaku_Gothic_New({
   weight: ["700", "900"],
   display: "swap",
-  preload: false,
   subsets: ["latin"],
   variable: "--font-zen-gothic",
 });
@@ -36,6 +35,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
   const intro01Ref = useRef<HTMLDivElement>(null);
   const intro02Ref = useRef<HTMLDivElement>(null);
+  const slitMaskRef = useRef<HTMLDivElement>(null);
   const portalDesktopRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<0 | 1 | 2>(0);
@@ -48,6 +48,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const lastClickTimeRef = useRef(0);
   const activeTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const navigationTimerRef = useRef<number | null>(null);
+  const jpFontLoadPromiseRef = useRef<Promise<unknown> | null>(null);
   const reduceMotion = useReducedMotion();
 
   // Initial Document Visit Hydration & Hash Check
@@ -65,6 +66,20 @@ export const TypographicPortal = memo(function TypographicPortal() {
       setStep(2);
     }
     setIsRouteReady(true);
+  }, []);
+
+  // Pre-load exact Japanese font face during Intro 01 with 1200ms fail-safe timeout
+  useEffect(() => {
+    if (typeof document !== "undefined" && "fonts" in document) {
+      const loadPromise = document.fonts.load(
+        `900 1em ${zenKakuGothic.style.fontFamily}`,
+        "私の人生へようこそ"
+      );
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 1200));
+      jpFontLoadPromiseRef.current = Promise.race([loadPromise, timeoutPromise]).catch(() => {
+        // Fail-safe: prevent state machine freeze on network failure
+      });
+    }
   }, []);
 
   // Prefetch target routes
@@ -129,7 +144,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
         return;
       }
 
-      // CLICK 01 MASTER TIMELINE: Typographic Handoff (Darling, ohayō → 私の人生へようこそ ~0.75s)
+      // CLICK 01 MASTER TIMELINE: Editorial Slit / Language Reveal (~0.85s)
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
         onComplete: () => {
@@ -139,17 +154,19 @@ export const TypographicPortal = memo(function TypographicPortal() {
       });
       activeTimelineRef.current = tl;
 
-      if (intro01Ref.current && intro02Ref.current) {
+      if (intro01Ref.current && intro02Ref.current && slitMaskRef.current) {
         const partLeft = intro01Ref.current.querySelector(".typo-latin-part--left");
         const partRight = intro01Ref.current.querySelector(".typo-latin-part--right");
         const commaGlyph = intro01Ref.current.querySelector(".typo-comma-glyph");
-        const guideTop = intro01Ref.current.querySelector(".typo-guide-line--top");
-        const guideBottom = intro01Ref.current.querySelector(".typo-guide-line--bottom");
 
         const line1_02 = intro02Ref.current.querySelector(".typo-jp-line--1");
         const line2_02 = intro02Ref.current.querySelector(".typo-jp-line--2");
 
         gsap.set(intro01Ref.current, { willChange: "transform, opacity" });
+        gsap.set(slitMaskRef.current, {
+          clipPath: "inset(0% 48% 0% 48%)",
+          willChange: "clip-path",
+        });
         gsap.set(intro02Ref.current, {
           display: "flex",
           opacity: 0,
@@ -157,40 +174,58 @@ export const TypographicPortal = memo(function TypographicPortal() {
           willChange: "transform, opacity",
         });
 
-        // Phase 1: 0ms Immediate Response - Latin text structural separation
-        tl.to(partLeft, { x: -35, y: -16, duration: 0.45, ease: "power2.out" }, 0)
-          .to(partRight, { x: 35, y: 16, duration: 0.45, ease: "power2.out" }, 0);
+        // Stage 1 (0ms - 80ms): 0ms Immediate Response - Latin tracking compression
+        tl.to([partLeft, partRight], { letterSpacing: "-0.06em", scale: 0.98, duration: 0.08, ease: "power1.out" }, 0);
+
+        // Stage 2 (60ms - 220ms): Latin structural split
+        tl.to(partLeft, { x: -75, y: -12, duration: 0.42, ease: "power2.out" }, 0.06)
+          .to(partRight, { x: 75, y: 12, duration: 0.42, ease: "power2.out" }, 0.06);
 
         if (commaGlyph) {
-          tl.to(commaGlyph, { y: 4, opacity: 0.6, duration: 0.3 }, 0);
+          tl.to(commaGlyph, { y: 4, opacity: 0.7, duration: 0.3 }, 0.06);
         }
 
-        // Phase 2: 0.10s - Construction baseline guide lines reveal
-        if (guideTop && guideBottom) {
-          tl.fromTo(guideTop, { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 0.22, duration: 0.35 }, 0.1)
-            .fromTo(guideBottom, { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 0.22, duration: 0.35 }, 0.12);
-        }
+        // Stage 3 (140ms - 300ms): Editorial Aperture Slit Opening
+        tl.to(
+          slitMaskRef.current,
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.52, ease: "power3.inOut" },
+          0.14
+        );
 
-        // Phase 3: 0.22s - Japanese reveals along structural axes (VISIBLE COEXISTENCE 300ms–550ms!)
-        tl.to(intro02Ref.current, { opacity: 1, duration: 0.4 }, 0.22)
-          .fromTo(
+        // Stage 4 (220ms - 550ms): Japanese Layer Exposure with Font Gate
+        const revealJapanese = () => {
+          gsap.to(intro02Ref.current, { opacity: 1, duration: 0.4, ease: "power2.out" });
+          gsap.fromTo(
             line1_02,
-            { opacity: 0, x: -45, y: -10 },
-            { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "power3.out" },
-            0.22
-          )
-          .fromTo(
-            line2_02,
-            { opacity: 0, x: 45, y: 10 },
-            { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "power3.out" },
-            0.28
+            { opacity: 0, x: -35 },
+            { opacity: 1, x: 0, duration: 0.48, ease: "power3.out" }
           );
+          gsap.fromTo(
+            line2_02,
+            { opacity: 0, x: 35 },
+            { opacity: 1, x: 0, duration: 0.48, ease: "power3.out" }
+          );
+        };
 
-        // Phase 4: 0.48s - Handoff & Latin retreat
-        tl.to(intro01Ref.current, { opacity: 0, scale: 0.96, duration: 0.35 }, 0.48);
-        if (guideTop && guideBottom) {
-          tl.to([guideTop, guideBottom], { scaleX: 0, opacity: 0, duration: 0.3 }, 0.48);
+        if (jpFontLoadPromiseRef.current) {
+          tl.add(() => {
+            jpFontLoadPromiseRef.current?.then(revealJapanese).catch(revealJapanese);
+          }, 0.22);
+        } else {
+          tl.add(revealJapanese, 0.22);
         }
+
+        // Stage 6 (500ms - 800ms): Latin Spatial Crop Exit
+        tl.to(partLeft, { x: "-140%", opacity: 0, duration: 0.38, ease: "power2.in" }, 0.5)
+          .to(partRight, { x: "140%", opacity: 0, duration: 0.38, ease: "power2.in" }, 0.5);
+
+        // Stage 7 (700ms - 950ms): Slit Retraction & Settle into clean Intro 02 posture
+        tl.to(intro01Ref.current, { opacity: 0, duration: 0.25 }, 0.7);
+        tl.add(() => {
+          if (slitMaskRef.current) {
+            gsap.set(slitMaskRef.current, { clearProps: "clipPath,willChange" });
+          }
+        }, 0.85);
       }
     } else if (step === 1) {
       isAnimatingRef.current = true;
@@ -377,7 +412,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
         className="typo-intro-stage typo-intro-stage--01"
         style={{
           display: step === 0 || isAnimatingRef.current ? "grid" : "none",
-          opacity: step === 0 ? 1 : 0,
+          opacity: step === 0 || isAnimatingRef.current ? 1 : 0,
           pointerEvents: step === 0 ? "auto" : "none",
         }}
         onClick={advanceStep}
@@ -406,18 +441,15 @@ export const TypographicPortal = memo(function TypographicPortal() {
               ))}
             </span>
           </h1>
-          {/* Subtle editorial baseline construction guides */}
-          <div className="typo-guide-line typo-guide-line--top" aria-hidden="true" />
-          <div className="typo-guide-line typo-guide-line--bottom" aria-hidden="true" />
         </div>
       </div>
 
-      {/* Layer 2: Intro 02 (私の人生へようこそ - Asymmetrical Architectural Statement) */}
+      {/* Layer 2: Intro 02 (私の人生へようこそ - Masked Editorial Aperture) */}
       <div
         className="typo-intro-stage typo-intro-stage--02"
         style={{
           display: step === 1 || isAnimatingRef.current ? "grid" : "none",
-          opacity: step === 1 ? 1 : 0,
+          opacity: step === 1 || isAnimatingRef.current ? 1 : 0,
           pointerEvents: step === 1 ? "auto" : "none",
         }}
         onClick={advanceStep}
@@ -426,23 +458,25 @@ export const TypographicPortal = memo(function TypographicPortal() {
         tabIndex={step === 1 ? 0 : -1}
         aria-label="Khai mở thế giới chữ FUJIWARA DAIKI"
       >
-        <div className="typo-intro-copy typo-intro-copy--jp" ref={intro02Ref}>
-          <h1 className="typo-intro-title typo-intro-title--jp">
-            <div className="typo-jp-line typo-jp-line--1">
-              {line1Text.split("").map((char, index) => (
-                <span key={`jp1-${index}-${char}`} className="jp-glyph">
-                  {char}
-                </span>
-              ))}
-            </div>
-            <div className="typo-jp-line typo-jp-line--2">
-              {line2Text.split("").map((char, index) => (
-                <span key={`jp2-${index}-${char}`} className="jp-glyph">
-                  {char}
-                </span>
-              ))}
-            </div>
-          </h1>
+        <div className="typo-slit-mask" ref={slitMaskRef}>
+          <div className="typo-intro-copy typo-intro-copy--jp" ref={intro02Ref}>
+            <h1 className="typo-intro-title typo-intro-title--jp">
+              <div className="typo-jp-line typo-jp-line--1">
+                {line1Text.split("").map((char, index) => (
+                  <span key={`jp1-${index}-${char}`} className="jp-glyph">
+                    {char}
+                  </span>
+                ))}
+              </div>
+              <div className="typo-jp-line typo-jp-line--2">
+                {line2Text.split("").map((char, index) => (
+                  <span key={`jp2-${index}-${char}`} className="jp-glyph">
+                    {char}
+                  </span>
+                ))}
+              </div>
+            </h1>
+          </div>
         </div>
       </div>
 
