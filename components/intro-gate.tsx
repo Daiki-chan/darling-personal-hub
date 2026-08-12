@@ -40,11 +40,7 @@ export const IntroGate = memo(function IntroGate() {
   }, [router]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     return () => {
-      document.body.style.overflow = previousOverflow;
       if (closeTimer.current !== null) {
         window.clearTimeout(closeTimer.current);
       }

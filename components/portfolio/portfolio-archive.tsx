@@ -15,7 +15,21 @@ export function PortfolioArchive() {
   const containerRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<"index" | "grid">("index");
+  const [viewMode, setViewMode] = useState<"index" | "grid">(() => {
+    if (typeof window === "undefined") return "index";
+    try {
+      const rawState = sessionStorage.getItem("portfolio:return-state");
+      if (rawState) {
+        const saved = JSON.parse(rawState);
+        if (saved.archiveView === "grid" || saved.archiveView === "index") {
+          return saved.archiveView;
+        }
+      }
+    } catch {
+      // Fallback to default
+    }
+    return "index";
+  });
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
   useGSAP(

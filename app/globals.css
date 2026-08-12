@@ -21,7 +21,6 @@
 }
 
 html {
-  scroll-behavior: smooth;
   background: var(--bg);
 }
 
@@ -3453,58 +3452,7 @@ figcaption {
   }
 }
 
-@media (max-width: 768px) {
-  .phuc-hero__line {
-    font-size: clamp(2.8rem, 11vw, 4.2rem);
-  }
 
-  .phuc-work-intro__content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .phuc-showcase-track {
-    height: auto;
-    flex-direction: column;
-    padding-inline: 0;
-    gap: 3rem;
-  }
-
-  .phuc-showcase-project {
-    width: 100%;
-    height: auto;
-    opacity: 1;
-  }
-
-  .phuc-proj-content-layer {
-    grid-template-columns: 1fr;
-    padding: 1.5rem;
-  }
-
-  .phuc-showcase-progress-bar {
-    display: none;
-  }
-
-  .phuc-archive-row {
-    grid-template-columns: 40px 1fr 60px;
-  }
-
-  .phuc-row-cat {
-    display: none;
-  }
-
-  .phuc-capabilities__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .phuc-numbers__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .phuc-cs-hero__meta-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -3631,14 +3579,29 @@ figcaption {
   color: #c4b5fd;
 }
 
-.phuc-hint-arrow {
+.phuc-hint-text-mobile,
+.phuc-hint-arrow--mobile {
+  display: none;
+}
+
+.phuc-hint-arrow--desktop {
   display: inline-block;
   animation: phuc-bounce-right 1.8s infinite ease-in-out;
+}
+
+.phuc-hint-arrow--mobile {
+  display: inline-block;
+  animation: phuc-bounce-down 1.8s infinite ease-in-out;
 }
 
 @keyframes phuc-bounce-right {
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(6px); }
+}
+
+@keyframes phuc-bounce-down {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
 }
 
 .phuc-exit-cue {
@@ -3649,6 +3612,192 @@ figcaption {
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--muted);
+}
+
+/* ==========================================
+   PORTFOLIO MOBILE RESPONSIVE OVERRIDES (<=768px)
+   Must remain at the very end of file for CSS cascade precedence
+   ========================================== */
+@media (max-width: 768px) {
+  /* 1. Hero Title */
+  .phuc-hero__line {
+    font-size: clamp(2.6rem, 10vw, 4rem);
+  }
+
+  /* 2. Work Intro Header */
+  .phuc-work-intro__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  /* 3. Featured Showcase Track & Mobile Single Column Cards */
+  .phuc-showcase-track {
+    height: auto;
+    flex-direction: column;
+    padding-inline: 0;
+    gap: 3rem;
+  }
+
+  .phuc-showcase-intro-card,
+  .phuc-showcase-exit-card {
+    width: 100%;
+    padding-inline: 1.5rem;
+  }
+
+  .phuc-showcase-project {
+    width: 100%;
+    height: auto;
+    opacity: 1;
+  }
+
+  /* Force ALL project layout variants (layout-1, layout-2, layout-3) to single column on mobile */
+  .phuc-showcase-project--layout-2 .phuc-proj-content-layer,
+  .phuc-showcase-project--layout-3 .phuc-proj-content-layer,
+  .phuc-proj-content-layer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .phuc-proj-title {
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+  }
+
+  .phuc-showcase-progress-bar {
+    display: none;
+  }
+
+  /* 4. Archive Header & Layout Toggle Stack */
+  .phuc-archive__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .phuc-archive__headline {
+    font-size: clamp(1.8rem, 7vw, 2.6rem);
+  }
+
+  /* 5. Archive List Row 4-Column Layout */
+  .phuc-archive-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto 22px;
+    gap: 0.5rem;
+    padding-inline: 0.5rem;
+    align-items: center;
+  }
+
+  .phuc-row-title {
+    font-size: 1.05rem;
+  }
+
+  .phuc-row-cat {
+    display: none;
+  }
+
+  /* 6. Archive Grid Matrix Mobile 1-Column */
+  .phuc-archive__grid-matrix {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  /* 7. Methodology / Editorial Steps Mobile 1-Column Stack (P0) */
+  .phuc-editorial-step {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+    padding-block: 1.5rem;
+  }
+
+  .phuc-step-header {
+    gap: 0.8rem;
+  }
+
+  .phuc-step-title {
+    font-size: 1.2rem;
+  }
+
+  .phuc-approach__timeline-list {
+    margin-bottom: 3rem;
+  }
+
+  .phuc-approach__statement-block {
+    padding: 2rem 1.5rem;
+  }
+
+  .phuc-approach__quote {
+    font-size: clamp(1.25rem, 5vw, 1.8rem);
+  }
+
+  /* 8. Capabilities & Tools Grid */
+  .phuc-capabilities__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  /* 9. Numbers / KPI Editorial Grid 2x2 */
+  .phuc-numbers__editorial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1.2rem;
+    padding-block: 2.5rem;
+  }
+
+  .phuc-editorial-stat {
+    padding-inline: 0.5rem;
+    border-left: 1px solid var(--line);
+  }
+
+  .phuc-editorial-stat:nth-child(2n+1) {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .phuc-stat-val {
+    font-size: clamp(2.8rem, 10vw, 4rem);
+  }
+
+  /* 10. Contact Section & Metadata Wrap */
+  .phuc-contact {
+    min-height: auto;
+    padding-block: 4rem;
+  }
+
+  .phuc-contact__headline {
+    font-size: clamp(2.2rem, 8vw, 3.6rem);
+  }
+
+  .phuc-contact__meta {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 0.7rem;
+  }
+
+  /* 11. Mobile Scroll Hint Toggle */
+  .phuc-hint-text-desktop,
+  .phuc-hint-arrow--desktop {
+    display: none !important;
+  }
+
+  .phuc-hint-text-mobile,
+  .phuc-hint-arrow--mobile {
+    display: inline-block !important;
+  }
+
+  /* 12. Case Study Detail Hero Meta Grid */
+  .phuc-cs-hero__meta-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .phuc-cs-metrics-grid {
+    padding: 1.5rem;
+  }
+
+  .phuc-cs-media-hero {
+    height: auto;
+    min-height: 240px;
+  }
 }
 
 

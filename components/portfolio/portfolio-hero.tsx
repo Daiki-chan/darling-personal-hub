@@ -34,6 +34,27 @@ export function PortfolioHero() {
     return () => window.removeEventListener("mousemove", handlePointerMove);
   }, []);
 
+  useEffect(() => {
+    const growth = growthSpanRef.current;
+    if (!growth || window.matchMedia("(pointer: coarse)").matches) return;
+
+    const gX = gsap.quickTo(growth, "x", { duration: 0.8, ease: "power2.out" });
+    const gY = gsap.quickTo(growth, "y", { duration: 0.8, ease: "power2.out" });
+
+    const handleGrowthMove = (e: MouseEvent) => {
+      const rect = growth.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const deltaX = (e.clientX - centerX) * 0.08;
+      const deltaY = (e.clientY - centerY) * 0.08;
+      gX(deltaX);
+      gY(deltaY);
+    };
+
+    window.addEventListener("mousemove", handleGrowthMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleGrowthMove);
+  }, []);
+
   useGSAP(
     () => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -53,26 +74,7 @@ export function PortfolioHero() {
         }
       );
 
-      // 2. Pointer inertia on active word
-      if (growthSpanRef.current && !window.matchMedia("(pointer: coarse)").matches) {
-        const growth = growthSpanRef.current;
-        const gX = gsap.quickTo(growth, "x", { duration: 0.8, ease: "power2.out" });
-        const gY = gsap.quickTo(growth, "y", { duration: 0.8, ease: "power2.out" });
-
-        const handleGrowthMove = (e: MouseEvent) => {
-          const rect = growth.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          const deltaX = (e.clientX - centerX) * 0.08;
-          const deltaY = (e.clientY - centerY) * 0.08;
-          gX(deltaX);
-          gY(deltaY);
-        };
-
-        window.addEventListener("mousemove", handleGrowthMove, { passive: true });
-      }
-
-      // 3. Scroll Exit Parallax & Ghost Typography Timeline (Rules 3, 4, 5)
+      // 2. Scroll Exit Parallax & Ghost Typography Timeline (Rules 3, 4, 5)
       const heroScrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,

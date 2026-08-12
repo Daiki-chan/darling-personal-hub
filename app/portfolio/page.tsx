@@ -26,29 +26,35 @@ export default function PortfolioPage() {
     if (typeof window === "undefined") return;
 
     const rawState = sessionStorage.getItem("portfolio:return-state");
-    if (!rawState) return;
+    if (rawState) {
+      try {
+        const saved = JSON.parse(rawState);
+        // Consume state so manual reloads do not trigger stale scroll jumps
+        sessionStorage.removeItem("portfolio:return-state");
 
-    try {
-      const saved = JSON.parse(rawState);
-      // Consume state so manual reloads do not trigger stale scroll jumps
-      sessionStorage.removeItem("portfolio:return-state");
-
-      // Verify timestamp freshness (within 2 hours)
-      if (saved.scrollY && Date.now() - saved.timestamp < 7200000) {
-        // Wait for DOM layout and ScrollTrigger pin measurements to stabilize
-        requestAnimationFrame(() => {
-          ScrollTrigger.refresh();
-          window.scrollTo({ top: saved.scrollY, behavior: "instant" });
-
-          // Secondary refresh pass after scroll position is restored
+        // Verify timestamp freshness (within 2 hours)
+        if (saved.scrollY && Date.now() - saved.timestamp < 7200000) {
+          // Wait for DOM layout and ScrollTrigger pin measurements to stabilize
           requestAnimationFrame(() => {
-            ScrollTrigger.refresh();
+            ScrollTrigger.refresh(true);
+            window.scrollTo({ top: saved.scrollY, behavior: "instant" });
+
+            // Secondary refresh pass after scroll position is restored
+            requestAnimationFrame(() => {
+              ScrollTrigger.refresh(true);
+            });
           });
-        });
+          return;
+        }
+      } catch {
+        sessionStorage.removeItem("portfolio:return-state");
       }
-    } catch {
-      sessionStorage.removeItem("portfolio:return-state");
     }
+
+    // Stabilize layout measurements after initial mount / route transition
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh(true);
+    });
   });
 
   return (

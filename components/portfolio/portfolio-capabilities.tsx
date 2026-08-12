@@ -17,19 +17,37 @@ export function PortfolioCapabilities() {
     if (!track) return;
 
     let currentX = 0;
-    let baseSpeed = -0.5;
+    const baseSpeed = -0.5;
     let speed = baseSpeed;
-    let animId: number;
+    let animId = 0;
+    let isVisible = false;
 
     const tick = () => {
       currentX += speed;
       if (currentX <= -50) currentX = 0;
       if (currentX > 0) currentX = -50;
       track.style.transform = `translate3d(${currentX}%, 0, 0)`;
-      animId = requestAnimationFrame(tick);
+      if (isVisible) {
+        animId = requestAnimationFrame(tick);
+      } else {
+        animId = 0;
+      }
     };
 
-    animId = requestAnimationFrame(tick);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        isVisible = entry.isIntersecting;
+        if (isVisible && !animId) {
+          animId = requestAnimationFrame(tick);
+        } else if (!isVisible && animId) {
+          cancelAnimationFrame(animId);
+          animId = 0;
+        }
+      },
+      { threshold: 0 }
+    );
+    observer.observe(track);
 
     const st = ScrollTrigger.create({
       onUpdate: (self) => {
@@ -45,7 +63,8 @@ export function PortfolioCapabilities() {
     });
 
     return () => {
-      cancelAnimationFrame(animId);
+      observer.disconnect();
+      if (animId) cancelAnimationFrame(animId);
       st.kill();
     };
   }, []);

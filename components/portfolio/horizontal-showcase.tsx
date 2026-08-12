@@ -226,8 +226,10 @@ export function HorizontalShowcase() {
           <span className="phuc-tag">KHÔNG GIAN LƯU TRỮ NỔI BẬT</span>
           <h2>NHỮNG HÀNH TRÌNH TÌM KIẾM & CHUYỂN ĐỔI.</h2>
           <div className="phuc-intro-scroll-hint">
-            <span>CUỘN ĐỂ DI CHUYỂN</span>
-            <span className="phuc-hint-arrow">→</span>
+            <span className="phuc-hint-text-desktop">CUỘN ĐỂ DI CHUYỂN</span>
+            <span className="phuc-hint-text-mobile">CUỘN ĐỂ KHÁM PHÁ</span>
+            <span className="phuc-hint-arrow phuc-hint-arrow--desktop">→</span>
+            <span className="phuc-hint-arrow phuc-hint-arrow--mobile">↓</span>
           </div>
         </div>
 

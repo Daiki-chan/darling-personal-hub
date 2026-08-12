@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { gsap } from "gsap";
 import { PortfolioMediaPlaceholder, type MediaVariant } from "./portfolio-media-placeholder";
 
@@ -14,16 +14,23 @@ export interface CursorState {
   year?: string;
 }
 
+const emptySubscribe = () => () => {};
+
 export function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const [cursorState, setCursorState] = useState<CursorState>({ active: false });
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  const isTouchDevice = isClient
+    ? window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window
+    : false;
 
   useEffect(() => {
-    // Detect touch / coarse pointer devices
-    const touchCheck = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
-    setIsTouchDevice(touchCheck);
-    if (touchCheck) return;
+    if (!isClient || isTouchDevice) return;
 
     const el = cursorRef.current;
     if (!el) return;
@@ -50,9 +57,9 @@ export function CustomCursor() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("phuc-cursor", handleCursorChange as EventListener);
     };
-  }, []);
+  }, [isClient, isTouchDevice]);
 
-  if (isTouchDevice) return null;
+  if (!isClient || isTouchDevice) return null;
 
   const isPreview = cursorState.variant === "archive-preview";
   const isBadge = cursorState.variant === "badge" || Boolean(cursorState.text);
