@@ -24,7 +24,7 @@ export function SimulatedVisualizer() {
     let width = 0;
     let height = 0;
     let lastPaint = 0;
-    let energy = state.isPlaying ? 1 : 0.16;
+    let energy = state.isPlaying ? 0.85 : 0.08;
     const seed = seedValue(state.currentTrack.videoId);
     const accent = state.accent || "#8f8a82";
 
@@ -43,35 +43,39 @@ export function SimulatedVisualizer() {
         frame = 0;
         return;
       }
-      if (timestamp - lastPaint < 50 && !reduceMotion) {
+      if (timestamp - lastPaint < 33 && !reduceMotion) {
         frame = requestAnimationFrame(paint);
         return;
       }
       lastPaint = timestamp;
+
       const { currentTime, duration } = clock.getSnapshot();
       const progress = duration ? currentTime / duration : 0;
-      const targetEnergy = state.isPlaying ? 0.55 + state.volume.volume / 100 * 0.45 : 0.11;
-      energy += (targetEnergy - energy) * (state.isPlaying ? 0.08 : 0.035);
+      const effectiveVolFactor = state.volume.muted ? 0 : state.volume.volume / 100;
+      const targetEnergy = state.isPlaying ? 0.45 + effectiveVolFactor * 0.55 : 0.05;
+      energy += (targetEnergy - energy) * (state.isPlaying ? 0.08 : 0.04);
+
       context.clearRect(0, 0, width, height);
-      const bars = Math.max(16, Math.min(36, Math.floor(width / 10)));
-      const gap = 3;
-      const barWidth = Math.max(2, (width - gap * (bars - 1)) / bars);
+
+      const bars = Math.max(20, Math.min(48, Math.floor(width / 8)));
+      const gap = 2;
+      const barWidth = Math.max(1.5, (width - gap * (bars - 1)) / bars);
 
       for (let index = 0; index < bars; index += 1) {
-        const phase = timestamp * 0.0015 + index * 0.61 + seed * 0.00001;
+        const phase = timestamp * 0.0012 + index * 0.45 + seed * 0.00001;
         const slow = Math.sin(phase) * 0.5 + 0.5;
-        const detail = Math.sin(phase * 0.41 + progress * Math.PI * 5) * 0.5 + 0.5;
-        const strength = reduceMotion ? 0.16 : (0.14 + slow * 0.48 + detail * 0.2) * energy;
-        const barHeight = Math.max(3, strength * height * 0.84);
+        const detail = Math.sin(phase * 0.73 + progress * Math.PI * 6) * 0.5 + 0.5;
+        const strength = reduceMotion ? 0.12 : (0.12 + slow * 0.52 + detail * 0.22) * energy;
+        const barHeight = Math.max(2, strength * height * 0.82);
         const x = index * (barWidth + gap);
         const y = (height - barHeight) / 2;
-        context.globalAlpha = 0.22 + strength * 0.68;
-        context.fillStyle = accent;
-        context.beginPath();
-        context.roundRect(x, y, barWidth, barHeight, barWidth / 2);
-        context.fill();
+
+        context.globalAlpha = 0.25 + strength * 0.65;
+        context.fillStyle = index % 3 === 0 ? "#f3f3f5" : accent;
+        context.fillRect(x, y, barWidth, barHeight);
       }
       context.globalAlpha = 1;
+
       if (!reduceMotion) frame = requestAnimationFrame(paint);
     };
 
@@ -88,7 +92,7 @@ export function SimulatedVisualizer() {
   return (
     <div className={styles.visualizer}>
       <canvas aria-hidden="true" ref={canvasRef} />
-      <span>Chuyển động mô phỏng</span>
+      <span>MOTION FIELD</span>
     </div>
   );
 }

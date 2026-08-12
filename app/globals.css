@@ -4120,25 +4120,6 @@ figcaption {
   opacity: 1;
 }
 
-.glyph-window-visual {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.glyph-window-layer[data-active-dest="music"] .glyph-window-visual {
-  opacity: 0.15;
-}
-
-.glyph-window-media {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: grayscale(40%) contrast(110%);
-}
-
 /* 5. Touch-Optimized Mobile View */
 .typo-world-mobile {
   display: none;

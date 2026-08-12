@@ -1,63 +1,141 @@
 "use client";
 
 import Image from "next/image";
-import { AlertCircle, Play, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { rankMusicTracks } from "@/lib/music/ranking";
 import { fetchTrendingMusic } from "@/lib/music/trending-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { useMusicPlayer } from "./music-player-core";
-import { TrackFavoriteAction, TrackMenuTrigger } from "./track-actions";
+import { TrackMenuTrigger } from "./track-actions";
 import styles from "./music-app.module.css";
 
 type TrendingStatus = "loading" | "ready" | "empty" | "error";
 
-function TrackRail({ tracks, label, surface }: { tracks: MusicTrack[]; label: string; surface: string }) {
+// 01 / DISCOVER Catalogue Rail
+function DiscoverRail({ tracks }: { tracks: MusicTrack[] }) {
   const { playNow } = useMusicPlayer();
   if (!tracks.length) return null;
+
   return (
-    <div className={styles.homeRail} aria-label={label}>
-      {tracks.slice(0, 12).map((track) => (
-        <article className={styles.homeTrack} key={`${surface}:${track.videoId}`}>
-          <div className={styles.homeTrackCover}>
-            <Image
-              alt={`Thumbnail ${track.title}`}
-              className={styles.homeTrackImage}
-              height={360}
-              sizes="(max-width: 767px) 78vw, 240px"
-              src={track.thumbnail}
-              width={360}
-            />
-            <button
-              aria-label={`Phát ${track.title}`}
-              className={styles.homeTrackPlay}
-              onClick={(e) => {
-                e.stopPropagation();
+    <div className={styles.discoverRail} aria-label="Danh sách nhạc thịnh hành">
+      {tracks.slice(0, 12).map((track, index) => {
+        const formattedIndex = String(index + 1).padStart(2, "0");
+        return (
+          <article
+            className={styles.discoverCard}
+            key={`trending:${track.videoId}`}
+            onClick={() => playNow(track)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
                 playNow(track);
+              }
+            }}
+          >
+            <div className={styles.discoverCoverWrap}>
+              <Image
+                alt={`Thumbnail ${track.title}`}
+                className={styles.discoverImage}
+                height={280}
+                sizes="(max-width: 767px) 70vw, 240px"
+                src={track.thumbnail}
+                width={280}
+              />
+              <span className={styles.discoverIndexTag}>{formattedIndex}</span>
+            </div>
+
+            <div className={styles.discoverMeta}>
+              <div className={styles.discoverTitleRow}>
+                <strong className={styles.discoverTitle} title={track.title}>
+                  {track.title}
+                </strong>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <TrackMenuTrigger surface="trending" track={track} />
+                </div>
+              </div>
+              <span className={styles.discoverArtist}>{track.artist}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+// 02 / FOR YOU Editorial Chapter with Track Index List & Large Artwork Preview
+function ForYouChapter({ tracks }: { tracks: MusicTrack[] }) {
+  const { playNow } = useMusicPlayer();
+  const [activeTrackIndex, setActiveTrackIndex] = useState<number>(0);
+
+  if (!tracks.length) return null;
+
+  const previewTrack = tracks[activeTrackIndex] || tracks[0];
+
+  return (
+    <div className={styles.forYouLayout}>
+      {/* Left Column: Track Index List */}
+      <div className={styles.forYouList}>
+        {tracks.slice(0, 8).map((track, index) => {
+          const formattedIdx = String(index + 1).padStart(2, "0");
+          const isCurrentHover = index === activeTrackIndex;
+
+          return (
+            <div
+              key={`foryou:${track.videoId}`}
+              className={styles.forYouRow}
+              data-active={isCurrentHover}
+              onPointerEnter={() => setActiveTrackIndex(index)}
+              onFocus={() => setActiveTrackIndex(index)}
+              onClick={() => playNow(track)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  playNow(track);
+                }
               }}
-              type="button"
             >
-              <Play aria-hidden="true" fill="currentColor" size={20} />
-            </button>
-          </div>
-
-          <div className={styles.homeTrackMeta}>
-            <div className={styles.homeTrackHeading}>
-              <strong className={styles.trackTitle} title={track.title}>
-                {track.title}
-              </strong>
-              <TrackMenuTrigger surface={surface} track={track} />
+              <span className={styles.forYouIdx}>{formattedIdx}</span>
+              <div className={styles.forYouText}>
+                <strong className={styles.forYouTitle} title={track.title}>
+                  {track.title}
+                </strong>
+                <span className={styles.forYouArtist}>{track.artist}</span>
+              </div>
+              <div className={styles.forYouActions} onClick={(e) => e.stopPropagation()}>
+                <TrackMenuTrigger surface="foryou" track={track} />
+              </div>
             </div>
+          );
+        })}
+      </div>
 
-            <div className={styles.homeTrackSubline}>
-              <span className={styles.trackArtist}>
-                {track.artist}
-              </span>
-              <TrackFavoriteAction track={track} />
+      {/* Right Column: Large Active Artwork Preview */}
+      <div className={styles.forYouPreviewContainer}>
+        {previewTrack ? (
+          <div className={styles.forYouPreviewCard}>
+            <div className={styles.forYouImageWrap}>
+              <Image
+                alt={`Preview ${previewTrack.title}`}
+                className={styles.forYouPreviewImage}
+                height={400}
+                sizes="(max-width: 767px) 100vw, 400px"
+                src={previewTrack.thumbnail}
+                width={400}
+              />
+            </div>
+            <div className={styles.forYouPreviewMeta}>
+              <span className={styles.forYouTag}>CURATED SELECTION</span>
+              <h3 className={styles.forYouPreviewTitle}>{previewTrack.title}</h3>
+              <p className={styles.forYouPreviewArtist}>{previewTrack.artist}</p>
             </div>
           </div>
-        </article>
-      ))}
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -87,48 +165,70 @@ export function MusicHome() {
 
   const recommended = useMemo(() => {
     const reference = state.history[0] ?? state.favorites[0];
-    if (!reference) return trending.slice(6, 16);
+    if (!reference) return trending.slice(6, 14);
     return rankMusicTracks(trending, {
       targetArtist: reference.artist,
       recentVideoIds: state.history.slice(0, 20).map((track) => track.videoId),
-    }).filter((track) => !state.history.some((entry) => entry.videoId === track.videoId)).slice(0, 10);
+    }).filter((track) => !state.history.some((entry) => entry.videoId === track.videoId)).slice(0, 8);
   }, [state.favorites, state.history, trending]);
 
   return (
-    <div className={styles.musicHome}>
-      <section className={styles.homeSection} aria-labelledby="trending-vn-title">
-        <div className={styles.sectionHeading}>
-          <h2 id="trending-vn-title">Thịnh hành tại Việt Nam</h2>
-          <span>YouTube Music category</span>
+    <div className={styles.musicHomeContainer}>
+      {/* Chapter 01: Discover */}
+      <section className={styles.editorialChapter} aria-labelledby="discover-title">
+        <div className={styles.chapterHeading}>
+          <h2 id="discover-title" className={styles.chapterTitle}>
+            01 / DISCOVER
+          </h2>
+          <span className={styles.chapterSub}>TRENDING CATALOGUE · VIETNAM</span>
         </div>
+
         {status === "loading" && !trending.length ? (
-          <div className={styles.homeRail} aria-label="Đang tải nhạc thịnh hành">
-            {Array.from({ length: 6 }, (_, index) => <div className={styles.homeSkeleton} key={index} />)}
+          <div className={styles.discoverRail} aria-label="Đang tải nhạc thịnh hành">
+            {Array.from({ length: 6 }, (_, index) => (
+              <div className={styles.discoverSkeleton} key={index} />
+            ))}
           </div>
         ) : null}
+
         {status === "error" ? (
           <div className={styles.inlineState} role="alert">
             <AlertCircle aria-hidden="true" size={20} />
-            <div><strong>Chưa tải được nhạc thịnh hành</strong><span>Dữ liệu đã lưu vẫn được ưu tiên khi có thể.</span></div>
-            <button onClick={() => {
-              setStatus("loading");
-              load(new AbortController().signal);
-            }} type="button"><RefreshCw aria-hidden="true" size={15} />Thử lại</button>
+            <div>
+              <strong>CHƯA TẢI ĐƯỢC DỮ LIỆU THỊNH HÀNH</strong>
+              <span>Dữ liệu đã lưu vẫn được ưu tiên khi có thể.</span>
+            </div>
+            <button
+              onClick={() => {
+                setStatus("loading");
+                load(new AbortController().signal);
+              }}
+              type="button"
+            >
+              <RefreshCw aria-hidden="true" size={15} /> THỬ LẠI
+            </button>
           </div>
         ) : null}
+
         {status === "empty" ? (
-          <div className={styles.emptySearch}><strong>Chưa có dữ liệu thịnh hành</strong><span>Hãy thử lại sau hoặc tìm một nghệ sĩ bạn yêu thích.</span></div>
+          <div className={styles.emptySearch}>
+            <strong>CHƯA CÓ DỮ LIỆU THỊNH HÀNH</strong>
+            <span>Thử tìm kiếm trực tiếp tên bài hát hoặc nghệ sĩ yêu thích.</span>
+          </div>
         ) : null}
-        {trending.length ? <TrackRail label="Phổ biến hôm nay" surface="home-trending" tracks={trending} /> : null}
+
+        {trending.length ? <DiscoverRail tracks={trending} /> : null}
       </section>
 
-      {/* Primary and ONLY "Dành cho bạn" section */}
-      <section id="for-you-section" className={styles.homeSection} aria-labelledby="for-you-title">
-        <div className={styles.sectionHeading}>
-          <h2 id="for-you-title">Dành cho bạn</h2>
-          <span>{recommended.length} bài gợi ý</span>
+      {/* Chapter 02: For You */}
+      <section className={styles.editorialChapter} aria-labelledby="for-you-title">
+        <div className={styles.chapterHeading}>
+          <h2 id="for-you-title" className={styles.chapterTitle}>
+            02 / FOR YOU
+          </h2>
+          <span className={styles.chapterSub}>CURATED RECOMMENDATIONS</span>
         </div>
-        <TrackRail label="Gợi ý dành cho bạn" surface="home-recommended" tracks={recommended} />
+        <ForYouChapter tracks={recommended} />
       </section>
     </div>
   );

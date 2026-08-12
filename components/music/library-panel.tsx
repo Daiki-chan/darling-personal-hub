@@ -2,52 +2,72 @@
 
 import Image from "next/image";
 import { type FormEvent, useState } from "react";
-import { Heart, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
+import { Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import type { MusicTrack } from "@/lib/music/types";
 import { useMusicPlayer } from "./music-player-core";
-import { TrackActions } from "./track-actions";
+import { TrackMenuTrigger } from "./track-actions";
 import styles from "./music-app.module.css";
 
-function TrackStrip({ title, tracks }: { title: string; tracks: MusicTrack[] }) {
+function EditorialTrackList({ title, tracks }: { title: string; tracks: MusicTrack[] }) {
   const { playNow } = useMusicPlayer();
+  const [hoveredTrack, setHoveredTrack] = useState<MusicTrack | null>(null);
+
   if (!tracks.length) return null;
+
   return (
-    <section className={styles.libraryGroup}>
-      <div className={styles.sectionHeading}>
-        <h2>{title}</h2>
-        <span>{tracks.length} bài</span>
+    <div className={styles.libraryColumn}>
+      <div className={styles.chapterHeading}>
+        <h3 className={styles.librarySubTitle}>{title}</h3>
+        <span className={styles.chapterSub}>{tracks.length} TRACKS</span>
       </div>
-      <div className={styles.trackStrip}>
-        {tracks.slice(0, 8).map((track) => (
-          <article className={styles.stripItem} key={track.videoId}>
-            <div className={styles.stripItemImageWrap}>
-              <Image alt={`Thumbnail ${track.title}`} height={80} sizes="80px" src={track.thumbnail} width={80} />
-              <button
-                aria-label={`Phát ${track.title}`}
-                className={styles.cardOverlayPlay}
-                onClick={(e) => {
-                  e.stopPropagation();
+
+      <div className={styles.editorialList}>
+        {tracks.slice(0, 10).map((track, index) => {
+          const formattedIdx = String(index + 1).padStart(2, "0");
+          return (
+            <div
+              key={track.videoId}
+              className={styles.editorialRow}
+              onClick={() => playNow(track)}
+              onPointerEnter={() => setHoveredTrack(track)}
+              onPointerLeave={() => setHoveredTrack(null)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
                   playNow(track);
-                }}
-                type="button"
-              >
-                <Play fill="currentColor" size={16} />
-              </button>
-            </div>
-            <div className={styles.trackHeading}>
-              <div className={styles.trackMeta}>
-                <strong className={styles.trackTitle} title={track.title}>{track.title}</strong>
-                <span className={styles.trackArtist}>{track.artist}</span>
+                }
+              }}
+            >
+              <span className={styles.editorialIdx}>{formattedIdx}</span>
+              <span className={styles.editorialTitle} title={track.title}>
+                {track.title}
+              </span>
+              <span className={styles.editorialArtist}>{track.artist}</span>
+
+              <div className={styles.editorialAction} onClick={(e) => e.stopPropagation()}>
+                <TrackMenuTrigger surface={`library:${title}:${track.videoId}`} track={track} />
               </div>
-              <TrackActions surface={`library-strip:${title}:${track.videoId}`} track={track} />
             </div>
-          </article>
-        ))}
+          );
+        })}
       </div>
-    </section>
+
+      {/* Fixed thumbnail preview container */}
+      {hoveredTrack ? (
+        <div className={styles.fixedHoverPreview}>
+          <Image
+            alt={`Preview ${hoveredTrack.title}`}
+            height={80}
+            src={hoveredTrack.thumbnail}
+            width={80}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
-
 
 export function LibraryPanel() {
   const {
@@ -64,107 +84,134 @@ export function LibraryPanel() {
 
   const submitPlaylist = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    createPlaylist(newName);
+    if (!newName.trim()) return;
+    createPlaylist(newName.trim());
     setNewName("");
   };
 
   return (
     <div className={styles.libraryPanel}>
-      <TrackStrip title="Nghe gần đây" tracks={state.history} />
-      <TrackStrip title="Bài hát yêu thích" tracks={state.favorites} />
+      {/* Chapter 03: Your Archive */}
+      <section className={styles.editorialChapter} aria-labelledby="archive-title">
+        <div className={styles.chapterHeading}>
+          <h2 id="archive-title" className={styles.chapterTitle}>
+            03 / YOUR ARCHIVE
+          </h2>
+          <span className={styles.chapterSub}>PERSONAL LISTENING HISTORY & FAVOURITES</span>
+        </div>
 
-      {!state.history.length && !state.favorites.length ? (
-        <section className={styles.libraryEmpty}>
-          <div className={styles.emptyArtwork} aria-hidden="true"><Heart size={28} /></div>
-          <div>
-            <h2>Thư viện sẽ mang dấu vết của bạn</h2>
-            <p>Bài đã nghe và bài yêu thích sẽ xuất hiện ở đây, được lưu riêng trên thiết bị này.</p>
-          </div>
-        </section>
-      ) : null}
+        <div className={styles.archiveDualColumns}>
+          <EditorialTrackList title="RECENTLY PLAYED" tracks={state.history} />
+          <EditorialTrackList title="FAVOURITES" tracks={state.favorites} />
+        </div>
+      </section>
 
-      <section className={styles.playlistSection}>
-        <div className={styles.playlistIntro}>
-          <div>
-            <h2>Playlist cá nhân</h2>
-            <p>Gom những bài cùng một tâm trạng. Dữ liệu được lưu bằng IndexedDB.</p>
-          </div>
-          <form onSubmit={submitPlaylist}>
-            <label htmlFor="playlist-name">Tên playlist mới</label>
-            <div>
-              <input
-                id="playlist-name"
-                maxLength={48}
-                onChange={(event) => setNewName(event.target.value)}
-                placeholder="Ví dụ: Đêm mưa"
-                value={newName}
-              />
-              <button disabled={!newName.trim()} type="submit"><Plus aria-hidden="true" size={17} />Tạo</button>
-            </div>
+      {/* Chapter 04: Playlists */}
+      <section className={styles.editorialChapter} aria-labelledby="playlists-title">
+        <div className={styles.chapterHeading}>
+          <h2 id="playlists-title" className={styles.chapterTitle}>
+            04 / PLAYLISTS
+          </h2>
+          <span className={styles.chapterSub}>INDEXEDDB PERSISTED COLLECTIONS</span>
+        </div>
+
+        <div className={styles.playlistHeaderRow}>
+          <form className={styles.playlistNewForm} onSubmit={submitPlaylist}>
+            <input
+              id="playlist-name"
+              maxLength={48}
+              onChange={(event) => setNewName(event.target.value)}
+              placeholder="PLAYLIST NAME"
+              value={newName}
+            />
+            <button disabled={!newName.trim()} type="submit">
+              <Plus aria-hidden="true" size={14} /> NEW PLAYLIST
+            </button>
           </form>
         </div>
 
         {state.playlists.length ? (
-          <div className={styles.playlistList}>
+          <div className={styles.playlistIndexList}>
             {state.playlists.map((playlist) => (
-              <article className={styles.playlist} key={playlist.id}>
-                <div className={styles.playlistCover} aria-hidden="true">
-                  {playlist.tracks.slice(0, 4).map((track) => (
-                    <Image alt="" height={128} key={track.videoId} sizes="64px" src={track.thumbnail} width={128} />
-                  ))}
-                  {!playlist.tracks.length ? <Heart size={22} /> : null}
-                </div>
-                <div className={styles.playlistContent}>
+              <article className={styles.playlistIndexRow} key={playlist.id}>
+                <div className={styles.playlistMainInfo}>
                   {editingId === playlist.id ? (
                     <form
-                      className={styles.renameForm}
+                      className={styles.renameFormInline}
                       onSubmit={(event) => {
                         event.preventDefault();
                         renamePlaylist(playlist.id, editingName);
                         setEditingId(null);
                       }}
                     >
-                      <input aria-label="Tên playlist" onChange={(event) => setEditingName(event.target.value)} value={editingName} />
-                      <button type="submit">Lưu</button>
+                      <input
+                        aria-label="Tên playlist"
+                        onChange={(event) => setEditingName(event.target.value)}
+                        value={editingName}
+                      />
+                      <button type="submit">SAVE</button>
                     </form>
                   ) : (
-                    <div className={styles.playlistTitle}>
-                      <div><h3>{playlist.name}</h3><span>{playlist.tracks.length} bài</span></div>
-                      <div>
-                        <button
-                          aria-label={`Đổi tên ${playlist.name}`}
-                          onClick={() => { setEditingId(playlist.id); setEditingName(playlist.name); }}
-                          type="button"
-                        ><Pencil aria-hidden="true" size={16} /></button>
-                        <button aria-label={`Xóa ${playlist.name}`} onClick={() => deletePlaylist(playlist.id)} type="button">
-                          <Trash2 aria-hidden="true" size={16} />
-                        </button>
-                      </div>
+                    <div className={styles.playlistTitleWrap}>
+                      <h3 className={styles.playlistName}>{playlist.name}</h3>
+                      <span className={styles.playlistCount}>{playlist.tracks.length} TRACKS</span>
                     </div>
                   )}
-                  <div className={styles.playlistControls}>
-                    <button disabled={!playlist.tracks.length} onClick={() => playCollection(playlist.tracks)} type="button">
-                      <Play aria-hidden="true" fill="currentColor" size={15} />Phát tất cả
+
+                  <div className={styles.playlistMetaActions}>
+                    <button
+                      aria-label={`Sửa ${playlist.name}`}
+                      onClick={() => {
+                        setEditingId(playlist.id);
+                        setEditingName(playlist.name);
+                      }}
+                      type="button"
+                    >
+                      <Pencil aria-hidden="true" size={14} />
                     </button>
-                    <button disabled={!playlist.tracks.length} onClick={() => playCollection(playlist.tracks, true)} type="button">
-                      <Shuffle aria-hidden="true" size={15} />Phát ngẫu nhiên
+                    <button
+                      aria-label={`Xóa ${playlist.name}`}
+                      onClick={() => deletePlaylist(playlist.id)}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={14} />
                     </button>
                   </div>
-                  {playlist.tracks.length ? (
-                    <ul className={styles.playlistTracks}>
-                      {playlist.tracks.map((track) => (
-                        <li key={track.videoId}>
-                          <span>{track.title}</span>
-                          <button
-                            aria-label={`Xóa ${track.title} khỏi ${playlist.name}`}
-                            onClick={() => removeFromPlaylist(playlist.id, track.videoId)}
-                            type="button"
-                          ><X aria-hidden="true" size={14} /></button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className={styles.playlistEmpty}>Dùng menu trên một bài hát để thêm vào playlist này.</p>}
                 </div>
+
+                <div className={styles.playlistPlayButtons}>
+                  <button
+                    disabled={!playlist.tracks.length}
+                    onClick={() => playCollection(playlist.tracks)}
+                    type="button"
+                  >
+                    <Play aria-hidden="true" fill="currentColor" size={13} /> PLAY ALL
+                  </button>
+                  <button
+                    disabled={!playlist.tracks.length}
+                    onClick={() => playCollection(playlist.tracks, true)}
+                    type="button"
+                  >
+                    <Shuffle aria-hidden="true" size={13} /> SHUFFLE
+                  </button>
+                </div>
+
+                {playlist.tracks.length ? (
+                  <ul className={styles.playlistTrackList}>
+                    {playlist.tracks.map((track) => (
+                      <li key={track.videoId} className={styles.playlistTrackSubRow}>
+                        <span>{track.title}</span>
+                        <button
+                          aria-label={`Xóa ${track.title} khỏi ${playlist.name}`}
+                          onClick={() => removeFromPlaylist(playlist.id, track.videoId)}
+                          type="button"
+                        >
+                          <X aria-hidden="true" size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </article>
             ))}
           </div>

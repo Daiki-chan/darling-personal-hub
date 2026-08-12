@@ -151,8 +151,8 @@ export function LyricsPanel() {
 
   useEffect(() => () => {
     manualAbortRef.current?.abort();
-    if (autoScrollTimerRef.current !== null) window.clearTimeout(autoScrollTimerRef.current);
-    if (smoothScrollTimerRef.current !== null) window.clearTimeout(smoothScrollTimerRef.current);
+    if (autoScrollTimerRef.current) window.clearTimeout(autoScrollTimerRef.current);
+    if (smoothScrollTimerRef.current) window.clearTimeout(smoothScrollTimerRef.current);
   }, []);
 
   const runManualSearch = async (event: FormEvent<HTMLFormElement>) => {
@@ -182,52 +182,63 @@ export function LyricsPanel() {
   if (!track) {
     return (
       <div className={styles.emptyPanel}>
-        <AlignVerticalSpaceAround aria-hidden="true" size={28} />
-        <strong>Lời bài hát đang chờ</strong>
-        <span>Phát một bài để Darling tìm lời đồng bộ từ LRCLIB.</span>
+        <AlignVerticalSpaceAround aria-hidden="true" size={26} />
+        <strong>KINETIC LYRICS DORMANT</strong>
+        <span>Select a track to synchronize lyrics from LRCLIB.</span>
       </div>
     );
   }
 
   return (
     <section aria-labelledby="lyrics-title" className={styles.lyricsPanel}>
-      <div className={styles.lyricsHeader}>
-        <div><h2 id="lyrics-title">Lời bài hát</h2><span>{track.title}</span></div>
-        <div className={styles.offsetControls}>
+      <div className={styles.lyricsHeaderRoot}>
+        {/* Row 1: Title & Search Alternate */}
+        <div className={styles.lyricsHeaderTopRow}>
+          <h2 id="lyrics-title" className={styles.chapterTitle}>KINETIC LYRICS</h2>
           <button className={styles.findLyricsButton} onClick={() => setCorrectionOpen(true)} type="button">
-            <Search aria-hidden="true" size={15} />Tìm bản khác
+            <Search aria-hidden="true" size={13} />
+            <span>SEARCH ALTERNATE</span>
           </button>
-          <span>Offset {offset > 0 ? "+" : ""}{offset.toFixed(1)}s</span>
-          <button aria-label="Giảm offset lời" onClick={() => setLyricOffset(track.videoId, offset - 0.5)} type="button">
-            <Minus aria-hidden="true" size={15} />
-          </button>
-          <button aria-label="Tăng offset lời" onClick={() => setLyricOffset(track.videoId, offset + 0.5)} type="button">
-            <Plus aria-hidden="true" size={15} />
-          </button>
+        </div>
+
+        {/* Row 2: Track Metadata & Offset Controls */}
+        <div className={styles.lyricsHeaderBottomRow}>
+          <span className={styles.chapterSub} title={`${track.title} · ${track.artist}`}>
+            {track.title}
+          </span>
+          <div className={styles.lyricsOffsetCluster}>
+            <span className={styles.offsetBadge}>OFFSET {offset > 0 ? "+" : ""}{offset.toFixed(1)}S</span>
+            <button aria-label="Giảm offset" className={styles.offsetBtn} onClick={() => setLyricOffset(track.videoId, offset - 0.5)} type="button">
+              <Minus aria-hidden="true" size={12} />
+            </button>
+            <button aria-label="Tăng offset" className={styles.offsetBtn} onClick={() => setLyricOffset(track.videoId, offset + 0.5)} type="button">
+              <Plus aria-hidden="true" size={12} />
+            </button>
+          </div>
         </div>
       </div>
 
       {correctionOpen ? (
         <div className={styles.lyricsCorrection}>
           <div className={styles.correctionHeading}>
-            <div><strong>Tìm phiên bản lời phù hợp</strong><span>Lựa chọn được lưu riêng cho video này.</span></div>
-            <button aria-label="Đóng tìm lời" onClick={() => setCorrectionOpen(false)} type="button"><X aria-hidden="true" size={16} /></button>
+            <div><strong>SEARCH LRCLIB VERSIONS</strong><span>Mapped individually to this video ID.</span></div>
+            <button aria-label="Đóng tìm lời" onClick={() => setCorrectionOpen(false)} type="button"><X aria-hidden="true" size={15} /></button>
           </div>
-          <form onSubmit={runManualSearch}>
+          <form onSubmit={runManualSearch} className={styles.manualSearchForm}>
             <label htmlFor="lyrics-track-name">
-              Tên bài hát
+              TITLE
               <input id="lyrics-track-name" onChange={(event) => setEditTrack(event.target.value)} value={editTrack} />
             </label>
             <label htmlFor="lyrics-artist-name">
-              Nghệ sĩ
+              ARTIST
               <input id="lyrics-artist-name" onChange={(event) => setEditArtist(event.target.value)} value={editArtist} />
             </label>
             <button disabled={!editTrack.trim() || manualStatus === "loading"} type="submit">
-              <Search aria-hidden="true" size={15} />{manualStatus === "loading" ? "Đang tìm" : "Tìm trên LRCLIB"}
+              <Search aria-hidden="true" size={14} />{manualStatus === "loading" ? "SEARCHING..." : "QUERY"}
             </button>
           </form>
           {manualStatus === "error" ? <p className={styles.manualLyricsError} role="alert">{manualError}</p> : null}
-          {manualStatus === "empty" ? <p className={styles.manualLyricsEmpty}>Không tìm thấy phiên bản phù hợp với metadata này.</p> : null}
+          {manualStatus === "empty" ? <p className={styles.manualLyricsEmpty}>No matching versions found.</p> : null}
           {manualStatus === "ready" ? (
             <div className={styles.lyricsCandidates}>
               {candidates.map((candidate) => (
@@ -243,7 +254,7 @@ export function LyricsPanel() {
                   type="button"
                 >
                   <span><strong>{candidate.trackName}</strong><small>{candidate.artistName}</small></span>
-                  <span><small>{formatTime(candidate.duration)} · {candidate.syncedLyrics ? "Đồng bộ" : "Lời thường"}</small><Check aria-hidden="true" size={16} /></span>
+                  <span><small>{formatTime(candidate.duration)} · {candidate.syncedLyrics ? "SYNCED" : "PLAIN"}</small><Check aria-hidden="true" size={15} /></span>
                 </button>
               ))}
             </div>
@@ -253,17 +264,17 @@ export function LyricsPanel() {
 
       {status === "loading" ? (
         <div className={styles.lyricsSkeleton} aria-label="Đang tải lời bài hát">
-          {Array.from({ length: 7 }, (_, index) => <span key={index} />)}
+          {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
         </div>
       ) : null}
       {status === "empty" ? (
-        <div className={styles.lyricsState}><strong>Chưa tìm thấy lời</strong><span>Playback vẫn hoạt động. Dùng “Tìm bản khác” để sửa metadata.</span></div>
+        <div className={styles.lyricsState}><strong>NO LYRICS FOUND</strong><span>Playback active. Use Search Alternate to correct metadata.</span></div>
       ) : null}
       {status === "error" ? (
-        <div className={styles.lyricsState}><strong>LRCLIB đang bận</strong><span>Không thể tải lời lúc này. Nhạc không bị gián đoạn.</span></div>
+        <div className={styles.lyricsState}><strong>LRCLIB SERVICE BUSY</strong><span>Playback remains uninterrupted.</span></div>
       ) : null}
       {status === "ready" && lyrics?.instrumental ? (
-        <div className={styles.lyricsState}><strong>Bản nhạc không lời</strong><span>Không có dòng lời cần đồng bộ.</span></div>
+        <div className={styles.lyricsState}><strong>INSTRUMENTAL TRACK</strong><span>No synced text lines available.</span></div>
       ) : null}
 
       {status === "ready" && lyrics?.syncedLyrics.length ? (
@@ -283,13 +294,13 @@ export function LyricsPanel() {
         >
           {lyrics.syncedLyrics.map((line, index) => (
             <button
-              className={index === activeIndex ? styles.lyricActive : undefined}
+              className={`${styles.lyricLine} ${index === activeIndex ? styles.lyricLineActive : ""}`}
               key={`${line.time}-${index}`}
               onClick={() => seek(Math.max(0, line.time - offset))}
               ref={index === activeIndex ? activeRef : undefined}
               type="button"
             >
-              {line.text || "Nhạc dạo"}
+              {line.text || "•••"}
             </button>
           ))}
         </div>
@@ -303,7 +314,7 @@ export function LyricsPanel() {
 
       {!autoScroll && status === "ready" && Boolean(lyrics?.syncedLyrics.length) ? (
         <button className={styles.resumeScroll} onClick={resumeAutoScroll} type="button">
-          <RotateCcw aria-hidden="true" size={15} />Tiếp tục tự cuộn
+          <RotateCcw aria-hidden="true" size={14} /> RESUME AUTO SCROLL
         </button>
       ) : null}
     </section>

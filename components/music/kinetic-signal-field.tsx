@@ -1,0 +1,183 @@
+"use client";
+
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import { useReducedMotion } from "framer-motion";
+import { memo, useEffect, useRef, useState } from "react";
+import { formatTime } from "@/lib/music/format";
+import { useMusicPlayer } from "./music-player-core";
+import styles from "./music-app.module.css";
+
+export const KineticSignalField = memo(function KineticSignalField() {
+  const { clock, state } = useMusicPlayer();
+  const reduceMotion = Boolean(useReducedMotion());
+  const track = state.currentTrack;
+  const isPlaying = state.isPlaying;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playheadRef = useRef<HTMLDivElement>(null);
+  const sliceTopRef = useRef<HTMLSpanElement>(null);
+  const sliceMidRef = useRef<HTMLSpanElement>(null);
+  const sliceBotRef = useRef<HTMLSpanElement>(null);
+
+  // Local accumulated phase for pause/resume consistency without phase jumps
+  const phaseRef = useRef(0);
+  const lastTimeRef = useRef(0);
+
+  // Active track state snapshot for smooth slice displacement transitions
+  const [displayTrack, setDisplayTrack] = useState(track);
+  const isTransitioningRef = useRef(false);
+
+  // Track change animation: slice displacement -> mask collapse -> content swap -> opposing mask reveal
+  useGSAP(
+    () => {
+      if (!containerRef.current || reduceMotion) {
+        setDisplayTrack(track);
+        return;
+      }
+
+      if (track?.videoId !== displayTrack?.videoId) {
+        isTransitioningRef.current = true;
+
+        const tl = gsap.timeline({
+          defaults: { ease: "power2.inOut" },
+          onComplete: () => {
+            isTransitioningRef.current = false;
+          },
+        });
+
+        // 1. Slice displacement & mask collapse
+        if (sliceTopRef.current && sliceMidRef.current && sliceBotRef.current) {
+          tl.to(sliceTopRef.current, { x: -40, opacity: 0, duration: 0.25 }, 0)
+            .to(sliceMidRef.current, { x: 40, opacity: 0, duration: 0.25 }, 0.05)
+            .to(sliceBotRef.current, { x: -20, opacity: 0, duration: 0.25 }, 0.1);
+        }
+
+        // 2. Content swap at midpoint
+        tl.add(() => {
+          setDisplayTrack(track);
+        }, 0.28);
+
+        // 3. Opposing mask reveal & settle
+        if (sliceTopRef.current && sliceMidRef.current && sliceBotRef.current) {
+          tl.fromTo(
+            sliceTopRef.current,
+            { x: 50, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+            0.32
+          )
+            .fromTo(
+              sliceMidRef.current,
+              { x: -50, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+              0.36
+            )
+            .fromTo(
+              sliceBotRef.current,
+              { x: 30, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+              0.4
+            );
+        }
+      }
+    },
+    { dependencies: [track?.videoId], scope: containerRef }
+  );
+
+  // Imperative 60fps Signal Drift via GSAP Ticker (Paused callback removed when paused to FREEZE exact frame)
+  useEffect(() => {
+    if (!containerRef.current || reduceMotion || !isPlaying) {
+      lastTimeRef.current = 0;
+      return;
+    }
+
+    const setTopX = gsap.quickSetter(sliceTopRef.current, "x", "px");
+    const setMidX = gsap.quickSetter(sliceMidRef.current, "x", "px");
+    const setBotX = gsap.quickSetter(sliceBotRef.current, "x", "px");
+
+    const updateSignal = (time: number, deltaTime: number) => {
+      if (isTransitioningRef.current) return;
+      const deltaSec = Math.min(deltaTime / 1000, 0.1);
+      phaseRef.current += deltaSec * 0.8;
+
+      const phase = phaseRef.current;
+      setTopX(Math.sin(phase) * 14);
+      setMidX(Math.cos(phase * 0.8) * -18);
+      setBotX(Math.sin(phase * 1.2) * 10);
+    };
+
+    gsap.ticker.add(updateSignal);
+    return () => {
+      gsap.ticker.remove(updateSignal);
+    };
+  }, [isPlaying, reduceMotion]);
+
+  // Imperative Playhead Cut update via direct clock subscription (0% React rerenders)
+  useEffect(() => {
+    if (!playheadRef.current) return;
+
+    const setProgress = gsap.quickSetter(playheadRef.current, "left", "%");
+
+    const updatePlayhead = () => {
+      const snap = clock.getSnapshot();
+      const dur = snap.duration || state.duration || 0;
+      const cur = snap.currentTime || 0;
+      const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+      setProgress(pct);
+    };
+
+    updatePlayhead();
+    const unsubscribe = clock.subscribe(updatePlayhead);
+    return () => {
+      unsubscribe();
+    };
+  }, [clock, state.duration]);
+
+  const titleText = displayTrack?.title || "NO ACTIVE TRACK";
+  const artistText = displayTrack?.artist || "ARCHIVE SOUNDSPACE";
+  const statusLabel = isPlaying ? "ACTIVE" : "PAUSED";
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.signalFieldRoot}
+      data-has-track={Boolean(track)}
+      data-playing={isPlaying}
+      aria-hidden="true"
+    >
+      {/* Layer A: Architectural Hairline Grid */}
+      <div className={styles.signalGrid}>
+        <div className={styles.signalHairlineHoriz} />
+        <div className={styles.signalHairlineVert} />
+      </div>
+
+      {/* Layer B: Typographic Sculpture Slices */}
+      <div className={styles.signalSculpture}>
+        <div className={styles.signalSliceLine}>
+          <span ref={sliceTopRef} className={`${styles.signalSlice} ${styles.signalSliceTop}`}>
+            {titleText}
+          </span>
+        </div>
+        <div className={styles.signalSliceLine}>
+          <span ref={sliceMidRef} className={`${styles.signalSlice} ${styles.signalSliceMid}`}>
+            {titleText}
+          </span>
+        </div>
+        <div className={styles.signalSliceLine}>
+          <span ref={sliceBotRef} className={`${styles.signalSlice} ${styles.signalSliceBot}`}>
+            {titleText}
+          </span>
+        </div>
+        <p className={styles.signalSubArtist}>{artistText}</p>
+      </div>
+
+      {/* Layer C: Playhead Cut & Technical Metadata */}
+      <div ref={playheadRef} className={styles.signalPlayhead} />
+
+      <div className={styles.signalMeta}>
+        <span className={styles.signalMetaTag}>SIGNAL / {track ? "02" : "00"}</span>
+        <span className={styles.signalMetaStatus}>{track ? statusLabel : "DORMANT"}</span>
+      </div>
+    </div>
+  );
+});
