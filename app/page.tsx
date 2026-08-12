@@ -1,5 +1,6 @@
-import { IntroGate } from "@/components/intro-gate";
+import { TypographicPortal } from "@/components/portal/typographic-portal";
 
 export default function HomePage() {
-  return <IntroGate />;
+  return <TypographicPortal />;
 }
+
