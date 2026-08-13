@@ -175,7 +175,7 @@ export function MusicHome() {
   return (
     <div className={styles.musicHomeContainer}>
       {/* Chapter 01: Discover */}
-      <section className={styles.editorialChapter} aria-labelledby="discover-title">
+      <section className={styles.editorialChapter} id="discover" aria-labelledby="discover-title">
         <div className={styles.chapterHeading}>
           <h2 id="discover-title" className={styles.chapterTitle}>
             01 / DISCOVER

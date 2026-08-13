@@ -4,7 +4,6 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "framer-motion";
 import { memo, useEffect, useRef, useState } from "react";
-import { formatTime } from "@/lib/music/format";
 import { useMusicPlayer } from "./music-player-core";
 import styles from "./music-app.module.css";
 
@@ -31,7 +30,7 @@ export const KineticSignalField = memo(function KineticSignalField() {
   // Track change animation: slice displacement -> mask collapse -> content swap -> opposing mask reveal
   useGSAP(
     () => {
-      if (!containerRef.current || reduceMotion) {
+      if (!containerRef.current || reduceMotion || !track) {
         setDisplayTrack(track);
         return;
       }
@@ -46,19 +45,16 @@ export const KineticSignalField = memo(function KineticSignalField() {
           },
         });
 
-        // 1. Slice displacement & mask collapse
         if (sliceTopRef.current && sliceMidRef.current && sliceBotRef.current) {
           tl.to(sliceTopRef.current, { x: -40, opacity: 0, duration: 0.25 }, 0)
             .to(sliceMidRef.current, { x: 40, opacity: 0, duration: 0.25 }, 0.05)
             .to(sliceBotRef.current, { x: -20, opacity: 0, duration: 0.25 }, 0.1);
         }
 
-        // 2. Content swap at midpoint
         tl.add(() => {
           setDisplayTrack(track);
         }, 0.28);
 
-        // 3. Opposing mask reveal & settle
         if (sliceTopRef.current && sliceMidRef.current && sliceBotRef.current) {
           tl.fromTo(
             sliceTopRef.current,
@@ -86,7 +82,7 @@ export const KineticSignalField = memo(function KineticSignalField() {
 
   // Imperative 60fps Signal Drift via GSAP Ticker (Paused callback removed when paused to FREEZE exact frame)
   useEffect(() => {
-    if (!containerRef.current || reduceMotion || !isPlaying) {
+    if (!containerRef.current || reduceMotion || !isPlaying || !track) {
       lastTimeRef.current = 0;
       return;
     }
@@ -95,7 +91,7 @@ export const KineticSignalField = memo(function KineticSignalField() {
     const setMidX = gsap.quickSetter(sliceMidRef.current, "x", "px");
     const setBotX = gsap.quickSetter(sliceBotRef.current, "x", "px");
 
-    const updateSignal = (time: number, deltaTime: number) => {
+    const updateSignal = (_time: number, deltaTime: number) => {
       if (isTransitioningRef.current) return;
       const deltaSec = Math.min(deltaTime / 1000, 0.1);
       phaseRef.current += deltaSec * 0.8;
@@ -110,11 +106,11 @@ export const KineticSignalField = memo(function KineticSignalField() {
     return () => {
       gsap.ticker.remove(updateSignal);
     };
-  }, [isPlaying, reduceMotion]);
+  }, [isPlaying, reduceMotion, track]);
 
   // Imperative Playhead Cut update via direct clock subscription (0% React rerenders)
   useEffect(() => {
-    if (!playheadRef.current) return;
+    if (!playheadRef.current || !track) return;
 
     const setProgress = gsap.quickSetter(playheadRef.current, "left", "%");
 
@@ -131,17 +127,33 @@ export const KineticSignalField = memo(function KineticSignalField() {
     return () => {
       unsubscribe();
     };
-  }, [clock, state.duration]);
+  }, [clock, state.duration, track]);
 
-  const titleText = displayTrack?.title || "NO ACTIVE TRACK";
-  const artistText = displayTrack?.artist || "ARCHIVE SOUNDSPACE";
+  if (!track) {
+    return (
+      <div className={styles.signalFieldRoot} data-has-track={false} aria-hidden="true">
+        <div className={styles.signalGrid}>
+          <div className={styles.signalHairlineHoriz} />
+          <div className={styles.signalHairlineVert} />
+        </div>
+        <div className={styles.signalDormantWrap}>
+          <span className={styles.signalDormantMeta}>SIGNAL / 00</span>
+          <h3 className={styles.signalDormantTitle}>DORMANT SOUNDSPACE</h3>
+          <p className={styles.signalDormantSub}>SELECT A TRACK TO INITIALIZE KINETIC SIGNAL</p>
+        </div>
+      </div>
+    );
+  }
+
+  const titleText = displayTrack?.title || track.title;
+  const artistText = displayTrack?.artist || track.artist;
   const statusLabel = isPlaying ? "ACTIVE" : "PAUSED";
 
   return (
     <div
       ref={containerRef}
       className={styles.signalFieldRoot}
-      data-has-track={Boolean(track)}
+      data-has-track={true}
       data-playing={isPlaying}
       aria-hidden="true"
     >
@@ -175,8 +187,8 @@ export const KineticSignalField = memo(function KineticSignalField() {
       <div ref={playheadRef} className={styles.signalPlayhead} />
 
       <div className={styles.signalMeta}>
-        <span className={styles.signalMetaTag}>SIGNAL / {track ? "02" : "00"}</span>
-        <span className={styles.signalMetaStatus}>{track ? statusLabel : "DORMANT"}</span>
+        <span className={styles.signalMetaTag}>SIGNAL / 02</span>
+        <span className={styles.signalMetaStatus}>{statusLabel}</span>
       </div>
     </div>
   );

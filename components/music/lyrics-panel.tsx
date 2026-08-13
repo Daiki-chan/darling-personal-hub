@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { AlignVerticalSpaceAround, Check, Minus, Plus, RotateCcw, Search, X } from "lucide-react";
 import { findActiveLyricIndex, formatTime } from "@/lib/music/format";
 import { lyricsRecordToResult } from "@/lib/music/lyrics";
@@ -12,17 +12,17 @@ import {
 } from "@/lib/music/lyrics-service";
 import { normalizeTrackMetadata } from "@/lib/music/metadata";
 import type { LyricsCandidate, LyricsResult } from "@/lib/music/types";
-import { useMusicPlayer, usePlaybackClock } from "./music-player-core";
+import { useMusicPlayer } from "./music-player-core";
 import styles from "./music-app.module.css";
 
 type LyricsStatus = "idle" | "loading" | "ready" | "empty" | "error";
 type ManualStatus = "idle" | "loading" | "ready" | "empty" | "error";
 
 export function LyricsPanel() {
-  const { seek, setLyricMapping, setLyricOffset, state } = useMusicPlayer();
-  const { currentTime } = usePlaybackClock();
+  const { clock, seek, setLyricMapping, setLyricOffset, state } = useMusicPlayer();
   const [status, setStatus] = useState<LyricsStatus>("idle");
   const [lyrics, setLyrics] = useState<LyricsResult | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [autoScroll, setAutoScroll] = useState(true);
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [editTrack, setEditTrack] = useState("");
@@ -31,28 +31,34 @@ export function LyricsPanel() {
   const [manualError, setManualError] = useState("");
   const [candidates, setCandidates] = useState<LyricsCandidate[]>([]);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const activeIndexRef = useRef(-1);
   const manualAbortRef = useRef<AbortController | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoScrollTimerRef = useRef<number | null>(null);
-  const smoothScrollTimerRef = useRef<number | null>(null);
+  const isSeekingRef = useRef(false);
   const track = state.currentTrack;
   const offset = track ? state.lyricOffsets[track.videoId] ?? 0 : 0;
   const mappedRecord = track ? state.lyricMappings[track.videoId] : undefined;
-  const activeIndex = useMemo(
-    () => findActiveLyricIndex(lyrics?.syncedLyrics ?? [], currentTime + offset),
-    [currentTime, lyrics?.syncedLyrics, offset],
-  );
 
-  const stopSmoothScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (smoothScrollTimerRef.current !== null) {
-      window.clearTimeout(smoothScrollTimerRef.current);
-      smoothScrollTimerRef.current = null;
-    }
-    if (container) {
-      container.scrollTo({ top: container.scrollTop, behavior: "auto" });
-    }
-  }, []);
+  // Imperative clock subscription with state guard: React re-renders ONLY when activeIndex changes
+  useEffect(() => {
+    const updateActiveIndex = () => {
+      const snap = clock.getSnapshot();
+      const curTime = snap.currentTime || 0;
+      const synced = lyrics?.syncedLyrics ?? [];
+      const newIndex = findActiveLyricIndex(synced, curTime + offset);
+      if (newIndex !== activeIndexRef.current) {
+        activeIndexRef.current = newIndex;
+        setActiveIndex(newIndex);
+      }
+    };
+
+    updateActiveIndex();
+    const unsubscribe = clock.subscribe(updateActiveIndex);
+    return () => {
+      unsubscribe();
+    };
+  }, [clock, lyrics?.syncedLyrics, offset]);
 
   const resumeAutoScroll = useCallback(() => {
     if (autoScrollTimerRef.current !== null) {
@@ -63,22 +69,19 @@ export function LyricsPanel() {
   }, []);
 
   const pauseAutoScroll = useCallback(() => {
-    stopSmoothScroll();
+    if (isSeekingRef.current) return;
     setAutoScroll(false);
-    if (autoScrollTimerRef.current !== null) window.clearTimeout(autoScrollTimerRef.current);
-    autoScrollTimerRef.current = window.setTimeout(() => {
-      autoScrollTimerRef.current = null;
-      setAutoScroll(true);
-    }, 5000);
-  }, [stopSmoothScroll]);
+  }, []);
 
   useEffect(() => {
     let disposed = false;
-    stopSmoothScroll();
     if (autoScrollTimerRef.current !== null) {
       window.clearTimeout(autoScrollTimerRef.current);
       autoScrollTimerRef.current = null;
     }
+    activeIndexRef.current = -1;
+    setActiveIndex(-1);
+
     if (!track) {
       queueMicrotask(() => {
         if (disposed) return;
@@ -118,41 +121,44 @@ export function LyricsPanel() {
       disposed = true;
       controller.abort();
     };
-  }, [mappedRecord, stopSmoothScroll, track]);
+  }, [mappedRecord, track]);
 
+  // Smooth Auto-Scroll to 42% Focus Anchor on Every Active Index Change
   useEffect(() => {
     if (!autoScroll || correctionOpen || activeIndex < 0) return;
     const container = scrollContainerRef.current;
     const activeLine = activeRef.current;
     if (!container || !activeLine) return;
-    const containerRect = container.getBoundingClientRect();
-    const lineRect = activeLine.getBoundingClientRect();
-    const geometry = {
-      containerHeight: container.clientHeight,
-      containerScrollTop: container.scrollTop,
-      lineHeight: lineRect.height,
-      lineTop: lineRect.top - containerRect.top,
-      scrollHeight: container.scrollHeight,
-    };
-    if (isLyricInsideSafeZone(geometry)) return;
-    stopSmoothScroll();
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const behavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
-    container.scrollTo({
-      top: calculateCenteredLyricScrollTop(geometry),
-      behavior,
+
+    const frameId = requestAnimationFrame(() => {
+      const containerRect = container.getBoundingClientRect();
+      const lineRect = activeLine.getBoundingClientRect();
+      const geometry = {
+        containerHeight: container.clientHeight,
+        containerScrollTop: container.scrollTop,
+        lineHeight: lineRect.height,
+        lineTop: lineRect.top - containerRect.top,
+        scrollHeight: container.scrollHeight,
+      };
+
+      if (isLyricInsideSafeZone(geometry) && !isSeekingRef.current) return;
+      isSeekingRef.current = false;
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const targetTop = calculateCenteredLyricScrollTop(geometry);
+
+      container.scrollTo({
+        top: targetTop,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
     });
-    if (behavior === "smooth") {
-      smoothScrollTimerRef.current = window.setTimeout(() => {
-        smoothScrollTimerRef.current = null;
-      }, 650);
-    }
-  }, [activeIndex, autoScroll, correctionOpen, stopSmoothScroll]);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [activeIndex, autoScroll, correctionOpen]);
 
   useEffect(() => () => {
     manualAbortRef.current?.abort();
     if (autoScrollTimerRef.current) window.clearTimeout(autoScrollTimerRef.current);
-    if (smoothScrollTimerRef.current) window.clearTimeout(smoothScrollTimerRef.current);
   }, []);
 
   const runManualSearch = async (event: FormEvent<HTMLFormElement>) => {
@@ -177,6 +183,12 @@ export function LyricsPanel() {
       setManualError(reason instanceof Error ? reason.message : "Không thể tìm phiên bản lời khác.");
       setManualStatus("error");
     }
+  };
+
+  const handleLineClick = (lineTime: number) => {
+    isSeekingRef.current = true;
+    seek(Math.max(0, lineTime - offset));
+    resumeAutoScroll();
   };
 
   if (!track) {
@@ -287,22 +299,34 @@ export function LyricsPanel() {
               pauseAutoScroll();
             }
           }}
-          onPointerDown={pauseAutoScroll}
           onWheel={pauseAutoScroll}
           ref={scrollContainerRef}
           tabIndex={0}
         >
-          {lyrics.syncedLyrics.map((line, index) => (
-            <button
-              className={`${styles.lyricLine} ${index === activeIndex ? styles.lyricLineActive : ""}`}
-              key={`${line.time}-${index}`}
-              onClick={() => seek(Math.max(0, line.time - offset))}
-              ref={index === activeIndex ? activeRef : undefined}
-              type="button"
-            >
-              {line.text || "•••"}
-            </button>
-          ))}
+          {lyrics.syncedLyrics.map((line, index) => {
+            const isActive = index === activeIndex;
+            const distance = Math.abs(index - activeIndex);
+            const isAdjacent = distance === 1 || distance === 2;
+
+            let lineClassName = styles.lyricLine;
+            if (isActive) {
+              lineClassName = `${styles.lyricLine} ${styles.lyricLineActive}`;
+            } else if (isAdjacent && activeIndex >= 0) {
+              lineClassName = `${styles.lyricLine} ${styles.lyricLineAdjacent}`;
+            }
+
+            return (
+              <button
+                className={lineClassName}
+                key={`${line.time}-${index}`}
+                onClick={() => handleLineClick(line.time)}
+                ref={isActive ? activeRef : undefined}
+                type="button"
+              >
+                {line.text || "•••"}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 

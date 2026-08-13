@@ -280,14 +280,15 @@ export function YouTubeVideoStage() {
         // Transient getter unavailabilities
       }
     };
-    const interval = window.setInterval(syncClock, 750);
+    const intervalMs = state.isPlaying ? 100 : 750;
+    const interval = window.setInterval(syncClock, intervalMs);
     document.addEventListener("visibilitychange", syncClock);
     syncClock();
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", syncClock);
     };
-  }, [clock, reportDuration]);
+  }, [clock, reportDuration, state.isPlaying]);
 
   if (state.isShutdown || !state.currentTrack) return null;
 

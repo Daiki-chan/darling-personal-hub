@@ -113,7 +113,6 @@ export function PlayerDock() {
 
   useEffect(() => {
     if (!expanded) return;
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
     const previousBodyOverflow = document.body.style.overflow;
     const previousRootOverflow = document.documentElement.style.overflow;
 
@@ -139,7 +138,6 @@ export function PlayerDock() {
       window.removeEventListener("popstate", onPopState);
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousRootOverflow;
-      restoreFocusRef.current?.focus();
     };
   }, [expanded, requestMinimize, setExpanded]);
 
@@ -190,9 +188,16 @@ export function PlayerDock() {
 
           {/* Column 2: Controls & Info Column */}
           <div className={styles.controlColumn}>
+            {/* Top Metadata Row */}
             <div className={styles.dockHeader}>
               <div className={styles.nowPlaying}>
-                <Image alt="" height={44} sizes="44px" src={track.thumbnail} width={44} />
+                <Image
+                  alt=""
+                  height={expanded ? 56 : 48}
+                  sizes="64px"
+                  src={track.thumbnail}
+                  width={expanded ? 56 : 48}
+                />
                 <div className={styles.nowPlayingMeta}>
                   <strong title={track.title}>{track.title}</strong>
                   <span>{track.artist}</span>
@@ -232,10 +237,46 @@ export function PlayerDock() {
               </div>
             </div>
 
+            {/* Progress Row: TIME | RANGE INPUT | TIME */}
             <ProgressControl />
 
-            <div className={styles.transportRow}>
-              {/* Secondary Controls */}
+            {/* ROW 1 — DEDICATED PRIMARY TRANSPORT (PHYSICALLY CENTERED) */}
+            <div className={styles.primaryTransportRow}>
+              <button
+                aria-label="Bài trước"
+                disabled={!queueHasNavigation}
+                onClick={previous}
+                type="button"
+              >
+                <SkipBack aria-hidden="true" fill="currentColor" size={20} />
+              </button>
+              <button
+                aria-label={state.isPlaying ? "Tạm dừng" : "Phát"}
+                className={styles.playButtonPrimary}
+                onClick={togglePlayback}
+                type="button"
+              >
+                {buffering ? (
+                  <LoaderCircle aria-hidden="true" className={styles.spinner} size={22} />
+                ) : state.isPlaying ? (
+                  <Pause aria-hidden="true" fill="currentColor" size={22} />
+                ) : (
+                  <Play aria-hidden="true" fill="currentColor" size={22} />
+                )}
+              </button>
+              <button
+                aria-label="Bài tiếp theo"
+                disabled={!canPlayNext}
+                onClick={() => void next()}
+                type="button"
+              >
+                <SkipForward aria-hidden="true" fill="currentColor" size={20} />
+              </button>
+            </div>
+
+            {/* ROW 2 — UTILITY CONTROL ROW (SECONDARY LEFT | VOLUME RIGHT) */}
+            <div className={styles.utilityControlRow}>
+              {/* Secondary Controls (Left) */}
               <div className={styles.secondaryControls}>
                 <button
                   aria-label="Phát ngẫu nhiên"
@@ -272,41 +313,7 @@ export function PlayerDock() {
                 </button>
               </div>
 
-              {/* Primary Transport: Prev / Play / Next */}
-              <div className={styles.primaryTransport}>
-                <button
-                  aria-label="Bài trước"
-                  disabled={!queueHasNavigation}
-                  onClick={previous}
-                  type="button"
-                >
-                  <SkipBack aria-hidden="true" fill="currentColor" size={20} />
-                </button>
-                <button
-                  aria-label={state.isPlaying ? "Tạm dừng" : "Phát"}
-                  className={styles.playButtonPrimary}
-                  onClick={togglePlayback}
-                  type="button"
-                >
-                  {buffering ? (
-                    <LoaderCircle aria-hidden="true" className={styles.spinner} size={22} />
-                  ) : state.isPlaying ? (
-                    <Pause aria-hidden="true" fill="currentColor" size={22} />
-                  ) : (
-                    <Play aria-hidden="true" fill="currentColor" size={22} />
-                  )}
-                </button>
-                <button
-                  aria-label="Bài tiếp theo"
-                  disabled={!canPlayNext}
-                  onClick={() => void next()}
-                  type="button"
-                >
-                  <SkipForward aria-hidden="true" fill="currentColor" size={20} />
-                </button>
-              </div>
-
-              {/* Volume Cluster: Mute | Vol- | Range Slider | Vol+ */}
+              {/* Volume Cluster (Right) */}
               <div className={styles.volumeCluster}>
                 <button
                   aria-label={state.volume.muted ? "Bật âm thanh" : "Tắt âm thanh"}

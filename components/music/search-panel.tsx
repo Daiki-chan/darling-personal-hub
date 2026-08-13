@@ -11,7 +11,6 @@ import { TrackMenuTrigger } from "./track-actions";
 import styles from "./music-app.module.css";
 
 type SearchStatus = "idle" | "loading" | "ready" | "empty" | "error";
-const suggestions = ["nhạc Việt đêm khuya", "lofi acoustic", "city pop", "indie chill"];
 
 export function SearchPanel() {
   const { playNow } = useMusicPlayer();
@@ -136,20 +135,8 @@ export function SearchPanel() {
     return () => {
       clearDebounceTimer();
       searchGenerationRef.current += 1;
-      abortRef.current?.abort();
     };
   }, [clearDebounceTimer]);
-
-  const handleSuggestionClick = (suggestion: string) => {
-    const cleanSuggestion = suggestion.trim();
-    clearDebounceTimer();
-    if (cleanSuggestion !== query.trim()) {
-      skipNextDebounceQueryRef.current = cleanSuggestion;
-      setQuery(suggestion);
-    }
-    triggerSearch(cleanSuggestion);
-  };
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     triggerSearch(query);
@@ -196,17 +183,6 @@ export function SearchPanel() {
           </button>
         </div>
       </form>
-
-      {status === "idle" && !items.length ? (
-        <div className={styles.suggestions} aria-label="Gợi ý từ khóa">
-          <span className={styles.suggestionLabel}>SUGGESTIONS</span>
-          {suggestions.map((suggestion) => (
-            <button key={suggestion} onClick={() => handleSuggestionClick(suggestion)} type="button">
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      ) : null}
 
       {status === "loading" && !items.length ? (
         <div className={styles.searchResultsList} aria-label="Đang tìm kiếm">

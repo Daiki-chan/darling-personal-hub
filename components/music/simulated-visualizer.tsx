@@ -62,16 +62,19 @@ export function SimulatedVisualizer() {
       const barWidth = Math.max(1.5, (width - gap * (bars - 1)) / bars);
 
       for (let index = 0; index < bars; index += 1) {
-        const phase = timestamp * 0.0012 + index * 0.45 + seed * 0.00001;
-        const slow = Math.sin(phase) * 0.5 + 0.5;
-        const detail = Math.sin(phase * 0.73 + progress * Math.PI * 6) * 0.5 + 0.5;
-        const strength = reduceMotion ? 0.12 : (0.12 + slow * 0.52 + detail * 0.22) * energy;
-        const barHeight = Math.max(2, strength * height * 0.82);
+        const barSeed = (seed + index * 1013) % 10000;
+        const macroPhase = timestamp * 0.0006 + (barSeed * 0.001);
+        const microPhase = timestamp * 0.0021 + index * 0.53 + (barSeed * 0.0007);
+        const macroWave = Math.sin(macroPhase) * 0.5 + 0.5;
+        const microWave = Math.cos(microPhase + progress * Math.PI * 8) * 0.5 + 0.5;
+        const barMult = 0.5 + ((barSeed % 9) / 10) * 0.8;
+        const strength = reduceMotion ? 0.12 : (0.1 + macroWave * 0.4 + microWave * 0.35 * barMult) * energy;
+        const barHeight = Math.max(2, strength * height * 0.84);
         const x = index * (barWidth + gap);
         const y = (height - barHeight) / 2;
 
-        context.globalAlpha = 0.25 + strength * 0.65;
-        context.fillStyle = index % 3 === 0 ? "#f3f3f5" : accent;
+        context.globalAlpha = 0.2 + strength * 0.7;
+        context.fillStyle = index % 4 === 0 ? "#f3f3f5" : accent;
         context.fillRect(x, y, barWidth, barHeight);
       }
       context.globalAlpha = 1;
@@ -87,7 +90,7 @@ export function SimulatedVisualizer() {
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [clock, reduceMotion, state.accent, state.currentTrack?.videoId, state.isPlaying, state.volume.volume]);
+  }, [clock, reduceMotion, state.accent, state.currentTrack?.videoId, state.isPlaying, state.volume.muted, state.volume.volume]);
 
   return (
     <div className={styles.visualizer}>
