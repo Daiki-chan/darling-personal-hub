@@ -497,4 +497,3 @@ Cross-page performance, responsive, a11y and visual QA
 - Không redesign màu sắc và nội dung trong phase này.
 - Mặc định bỏ custom cursor của Portfolio vì accessibility và performance; nếu muốn giữ, cần duyệt riêng như một exception.
 - Không thêm dependency animation mới vì GSAP, ScrollTrigger, `@gsap/react` và Framer Motion đã đủ.
-
