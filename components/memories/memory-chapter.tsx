@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import type { MemoryFragment, MemorySubject } from "@/lib/memories-data";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 import { MemoryFragmentCard } from "./memory-fragment-card";
 
 interface MemoryChapterProps {
@@ -24,15 +25,17 @@ export const MemoryChapter = memo(function MemoryChapter({
   onSelectMemory,
 }: MemoryChapterProps) {
   const formattedCount = String(memories.length).padStart(3, "0");
+  const motionRef = useSectionMotion<HTMLElement>();
 
   return (
     <section
+      ref={motionRef}
       id={id}
       className={`mem-chapter mem-chapter--${subject} section-shell`}
       aria-label={`${chapterNumber} / ${title} — ${subtitle}`}
     >
       {/* Intentional Chapter Header Break */}
-      <header className="mem-chapter__header">
+      <header className="mem-chapter__header" data-motion-reveal>
         <div className="mem-chapter__title-group">
           <span className="mem-chapter__num">{chapterNumber} / {title}</span>
           <h2 className="mem-chapter__heading">{subtitle}</h2>
@@ -56,7 +59,7 @@ export const MemoryChapter = memo(function MemoryChapter({
           ))}
         </div>
       ) : (
-        <div className="mem-chapter__empty-container">
+        <div className="mem-chapter__empty-container" data-motion-reveal>
           <div className="mem-chapter__empty-card">
             <span className="mem-chapter__empty-tag">ARCHIVE SEGMENT 000 // EMPTY</span>
             <h3 className="mem-chapter__empty-title">

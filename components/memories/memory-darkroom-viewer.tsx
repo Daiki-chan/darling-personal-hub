@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { MemoryFragment } from "@/lib/memories-data";
+import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 
 interface MemoryDarkroomViewerProps {
   memory: MemoryFragment | null;
@@ -21,6 +22,9 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [direction, setDirection] = useState(1);
+  const reduceMotion = Boolean(useReducedMotion());
 
   const currentIndex = memory
     ? allMemories.findIndex((m) => m.id === memory.id)
@@ -40,12 +44,14 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
     if (currentIndex === -1) return;
     const nextIdx = (currentIndex - 1 + allMemories.length) % allMemories.length;
     onSelectMemory(allMemories[nextIdx]);
+    setDirection(-1);
   }, [currentIndex, allMemories, onSelectMemory]);
 
   const handleNext = useCallback(() => {
     if (currentIndex === -1) return;
     const nextIdx = (currentIndex + 1) % allMemories.length;
     onSelectMemory(allMemories[nextIdx]);
+    setDirection(1);
   }, [currentIndex, allMemories, onSelectMemory]);
 
   // Keyboard navigation & escape listener
@@ -70,16 +76,23 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
   }, [memory, onClose, handlePrev, handleNext]);
 
   // Lock background scroll when viewer is open
+  const isOpen = Boolean(memory);
   useEffect(() => {
-    if (memory) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      closeBtnRef.current?.focus();
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [memory]);
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    document.body.style.overflow = "hidden";
+    closeBtnRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+    };
+  }, [isOpen]);
 
   // Touch gesture swipe handling
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -109,23 +122,24 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
     touchStartYRef.current = null;
   };
 
-  if (!memory) return null;
 
-  const isGame = memory.subject === "game";
-  const gameMeta = isGame ? (memory as import("@/lib/memories-data").GameMemoryFragment) : null;
-  const placeMeta = !isGame ? (memory as import("@/lib/memories-data").PlaceMemoryFragment) : null;
+  const isGame = memory?.subject === "game";
+  const gameMeta = memory && isGame ? (memory as import("@/lib/memories-data").GameMemoryFragment) : null;
+  const placeMeta = memory && !isGame ? (memory as import("@/lib/memories-data").PlaceMemoryFragment) : null;
 
   const formattedSubjectIdx = String(currentSubjectIndex).padStart(3, "0");
   const formattedSubjectTotal = String(totalInSubject).padStart(3, "0");
 
   return (
     <AnimatePresence>
+      {memory ? (
       <motion.div
+        key="darkroom"
         className="darkroom-modal"
-        initial={{ opacity: 0 }}
+        initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.22 }}
+        transition={{ duration: reduceMotion ? 0 : MOTION_DURATION.exit, ease: MOTION_EASE.css }}
         role="dialog"
         aria-modal="true"
         aria-label={`Chi tiết ảnh ${memory.id}`}
@@ -178,7 +192,18 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
               ←
             </button>
 
-            <div className="darkroom-modal__image-wrapper">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={memory.id}
+                className="darkroom-modal__image-wrapper"
+                initial={reduceMotion ? false : { opacity: 0, x: direction * 20, scale: 0.985 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: direction * -20, scale: 0.99 }}
+                transition={{
+                  duration: reduceMotion ? 0 : MOTION_DURATION.standard,
+                  ease: MOTION_EASE.css,
+                }}
+              >
               <Image
                 src={memory.image}
                 alt={memory.title}
@@ -187,7 +212,8 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
                 priority
                 className="darkroom-modal__img"
               />
-            </div>
+              </motion.div>
+            </AnimatePresence>
 
             <button
               type="button"
@@ -250,6 +276,7 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
           </footer>
         </div>
       </motion.div>
+      ) : null}
     </AnimatePresence>
   );
 };

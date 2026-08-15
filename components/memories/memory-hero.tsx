@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { memo } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
+import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 import type { GameMemoryFragment, MemoryFragment, MemorySubject, PlaceMemoryFragment } from "@/lib/memories-data";
 
 interface MemoryHeroProps {
@@ -32,11 +35,13 @@ export const MemoryHero = memo(function MemoryHero({
   const isGame = featuredMemory?.subject === "game";
   const gameMeta = isGame ? (featuredMemory as GameMemoryFragment) : null;
   const placeMeta = featuredMemory && !isGame ? (featuredMemory as PlaceMemoryFragment) : null;
+  const motionRef = useSectionMotion<HTMLElement>({ start: "top 92%" });
+  const reduceMotion = Boolean(useReducedMotion());
 
   return (
-    <header className="mem-hero section-shell">
+    <header ref={motionRef} className="mem-hero section-shell">
       {/* 1. Clear, Uncompromised Typography Level */}
-      <div className="mem-hero__header-row">
+      <div className="mem-hero__header-row" data-motion-reveal>
         <span className="mem-hero__eyebrow">FUJIWARA DAIKI · CH.01</span>
         <h1 className="mem-hero__title">
           <span className="mem-hero__title-main">MEMORIES</span>
@@ -45,7 +50,7 @@ export const MemoryHero = memo(function MemoryHero({
       </div>
 
       {/* 2. Structured Two-Column Stage (Independent Nav & Independent Visual Anchor) */}
-      <div className="mem-hero__stage">
+      <div className="mem-hero__stage" data-motion-reveal>
         {/* Left Side: Editorial Category Navigation */}
         <div className="mem-hero__nav-col">
           <nav className="mem-hero__categories" aria-label="Danh mục chủ đề ký ức">
@@ -93,10 +98,19 @@ export const MemoryHero = memo(function MemoryHero({
 
         {/* Right Side: Clean Visual Anchor Frame (Active or Empty State) */}
         <div className="mem-hero__anchor-col">
+          <AnimatePresence mode="wait" initial={false}>
           {featuredMemory ? (
-            <button
+            <motion.button
               type="button"
               className="mem-hero__anchor-frame"
+              key={featuredMemory.id}
+              initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -8 }}
+              transition={{
+                duration: reduceMotion ? 0 : MOTION_DURATION.standard,
+                ease: MOTION_EASE.css,
+              }}
               onClick={() => onSelectMemory(featuredMemory)}
               aria-label={`Xem ảnh đại diện: ${featuredMemory.title}`}
             >
@@ -126,7 +140,7 @@ export const MemoryHero = memo(function MemoryHero({
                     : [featuredMemory.date || featuredMemory.year].filter(Boolean).join(" · ")}
                 </span>
               </div>
-            </button>
+            </motion.button>
           ) : (
             <div className="mem-hero__anchor-frame mem-hero__anchor-frame--empty" aria-label="Khung lưu trữ sẵn sàng">
               <div className="mem-hero__anchor-media mem-hero__anchor-media--empty">
@@ -146,6 +160,7 @@ export const MemoryHero = memo(function MemoryHero({
               </div>
             </div>
           )}
+          </AnimatePresence>
         </div>
       </div>
 

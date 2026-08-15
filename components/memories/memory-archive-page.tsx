@@ -10,6 +10,7 @@ import {
   type MemoryFragment,
   type MemorySubject,
 } from "@/lib/memories-data";
+import { getNavigationScrollBehavior } from "@/lib/motion/preferences";
 import { MemoryHero } from "./memory-hero";
 import { MemoryChapter } from "./memory-chapter";
 import { MemoryEpilogue } from "./memory-epilogue";
@@ -28,7 +29,8 @@ export function MemoryArchivePage() {
   const handleScrollToChapter = useCallback((chapterId: string) => {
     const el = document.getElementById(chapterId);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ behavior: getNavigationScrollBehavior(reducedMotion), block: "start" });
     }
   }, []);
 

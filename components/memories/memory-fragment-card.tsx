@@ -21,7 +21,7 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
   const placeMeta = !isGame ? (memory as PlaceMemoryFragment) : null;
 
   return (
-    <article className={`mem-card mem-card--${memory.subject} ${className}`}>
+    <article className={`mem-card mem-card--${memory.subject} ${className}`} data-motion-reveal>
       <button
         type="button"
         className="mem-card__frame"

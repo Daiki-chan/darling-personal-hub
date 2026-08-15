@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 interface MemoryEpilogueProps {
   totalCount: number;
   gameCount: number;
@@ -19,18 +20,19 @@ export const MemoryEpilogue = memo(function MemoryEpilogue({
   const formattedGame = String(gameCount).padStart(3, "0");
   const formattedPlace = String(placeCount).padStart(3, "0");
   const isArchiveEmpty = totalCount === 0;
+  const motionRef = useSectionMotion<HTMLDivElement>();
 
   return (
     <footer className="mem-epilogue section-shell" aria-label="Kết thúc kho lưu trữ">
       <div className="mem-epilogue__divider" aria-hidden="true" />
       
-      <div className="mem-epilogue__panel">
-        <div className="mem-epilogue__headline-group">
+      <div ref={motionRef} className="mem-epilogue__panel">
+        <div className="mem-epilogue__headline-group" data-motion-reveal>
           <span className="mem-epilogue__eyebrow">EPILOGUE</span>
           <h2 className="mem-epilogue__title">END OF ARCHIVE</h2>
         </div>
 
-        <div className="mem-epilogue__data-grid">
+        <div className="mem-epilogue__data-grid" data-motion-reveal>
           <div className="mem-epilogue__data-item">
             <span className="mem-epilogue__data-label">01 / GAME</span>
             <span className="mem-epilogue__data-val">{formattedGame} FRAGMENTS</span>
@@ -47,7 +49,7 @@ export const MemoryEpilogue = memo(function MemoryEpilogue({
           </div>
         </div>
 
-        <div className="mem-epilogue__action-row">
+        <div className="mem-epilogue__action-row" data-motion-reveal>
           <button
             type="button"
             className={`mem-epilogue__shuffle-btn ${isArchiveEmpty ? "mem-epilogue__shuffle-btn--disabled" : ""}`}
