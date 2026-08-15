@@ -4,6 +4,7 @@ import Image from "next/image";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { rankMusicTracks } from "@/lib/music/ranking";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 import { fetchTrendingMusic } from "@/lib/music/trending-service";
 import type { MusicTrack } from "@/lib/music/types";
 import { useMusicPlayer } from "./music-player-core";
@@ -75,7 +76,7 @@ function ForYouChapter({ tracks }: { tracks: MusicTrack[] }) {
   const previewTrack = tracks[activeTrackIndex] || tracks[0];
 
   return (
-    <div className={styles.forYouLayout}>
+    <div className={styles.forYouLayout} data-motion-reveal>
       {/* Left Column: Track Index List */}
       <div className={styles.forYouList}>
         {tracks.slice(0, 8).map((track, index) => {
@@ -144,6 +145,8 @@ export function MusicHome() {
   const { state } = useMusicPlayer();
   const [status, setStatus] = useState<TrendingStatus>("loading");
   const [trending, setTrending] = useState<MusicTrack[]>([]);
+  const discoverMotionRef = useSectionMotion<HTMLElement>();
+  const forYouMotionRef = useSectionMotion<HTMLElement>();
 
   const load = useCallback((signal: AbortSignal) => {
     fetchTrendingMusic(signal)
@@ -175,8 +178,8 @@ export function MusicHome() {
   return (
     <div className={styles.musicHomeContainer}>
       {/* Chapter 01: Discover */}
-      <section className={styles.editorialChapter} id="discover" aria-labelledby="discover-title">
-        <div className={styles.chapterHeading}>
+      <section ref={discoverMotionRef} className={styles.editorialChapter} id="discover" aria-labelledby="discover-title">
+        <div className={styles.chapterHeading} data-motion-reveal>
           <h2 id="discover-title" className={styles.chapterTitle}>
             01 / DISCOVER
           </h2>
@@ -221,8 +224,8 @@ export function MusicHome() {
       </section>
 
       {/* Chapter 02: For You */}
-      <section className={styles.editorialChapter} aria-labelledby="for-you-title">
-        <div className={styles.chapterHeading}>
+      <section ref={forYouMotionRef} className={styles.editorialChapter} aria-labelledby="for-you-title">
+        <div className={styles.chapterHeading} data-motion-reveal>
           <h2 id="for-you-title" className={styles.chapterTitle}>
             02 / FOR YOU
           </h2>

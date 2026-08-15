@@ -4,6 +4,7 @@ import Image from "next/image";
 import { type FormEvent, useState } from "react";
 import { Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import type { MusicTrack } from "@/lib/music/types";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 import { useMusicPlayer } from "./music-player-core";
 import { TrackMenuTrigger } from "./track-actions";
 import styles from "./music-app.module.css";
@@ -81,6 +82,8 @@ export function LibraryPanel() {
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const archiveMotionRef = useSectionMotion<HTMLElement>();
+  const playlistsMotionRef = useSectionMotion<HTMLElement>();
 
   const submitPlaylist = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -92,30 +95,30 @@ export function LibraryPanel() {
   return (
     <div className={styles.libraryPanel}>
       {/* Chapter 03: Your Archive */}
-      <section className={styles.editorialChapter} aria-labelledby="archive-title">
-        <div className={styles.chapterHeading}>
+      <section ref={archiveMotionRef} className={styles.editorialChapter} aria-labelledby="archive-title">
+        <div className={styles.chapterHeading} data-motion-reveal>
           <h2 id="archive-title" className={styles.chapterTitle}>
             03 / YOUR ARCHIVE
           </h2>
           <span className={styles.chapterSub}>PERSONAL LISTENING HISTORY & FAVOURITES</span>
         </div>
 
-        <div className={styles.archiveDualColumns}>
+        <div className={styles.archiveDualColumns} data-motion-reveal>
           <EditorialTrackList title="RECENTLY PLAYED" tracks={state.history} />
           <EditorialTrackList title="FAVOURITES" tracks={state.favorites} />
         </div>
       </section>
 
       {/* Chapter 04: Playlists */}
-      <section className={styles.editorialChapter} aria-labelledby="playlists-title">
-        <div className={styles.chapterHeading}>
+      <section ref={playlistsMotionRef} className={styles.editorialChapter} aria-labelledby="playlists-title">
+        <div className={styles.chapterHeading} data-motion-reveal>
           <h2 id="playlists-title" className={styles.chapterTitle}>
             04 / PLAYLISTS
           </h2>
           <span className={styles.chapterSub}>INDEXEDDB PERSISTED COLLECTIONS</span>
         </div>
 
-        <div className={styles.playlistHeaderRow}>
+        <div className={styles.playlistHeaderRow} data-motion-reveal>
           <form className={styles.playlistNewForm} onSubmit={submitPlaylist}>
             <input
               id="playlist-name"

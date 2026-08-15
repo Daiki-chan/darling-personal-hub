@@ -2867,11 +2867,12 @@
   top: 0;
   bottom: 0;
   width: 1px;
+  left: 0;
   background: #ffffff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
   pointer-events: none;
   z-index: 2;
-  will-change: left;
+  will-change: transform;
 }
 
 .signalMeta {

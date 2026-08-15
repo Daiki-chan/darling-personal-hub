@@ -1,9 +1,9 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
-import { gsap } from "gsap";
 import { useReducedMotion } from "framer-motion";
 import { memo, useEffect, useRef, useState } from "react";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { getPlayheadScale, shouldRunSignalTicker } from "@/lib/music/signal-motion";
 import { useMusicPlayer } from "./music-player-core";
 import styles from "./music-app.module.css";
 
@@ -21,11 +21,19 @@ export const KineticSignalField = memo(function KineticSignalField() {
 
   // Local accumulated phase for pause/resume consistency without phase jumps
   const phaseRef = useRef(0);
-  const lastTimeRef = useRef(0);
 
   // Active track state snapshot for smooth slice displacement transitions
   const [displayTrack, setDisplayTrack] = useState(track);
   const isTransitioningRef = useRef(false);
+  const [inViewport, setInViewport] = useState(false);
+  const [isDocumentVisible, setIsDocumentVisible] = useState(true);
+  const runTicker = shouldRunSignalTicker({
+    hasTrack: Boolean(track),
+    inViewport,
+    isDocumentVisible,
+    isPlaying,
+    reducedMotion: reduceMotion,
+  });
 
   // Track change animation: slice displacement -> mask collapse -> content swap -> opposing mask reveal
   useGSAP(
@@ -81,11 +89,30 @@ export const KineticSignalField = memo(function KineticSignalField() {
   );
 
   // Imperative 60fps Signal Drift via GSAP Ticker (Paused callback removed when paused to FREEZE exact frame)
+
   useEffect(() => {
-    if (!containerRef.current || reduceMotion || !isPlaying || !track) {
-      lastTimeRef.current = 0;
-      return;
-    }
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateDocumentVisibility = () => {
+      setIsDocumentVisible(document.visibilityState === "visible");
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => setInViewport(Boolean(entry?.isIntersecting)),
+      { threshold: 0.08 }
+    );
+
+    updateDocumentVisibility();
+    observer.observe(container);
+    document.addEventListener("visibilitychange", updateDocumentVisibility);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", updateDocumentVisibility);
+    };
+  }, [track?.videoId]);
+  useEffect(() => {
+    if (!containerRef.current || !runTicker) return;
 
     const setTopX = gsap.quickSetter(sliceTopRef.current, "x", "px");
     const setMidX = gsap.quickSetter(sliceMidRef.current, "x", "px");
@@ -106,20 +133,20 @@ export const KineticSignalField = memo(function KineticSignalField() {
     return () => {
       gsap.ticker.remove(updateSignal);
     };
-  }, [isPlaying, reduceMotion, track]);
+  }, [runTicker]);
 
   // Imperative Playhead Cut update via direct clock subscription (0% React rerenders)
   useEffect(() => {
     if (!playheadRef.current || !track) return;
 
-    const setProgress = gsap.quickSetter(playheadRef.current, "left", "%");
+    const setProgressX = gsap.quickSetter(playheadRef.current, "x", "px");
 
     const updatePlayhead = () => {
       const snap = clock.getSnapshot();
       const dur = snap.duration || state.duration || 0;
-      const cur = snap.currentTime || 0;
-      const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
-      setProgress(pct);
+      const scale = getPlayheadScale(snap.currentTime || 0, dur);
+      const travel = Math.max(0, (containerRef.current?.clientWidth ?? 0) - 1);
+      setProgressX(scale * travel);
     };
 
     updatePlayhead();
@@ -131,7 +158,7 @@ export const KineticSignalField = memo(function KineticSignalField() {
 
   if (!track) {
     return (
-      <div className={styles.signalFieldRoot} data-has-track={false} aria-hidden="true">
+      <div ref={containerRef} className={styles.signalFieldRoot} data-has-track={false} aria-hidden="true">
         <div className={styles.signalGrid}>
           <div className={styles.signalHairlineHoriz} />
           <div className={styles.signalHairlineVert} />
@@ -155,6 +182,7 @@ export const KineticSignalField = memo(function KineticSignalField() {
       className={styles.signalFieldRoot}
       data-has-track={true}
       data-playing={isPlaying}
+      data-ticker-active={runTicker}
       aria-hidden="true"
     >
       {/* Layer A: Architectural Hairline Grid */}

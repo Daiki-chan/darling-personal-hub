@@ -26,7 +26,7 @@ export function useSectionMotion<T extends HTMLElement>({
       const media = gsap.matchMedia();
 
       media.add("(prefers-reduced-motion: no-preference)", () => {
-        const targets = gsap.utils.toArray<HTMLElement>("[data-motion-reveal]");
+        const targets = gsap.utils.toArray<HTMLElement>("[data-motion-reveal]", scope.current);
         if (targets.length === 0) return;
 
         gsap.fromTo(

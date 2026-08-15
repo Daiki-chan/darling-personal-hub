@@ -1,8 +1,9 @@
 "use client";
 
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Search, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { searchYouTubeMusic, SearchApiError } from "@/lib/music/search-service";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 import type { MusicTrack } from "@/lib/music/types";
 import { formatTime } from "@/lib/music/format";
 import { mergeUniqueTracks } from "@/lib/music/track-utils";
@@ -14,6 +15,7 @@ type SearchStatus = "idle" | "loading" | "ready" | "empty" | "error";
 
 export function SearchPanel() {
   const { playNow } = useMusicPlayer();
+  const motionRef = useSectionMotion<HTMLFormElement>();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<MusicTrack[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
@@ -162,8 +164,8 @@ export function SearchPanel() {
 
   return (
     <section aria-label="Tìm kiếm kho nhạc" className={styles.searchSection}>
-      <form className={styles.searchForm} onSubmit={handleSubmit} role="search">
-        <div className={styles.searchPromptRow}>
+      <form ref={motionRef} className={styles.searchForm} onSubmit={handleSubmit} role="search">
+        <div className={styles.searchPromptRow} data-motion-reveal>
           <input
             autoComplete="off"
             className={styles.searchInput}
