@@ -1,0 +1,56 @@
+.page {
+  min-width: 0;
+  isolation: isolate;
+}
+
+:global(.site-nav) {
+  view-transition-name: site-header;
+}
+
+:global(::view-transition) {
+  pointer-events: none;
+}
+
+:global(::view-transition-group(site-header)) {
+  z-index: 100;
+  animation: none;
+}
+
+:global(::view-transition-old(site-header)) {
+  display: none;
+}
+
+:global(::view-transition-new(site-header)) {
+  animation: none;
+}
+
+:global(::view-transition-old(.route-page)) {
+  animation: route-page-out 220ms ease-in both;
+}
+
+:global(::view-transition-new(.route-page)) {
+  animation: route-page-in 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes route-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes route-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(::view-transition-old(.route-page)),
+  :global(::view-transition-new(.route-page)),
+  :global(::view-transition-group(.route-page)) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
