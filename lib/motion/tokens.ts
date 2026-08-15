@@ -2,6 +2,7 @@ export const MOTION_DURATION = {
   quick: 0.16,
   exit: 0.22,
   enter: 0.44,
+  standard: 0.4,
   section: 0.62,
   hero: 0.86,
 } as const;

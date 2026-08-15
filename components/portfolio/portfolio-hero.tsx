@@ -1,12 +1,9 @@
 "use client";
 
 import { memo, useRef } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { MOTION_DURATION, MOTION_EASE, MOTION_STAGGER } from "@/lib/motion/tokens";
 import { EvidenceField } from "./evidence-field";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export const PortfolioHero = memo(function PortfolioHero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -18,7 +15,8 @@ export const PortfolioHero = memo(function PortfolioHero() {
       if (typeof window === "undefined") return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      const tl = gsap.timeline({ defaults: { ease: MOTION_EASE.gsap } });
+      const bottomStrip = containerRef.current?.querySelector(".phuc-hero-bottom-strip");
 
       if (titleLeftRef.current) {
         const meta = titleLeftRef.current.querySelector(".phuc-hero-meta");
@@ -27,7 +25,7 @@ export const PortfolioHero = memo(function PortfolioHero() {
         tl.fromTo(
           meta,
           { opacity: 0, y: -12 },
-          { opacity: 1, y: 0, duration: 0.6 }
+          { opacity: 1, y: 0, duration: MOTION_DURATION.standard }
         ).fromTo(
           titleLines,
           { opacity: 0, y: 32, clipPath: "polygon(0 0, 100% 0, 100% 0, 0 0)" },
@@ -35,8 +33,8 @@ export const PortfolioHero = memo(function PortfolioHero() {
             opacity: 1,
             y: 0,
             clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
-            duration: 0.9,
-            stagger: 0.12,
+            duration: MOTION_DURATION.hero,
+            stagger: MOTION_STAGGER.expressive,
           },
           "-=0.4"
         );
@@ -46,8 +44,17 @@ export const PortfolioHero = memo(function PortfolioHero() {
         tl.fromTo(
           evidenceRightRef.current,
           { opacity: 0, y: 16 },
-          { opacity: 1, y: 0, duration: 0.8 },
+          { opacity: 1, y: 0, duration: MOTION_DURATION.section },
           "-=0.6"
+        );
+      }
+
+      if (bottomStrip) {
+        tl.fromTo(
+          bottomStrip,
+          { opacity: 0, y: 8 },
+          { opacity: 1, y: 0, duration: MOTION_DURATION.standard },
+          "-=0.42"
         );
       }
     },

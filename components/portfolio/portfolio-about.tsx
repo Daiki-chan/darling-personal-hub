@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo } from "react";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 import { PortraitAperture } from "./portrait-aperture";
 
 const CAPABILITIES_TABLE = [
@@ -49,7 +50,7 @@ const TIMELINE_ENTRIES = [
 ];
 
 export const PortfolioAbout = memo(function PortfolioAbout() {
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useSectionMotion<HTMLElement>();
 
   return (
     <section
@@ -59,7 +60,7 @@ export const PortfolioAbout = memo(function PortfolioAbout() {
       aria-label="04 / ABOUT"
     >
       {/* Chapter 04 Tag */}
-      <div className="phuc-about__chapter-bar">
+      <div className="phuc-about__chapter-bar" data-motion-reveal>
         <span className="phuc-label">04 / ABOUT</span>
         <span className="phuc-about__chapter-desc">IDENTITY & EVIDENCE</span>
       </div>
@@ -67,7 +68,7 @@ export const PortfolioAbout = memo(function PortfolioAbout() {
       {/* Main 12-Column Editorial Spread: Name Plate ↔ Portrait Aperture */}
       <div className="phuc-about__main-grid">
         {/* Left Column: Monumental Typographic Name & Professional Metadata */}
-        <div className="phuc-about__left-col">
+        <div className="phuc-about__left-col" data-motion-reveal>
           <div className="phuc-about__name-plate">
             <h2 className="phuc-about__name">
               <span className="phuc-about__name-line">PHẠM</span>
@@ -105,7 +106,7 @@ export const PortfolioAbout = memo(function PortfolioAbout() {
       </div>
 
       {/* Static Editorial Capabilities Table (No Marquee, No Stars, No Pills) */}
-      <div className="phuc-about__capabilities-section">
+      <div className="phuc-about__capabilities-section" data-motion-reveal>
         <div className="phuc-about__section-header">
           <span className="phuc-about__sub-title">NĂNG LỰC THỰC THI</span>
           <span className="phuc-about__sub-desc">CORE DOMAINS</span>
@@ -129,7 +130,7 @@ export const PortfolioAbout = memo(function PortfolioAbout() {
       </div>
 
       {/* Professional Experience Timeline (3 Clean 1-Line Hairline Entries) */}
-      <div className="phuc-about__timeline-wrap">
+      <div className="phuc-about__timeline-wrap" data-motion-reveal>
         <div className="phuc-about__section-header">
           <span className="phuc-about__sub-title">HÀNH TRÌNH CHUYÊN MÔN</span>
           <span className="phuc-about__sub-desc">CHRONOLOGY</span>

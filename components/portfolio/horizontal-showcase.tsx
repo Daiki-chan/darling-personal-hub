@@ -2,37 +2,28 @@
 
 import { memo, useRef, useState } from "react";
 import Link from "next/link";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
 import { FEATURED_PROJECTS } from "@/lib/portfolio-data";
 import { ProjectMediaAperture } from "./project-media-aperture";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export const HorizontalShowcase = memo(function HorizontalShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeProjectIndex, setActiveProjectIndex] = useState<number>(0);
 
+  const activeProjectIndexRef = useRef(0);
   useGSAP(
     () => {
       if (typeof window === "undefined" || !trackRef.current) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       const mm = gsap.matchMedia();
 
       // Desktop Only Horizontal Scrubbing Track
-      mm.add("(min-width: 769px)", () => {
+      mm.add("(min-width: 769px) and (prefers-reduced-motion: no-preference)", () => {
         const track = trackRef.current;
         if (!track) return;
 
-        const getSpreadWidth = () => {
-          const firstSpread = track.querySelector<HTMLElement>(".phuc-editorial-spread");
-          return firstSpread ? firstSpread.offsetWidth : window.innerWidth;
-        };
-
-        const getScrollDistance = () => (FEATURED_PROJECTS.length - 1) * getSpreadWidth();
+        const getScrollDistance = () => Math.max(0, track.scrollWidth - window.innerWidth);
 
         const pinTl = gsap.timeline({
           scrollTrigger: {
@@ -44,12 +35,13 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
             invalidateOnRefresh: true,
             anticipatePin: 1,
             onUpdate: (self) => {
-              const progress = self.progress;
-              // Cleanly segment progress into active project index
               const idx = Math.min(
-                Math.floor(progress * FEATURED_PROJECTS.length + 0.15),
+                Math.round(self.progress * (FEATURED_PROJECTS.length - 1)),
                 FEATURED_PROJECTS.length - 1
               );
+
+              if (idx === activeProjectIndexRef.current) return;
+              activeProjectIndexRef.current = idx;
               setActiveProjectIndex(idx);
             },
           },
@@ -100,7 +92,10 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
           className={`phuc-editorial-spread phuc-editorial-spread--01 ${
             activeProjectIndex === 0 ? "phuc-editorial-spread--active" : ""
           }`}
-          onPointerEnter={() => setActiveProjectIndex(0)}
+          onPointerEnter={() => {
+            activeProjectIndexRef.current = 0;
+            setActiveProjectIndex(0);
+          }}
         >
           <div className="phuc-spread-inner">
             <Link href={`/portfolio/${project1.slug}`} className="phuc-spread-link">
@@ -164,7 +159,10 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
           className={`phuc-editorial-spread phuc-editorial-spread--02 ${
             activeProjectIndex === 1 ? "phuc-editorial-spread--active" : ""
           }`}
-          onPointerEnter={() => setActiveProjectIndex(1)}
+          onPointerEnter={() => {
+            activeProjectIndexRef.current = 1;
+            setActiveProjectIndex(1);
+          }}
         >
           <div className="phuc-spread-inner">
             <Link href={`/portfolio/${project2.slug}`} className="phuc-spread-link">
@@ -224,7 +222,10 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
           className={`phuc-editorial-spread phuc-editorial-spread--03 ${
             activeProjectIndex === 2 ? "phuc-editorial-spread--active" : ""
           }`}
-          onPointerEnter={() => setActiveProjectIndex(2)}
+          onPointerEnter={() => {
+            activeProjectIndexRef.current = 2;
+            setActiveProjectIndex(2);
+          }}
         >
           <div className="phuc-spread-inner">
             <Link href={`/portfolio/${project3.slug}`} className="phuc-spread-link">

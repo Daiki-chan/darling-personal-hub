@@ -5,7 +5,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CustomCursor } from "@/components/portfolio/custom-cursor";
 import { PortfolioHero } from "@/components/portfolio/portfolio-hero";
 import { HorizontalShowcase } from "@/components/portfolio/horizontal-showcase";
 import { PortfolioArchive } from "@/components/portfolio/portfolio-archive";
@@ -49,7 +48,6 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <CustomCursor />
       <SiteHeader active="portfolio" />
       <main className="phuc-portfolio-page inner-page">
         {/* WORLD HERO HEADER */}

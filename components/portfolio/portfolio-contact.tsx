@@ -1,11 +1,9 @@
 "use client";
 
 import { memo, useRef } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { MOTION_DURATION, MOTION_EASE, MOTION_STAGGER } from "@/lib/motion/tokens";
 
-gsap.registerPlugin(ScrollTrigger);
 
 export const PortfolioContact = memo(function PortfolioContact() {
   const containerRef = useRef<HTMLElement>(null);
@@ -23,7 +21,7 @@ export const PortfolioContact = memo(function PortfolioContact() {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 65%",
-          toggleActions: "play reverse play reverse",
+          toggleActions: "play none none none",
         },
       });
 
@@ -31,7 +29,7 @@ export const PortfolioContact = memo(function PortfolioContact() {
         tl.fromTo(
           tagRef.current,
           { autoAlpha: 0, y: -10 },
-          { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }
+          { autoAlpha: 1, y: 0, duration: MOTION_DURATION.standard, ease: MOTION_EASE.gsap }
         );
       }
 
@@ -42,9 +40,9 @@ export const PortfolioContact = memo(function PortfolioContact() {
           {
             autoAlpha: 1,
             y: 0,
-            stagger: 0.12,
-            duration: 0.7,
-            ease: "power2.out",
+            stagger: MOTION_STAGGER.expressive,
+            duration: MOTION_DURATION.section,
+            ease: MOTION_EASE.gsap,
           },
           "-=0.2"
         );
@@ -54,7 +52,7 @@ export const PortfolioContact = memo(function PortfolioContact() {
         tl.fromTo(
           actionsRef.current,
           { autoAlpha: 0, y: 16 },
-          { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" },
+          { autoAlpha: 1, y: 0, duration: MOTION_DURATION.enter, ease: MOTION_EASE.gsap },
           "-=0.3"
         );
       }
@@ -63,7 +61,7 @@ export const PortfolioContact = memo(function PortfolioContact() {
         tl.fromTo(
           footerRef.current,
           { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.4, ease: "power2.out" },
+          { autoAlpha: 1, duration: MOTION_DURATION.standard, ease: MOTION_EASE.gsap },
           "-=0.2"
         );
       }

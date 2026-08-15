@@ -1,11 +1,8 @@
 "use client";
 
-import { memo, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { memo, type KeyboardEvent, useState } from "react";
+import { useSectionMotion } from "@/components/motion/use-section-motion";
 
-gsap.registerPlugin(ScrollTrigger);
 
 const METHOD_STEPS = [
   {
@@ -41,10 +38,29 @@ const METHOD_STEPS = [
 ];
 
 export const PortfolioApproach = memo(function PortfolioApproach() {
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useSectionMotion<HTMLElement>();
   const [activeStepIdx, setActiveStepIdx] = useState<number>(2); // Default to Step 03 Structure
 
   const currentStep = METHOD_STEPS[activeStepIdx] || METHOD_STEPS[2];
+
+  const handleStepKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    const last = METHOD_STEPS.length - 1;
+    let next = index;
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % METHOD_STEPS.length;
+    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + METHOD_STEPS.length) % METHOD_STEPS.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = last;
+    else return;
+
+    event.preventDefault();
+    setActiveStepIdx(next);
+    const tabs = containerRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    tabs?.[next]?.focus();
+  };
 
   return (
     <section
@@ -54,7 +70,7 @@ export const PortfolioApproach = memo(function PortfolioApproach() {
       aria-label="03 / METHOD"
     >
       {/* Chapter 03 Tag & Headline (Calm / Precise) */}
-      <div className="phuc-method__hero">
+      <div className="phuc-method__hero" data-motion-reveal>
         <div className="phuc-method__chapter-bar">
           <span className="phuc-label">03 / METHOD</span>
           <span className="phuc-method__chapter-desc">SYSTEMATIC EXECUTION SYSTEM</span>
@@ -65,7 +81,7 @@ export const PortfolioApproach = memo(function PortfolioApproach() {
       </div>
 
       {/* 5-Stage Visible System Grid (All 5 Steps Visibly Present on Desktop) */}
-      <div className="phuc-method__grid-system">
+      <div className="phuc-method__grid-system" data-motion-reveal>
         <div className="phuc-method__top-hairline" aria-hidden="true" />
 
         <div className="phuc-method__steps-grid" role="tablist" aria-label="Method Steps">
@@ -78,9 +94,13 @@ export const PortfolioApproach = memo(function PortfolioApproach() {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
+                id={`method-tab-${step.idx}`}
+                aria-controls="method-active-protocol"
                 className={`phuc-method-card ${isActive ? "phuc-method-card--active" : ""}`}
                 onClick={() => setActiveStepIdx(index)}
+                tabIndex={isActive ? 0 : -1}
                 onPointerEnter={() => setActiveStepIdx(index)}
+                onKeyDown={(event) => handleStepKeyDown(event, index)}
                 aria-label={`Bước ${step.idx}: ${step.name}`}
               >
                 <div className="phuc-method-card__top">
@@ -97,7 +117,7 @@ export const PortfolioApproach = memo(function PortfolioApproach() {
         <div className="phuc-method__bottom-hairline" aria-hidden="true" />
 
         {/* Dynamic 1-Sentence Active Protocol Descriptor */}
-        <div className="phuc-method__descriptor-panel">
+        <div id="method-active-protocol" role="tabpanel" className="phuc-method__descriptor-panel">
           <div className="phuc-method__desc-tag">ACTIVE PROTOCOL</div>
           <p className="phuc-method__descriptor-text">
             <span className="phuc-method__desc-prefix">{currentStep.idx} / {currentStep.name} — </span>
@@ -107,7 +127,7 @@ export const PortfolioApproach = memo(function PortfolioApproach() {
       </div>
 
       {/* Restrained Philosophy Concluding Note (Quiet, Medium Scale, 2 Lines) */}
-      <div className="phuc-approach__statement-block">
+      <div className="phuc-approach__statement-block" data-motion-reveal>
         <div className="phuc-approach__statement-hairline" aria-hidden="true" />
         <p className="phuc-approach__quote">
           “DỮ LIỆU NÓI CHO TÔI BIẾT ĐIỀU GÌ ĐÃ XẢY RA.

@@ -2,11 +2,9 @@
 
 import { memo, useRef } from "react";
 import Image from "next/image";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 
-gsap.registerPlugin(ScrollTrigger);
 
 export interface PortraitApertureProps {
   src?: string | null;
@@ -37,7 +35,7 @@ export const PortraitAperture = memo(function PortraitAperture({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
-          toggleActions: "play none none reverse",
+          toggleActions: "play none none none",
         },
       });
 
@@ -45,7 +43,7 @@ export const PortraitAperture = memo(function PortraitAperture({
         tl.fromTo(
           containerRef.current,
           { opacity: 0.7, y: 16 },
-          { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }
+          { opacity: 1, y: 0, duration: MOTION_DURATION.section, ease: MOTION_EASE.gsap }
         );
       }
 
@@ -53,7 +51,7 @@ export const PortraitAperture = memo(function PortraitAperture({
         tl.fromTo(
           crosshairRef.current,
           { scale: 0.8, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.6, ease: "power2.out" },
+          { scale: 1, opacity: 1, duration: MOTION_DURATION.section, ease: MOTION_EASE.gsap },
           "-=0.4"
         );
       }

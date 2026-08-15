@@ -2,12 +2,9 @@
 
 import { memo, useRef, useState } from "react";
 import Link from "next/link";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { MOTION_DURATION, MOTION_EASE, MOTION_STAGGER } from "@/lib/motion/tokens";
 import { ARCHIVE_PROJECTS } from "@/lib/portfolio-data";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export const PortfolioArchive = memo(function PortfolioArchive() {
   const containerRef = useRef<HTMLElement>(null);
@@ -23,7 +20,7 @@ export const PortfolioArchive = memo(function PortfolioArchive() {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 80%",
-          toggleActions: "play none none reverse",
+          toggleActions: "play none none none",
         },
       });
 
@@ -35,11 +32,27 @@ export const PortfolioArchive = memo(function PortfolioArchive() {
             opacity: 1,
             y: 0,
             clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
-            duration: 0.8,
-            ease: "power3.out",
+            duration: MOTION_DURATION.section,
+            ease: MOTION_EASE.gsap,
           }
         );
       }
+
+        const rows = containerRef.current?.querySelectorAll(".phuc-archive-row");
+        if (rows?.length) {
+          tl.fromTo(
+            rows,
+            { autoAlpha: 0, y: 16 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: MOTION_DURATION.enter,
+              ease: MOTION_EASE.gsap,
+              stagger: MOTION_STAGGER.tight,
+            },
+            "-=0.28"
+          );
+        }
     },
     { scope: containerRef }
   );
