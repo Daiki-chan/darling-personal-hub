@@ -31,8 +31,20 @@ body {
     radial-gradient(circle at 84% 12%, rgba(99, 102, 241, 0.08), transparent 24rem),
     radial-gradient(circle at 12% 45%, rgba(139, 92, 246, 0.06), transparent 30rem),
     var(--bg);
-  font-family: var(--font-outfit), "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-primary), sans-serif;
   text-rendering: optimizeLegibility;
+}
+
+.font-primary {
+  font-family: var(--font-primary), sans-serif;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial), serif;
+}
+
+.font-mono {
+  font-family: var(--font-mono), monospace;
 }
 
 body::before {
@@ -1897,7 +1909,7 @@ figcaption {
 
 .phuc-label {
   display: inline-block;
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -2289,7 +2301,7 @@ figcaption {
 }
 
 .phuc-spread-kpi-huge {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: clamp(3.2rem, 5.8vw, 5.8rem);
   font-weight: 800;
   line-height: 0.92;
@@ -2372,7 +2384,7 @@ figcaption {
 }
 
 .phuc-spread-01-title {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(2.8rem, 5.2vw, 5.2rem);
   font-weight: 800;
   line-height: 0.95;
@@ -2399,7 +2411,7 @@ figcaption {
   position: absolute;
   bottom: -0.25em;
   right: 1.5rem;
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: clamp(4rem, 11vw, 9.5rem);
   font-weight: 800;
   color: rgba(255, 255, 255, 0.04);
@@ -2447,7 +2459,7 @@ figcaption {
 }
 
 .phuc-spread-02-title {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(3rem, 5.8vw, 5.8rem);
   font-weight: 800;
   line-height: 0.92;
@@ -2521,7 +2533,7 @@ figcaption {
 }
 
 .phuc-spread-03-title {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(2.4rem, 4.4vw, 4.4rem);
   font-weight: 800;
   line-height: 1.02;
@@ -2557,7 +2569,7 @@ figcaption {
 }
 
 .phuc-spread-03-split-kpi .kpi-item .val {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: clamp(2.4rem, 4vw, 3.8rem);
   font-weight: 800;
   color: var(--work-white);
@@ -2622,7 +2634,7 @@ figcaption {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(6rem, 15vw, 12rem);
   font-weight: 800;
   color: rgba(255, 255, 255, 0.035);
@@ -2636,7 +2648,7 @@ figcaption {
   position: absolute;
   top: 1.5rem;
   right: 1.8rem;
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: 3.5rem;
   font-weight: 800;
   color: var(--work-t14);
@@ -2672,7 +2684,7 @@ figcaption {
 
 .phuc-art-tag {
   font-size: 0.72rem;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   color: var(--work-t60);
 }
 
@@ -2701,7 +2713,7 @@ figcaption {
 }
 
 .phuc-art-title-box .title {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(1.2rem, 2.2vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -2723,7 +2735,7 @@ figcaption {
 }
 
 .phuc-art-kpi-col .val {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: 1.35rem;
   font-weight: 800;
   color: var(--work-white);
@@ -2762,7 +2774,7 @@ figcaption {
 }
 
 .phuc-art-pillar-title {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -2862,7 +2874,7 @@ figcaption {
 }
 
 .phuc-art-funnel-val {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-mono), monospace;
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--work-white);
@@ -3138,7 +3150,7 @@ figcaption {
 }
 
 .phuc-approach__quote {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(1.2rem, 2vw, 1.6rem);
   font-weight: 700;
   line-height: 1.45;
@@ -3179,7 +3191,7 @@ figcaption {
 }
 
 .phuc-about__name {
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(3.2rem, 7vw, 6.5rem);
   font-weight: 800;
   line-height: 0.94;
@@ -3583,7 +3595,7 @@ figcaption {
 
 .phuc-contact-word {
   display: block;
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(3.8rem, 9.5vw, 9rem);
   font-weight: 800;
   line-height: 0.9;
@@ -3883,7 +3895,7 @@ figcaption {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-syne), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(5rem, 12vw, 9rem);
   font-weight: 800;
   color: rgba(255, 255, 255, 0.04);
@@ -3930,7 +3942,7 @@ figcaption {
 
 .phuc-edit-query {
   font-size: 0.72rem;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   color: var(--work-t60);
 }
 
@@ -4143,7 +4155,7 @@ figcaption {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
 
   .code-line {
@@ -4709,7 +4721,7 @@ figcaption {
   overflow: hidden;
   background: #060608;
   color: #f3f3f5;
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   user-select: none;
   isolation: isolate;
 }
@@ -4744,7 +4756,7 @@ figcaption {
 }
 
 .typo-intro-title--en {
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   letter-spacing: -0.04em;
   display: flex;
   align-items: center;
@@ -4774,7 +4786,7 @@ figcaption {
 }
 
 .typo-intro-title--jp {
-  font-family: var(--font-zen-gothic), var(--font-outfit), sans-serif;
+  font-family: var(--font-zen-gothic), var(--font-primary), sans-serif;
   font-weight: 900;
   font-size: clamp(3.2rem, 9.5vw, 9.2rem);
   letter-spacing: 0.02em; /* Independent Japanese letter-spacing */
@@ -4831,7 +4843,7 @@ figcaption {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 5vw;
+  padding: 0 5.05vw 0 4.65vw;
   pointer-events: none;
   z-index: 1;
   opacity: 0.22;
@@ -4840,13 +4852,13 @@ figcaption {
 }
 
 .identity-anchor--kinetic {
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .identity-anchor--grotesk {
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -4858,6 +4870,7 @@ figcaption {
 
 .identity-anchor__line {
   display: flex;
+  width: max-content;
   letter-spacing: -0.06em;
   line-height: 0.82;
   font-size: clamp(4.2rem, 15vw, 16rem);
@@ -4865,13 +4878,21 @@ figcaption {
 }
 
 .identity-anchor__line--top {
+  align-self: flex-start;
   justify-content: flex-start;
+  scale: 1.62 1.033;
+  translate: 0 -10px;
+  transform-origin: left top;
 }
 
 .identity-anchor__line--bottom {
+  align-self: flex-end;
   justify-content: flex-end;
-  margin-top: -0.1em;
+  margin-top: -0.03em;
   opacity: 0.85;
+  scale: 2.21 1.033;
+  translate: 0 -4px;
+  transform-origin: right top;
 }
 
 .identity-glyph {
@@ -4902,13 +4923,12 @@ figcaption {
 }
 
 .typo-world-nav {
+  --portal-word-scale-x: 1.84;
   position: relative;
   z-index: 5;
-  width: min(1280px, 90vw);
-  height: min(720px, 75vh);
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: repeat(12, minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
 }
 
@@ -4930,31 +4950,47 @@ figcaption {
 }
 
 .dest-word--memories {
-  grid-column: 1 / span 6;
-  grid-row: 2 / span 3;
+  top: 19.05vh;
+  left: 8.03vw;
+  width: min(82vw, 1395px);
 }
 
 .dest-word--music {
-  grid-column: 6 / span 7;
-  grid-row: 5 / span 4;
+  top: 38.1vh;
+  left: 43.6vw;
+  width: min(50vw, 825px);
   align-items: flex-end;
 }
 
 .dest-word--work {
-  grid-column: 2 / span 6;
-  grid-row: 9 / span 3;
+  top: 63.14vh;
+  left: 14.9vw;
+  width: min(82vw, 1395px);
 }
 
 .dest-word__glyphs {
   display: flex;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
-  font-size: clamp(3.2rem, 8vw, 8.5rem);
+  font-family: var(--font-portal-display), var(--font-primary), sans-serif;
+  font-size: clamp(3.2rem, 8vw, 8.75rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 0.9;
   text-transform: uppercase;
   color: #f3f3f5;
+  scale: var(--portal-word-scale-x) 1.02;
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s ease;
+}
+
+.dest-word--memories .dest-word__glyphs {
+  transform-origin: left top;
+}
+
+.dest-word--music .dest-word__glyphs {
+  transform-origin: right top;
+}
+
+.dest-word--work .dest-word__glyphs {
+  transform-origin: left top;
 }
 
 .dest-word:hover .dest-word__glyphs,
@@ -5043,7 +5079,7 @@ figcaption {
 }
 
 .mobile-identity {
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(2.8rem, 12vw, 4.5rem);
   font-weight: 800;
   line-height: 0.85;
@@ -5091,14 +5127,14 @@ figcaption {
 }
 
 .mobile-chapter__num {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.4);
 }
 
 .mobile-chapter__title {
   margin: 0;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-portal-display), var(--font-primary), sans-serif;
   font-size: clamp(2.8rem, 11vw, 4.8rem);
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -5148,7 +5184,7 @@ figcaption {
 
 .mem-hero__eyebrow {
   display: inline-block;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   color: var(--mem-t60);
@@ -5164,7 +5200,7 @@ figcaption {
 }
 
 .mem-hero__title-main {
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(3.2rem, 8vw, 7rem);
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -5173,7 +5209,7 @@ figcaption {
 }
 
 .mem-hero__title-sub {
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(0.85rem, 1.2vw, 1.05rem);
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -5230,14 +5266,14 @@ figcaption {
 }
 
 .mem-hero__cat-idx {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   color: var(--mem-t60);
 }
 
 .mem-hero__cat-name {
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -5250,7 +5286,7 @@ figcaption {
 }
 
 .mem-hero__cat-count {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.85rem;
   color: var(--mem-t60);
 }
@@ -5271,7 +5307,7 @@ figcaption {
 }
 
 .mem-hero__tally-text {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   letter-spacing: 0.15em;
   color: var(--mem-t60);
@@ -5325,7 +5361,7 @@ figcaption {
   position: absolute;
   top: 12px;
   left: 12px;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   padding: 4px 8px;
@@ -5345,7 +5381,7 @@ figcaption {
 }
 
 .mem-hero__anchor-id {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   color: var(--mem-t60);
 }
@@ -5357,7 +5393,7 @@ figcaption {
 }
 
 .mem-hero__anchor-sub {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   color: var(--mem-t45);
 }
@@ -5384,14 +5420,14 @@ figcaption {
 }
 
 .mem-hero__empty-code {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.18em;
   color: var(--mem-t60);
 }
 
 .mem-hero__empty-desc {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   color: var(--mem-t45);
@@ -5428,7 +5464,7 @@ figcaption {
 }
 
 .mem-chapter__num {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   color: var(--mem-t60);
@@ -5437,7 +5473,7 @@ figcaption {
 
 .mem-chapter__heading {
   margin: 0;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(2rem, 4vw, 3.4rem);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -5449,7 +5485,7 @@ figcaption {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   color: var(--mem-t60);
 }
@@ -5552,7 +5588,7 @@ figcaption {
   position: absolute;
   top: 10px;
   left: 10px;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   padding: 3px 6px;
@@ -5579,7 +5615,7 @@ figcaption {
 }
 
 .mem-card__id {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   color: var(--mem-t60);
   flex-shrink: 0;
@@ -5602,7 +5638,7 @@ figcaption {
 }
 
 .mem-card__secondary {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   color: var(--mem-t45);
 }
@@ -5635,7 +5671,7 @@ figcaption {
 }
 
 .mem-epilogue__eyebrow {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   color: var(--mem-t60);
@@ -5644,7 +5680,7 @@ figcaption {
 
 .mem-epilogue__title {
   margin: 0;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(2rem, 4vw, 3.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -5668,14 +5704,14 @@ figcaption {
 }
 
 .mem-epilogue__data-label {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   color: var(--mem-t60);
 }
 
 .mem-epilogue__data-val {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--mem-t96);
@@ -5699,7 +5735,7 @@ figcaption {
   border: 1px solid var(--mem-hairline-strong);
   border-radius: 4px;
   color: var(--mem-t96);
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   cursor: pointer;
@@ -5730,7 +5766,7 @@ figcaption {
 }
 
 .mem-chapter__empty-tag {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   color: var(--mem-t60);
@@ -5739,7 +5775,7 @@ figcaption {
 
 .mem-chapter__empty-title {
   margin: 0;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: clamp(1.2rem, 2.2vw, 1.6rem);
   font-weight: 700;
   color: var(--mem-t96);
@@ -5824,7 +5860,7 @@ figcaption {
 }
 
 .darkroom-modal__id {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -5832,7 +5868,7 @@ figcaption {
 }
 
 .darkroom-modal__subject-tag {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   color: var(--mem-t60);
@@ -5848,7 +5884,7 @@ figcaption {
 }
 
 .darkroom-modal__tally {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   color: var(--mem-t60);
 }
@@ -5863,7 +5899,7 @@ figcaption {
   border-radius: 3px;
   color: var(--mem-t96);
   cursor: pointer;
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   transition: all 200ms ease;
 }
@@ -5950,14 +5986,14 @@ figcaption {
 
 .darkroom-modal__title {
   margin: 0;
-  font-family: var(--font-syne), var(--font-outfit), sans-serif;
+  font-family: var(--font-editorial), serif;
   font-size: clamp(1rem, 1.8vw, 1.4rem);
   font-weight: 700;
   color: var(--mem-t96);
 }
 
 .darkroom-modal__subline {
-  font-family: monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   color: var(--mem-t60);
 }
@@ -6051,7 +6087,7 @@ figcaption {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-family: monospace;
+    font-family: var(--font-mono), monospace;
     font-size: 0.75rem;
   }
 
@@ -6080,9 +6116,3 @@ figcaption {
     transform: none !important;
   }
 }
-
-
-
-
-
-

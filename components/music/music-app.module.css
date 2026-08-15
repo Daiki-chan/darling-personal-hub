@@ -2742,7 +2742,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -2759,7 +2759,7 @@
 .heroTitle {
   display: flex;
   flex-direction: column;
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(3.2rem, 6.5vw, 7rem);
   font-weight: 800;
   line-height: 0.88;
@@ -2828,7 +2828,7 @@
 
 .signalSlice {
   display: inline-block;
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(1.8rem, 3.2vw, 3.2rem);
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2853,7 +2853,7 @@
 }
 
 .signalSubArtist {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -2880,7 +2880,7 @@
   right: 0.5rem;
   display: flex;
   gap: 1rem;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -2914,7 +2914,7 @@
   background: transparent;
   border: 0;
   outline: 0;
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(1.4rem, 2.5vw, 2.4rem);
   font-weight: 700;
   color: #f3f3f5;
@@ -2930,7 +2930,7 @@
   background: transparent;
   border: 0;
   color: rgba(255, 255, 255, 0.6);
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -2948,7 +2948,7 @@
   align-items: center;
   gap: 1.25rem;
   margin-top: 1rem;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.72rem;
 }
 
@@ -2987,7 +2987,7 @@
   gap: 1rem;
   padding: 0.85rem 0.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   cursor: pointer;
   transition: background 150ms ease;
 }
@@ -3056,7 +3056,7 @@
 }
 
 .chapterTitle {
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(1.6rem, 2.8vw, 2.5rem);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -3065,7 +3065,7 @@
 }
 
 .chapterSub {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -3111,7 +3111,7 @@
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.7rem;
   font-weight: 800;
   color: #ffffff;
@@ -3133,7 +3133,7 @@
 }
 
 .discoverTitle {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.92rem;
   font-weight: 650;
   color: #f3f3f5;
@@ -3148,7 +3148,7 @@
 }
 
 .discoverArtist {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.45);
 }
@@ -3184,7 +3184,7 @@
 }
 
 .forYouIdx {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.35);
@@ -3197,7 +3197,7 @@
 }
 
 .forYouTitle {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.98rem;
   font-weight: 650;
   color: #f3f3f5;
@@ -3210,7 +3210,7 @@
 }
 
 .forYouArtist {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.45);
 }
@@ -3237,7 +3237,7 @@
 }
 
 .forYouTag {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -3245,7 +3245,7 @@
 }
 
 .forYouPreviewTitle {
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 1.35rem;
   font-weight: 800;
   color: #f3f3f5;
@@ -3253,7 +3253,7 @@
 }
 
 .forYouPreviewArtist {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
@@ -3274,7 +3274,7 @@
 }
 
 .librarySubTitle {
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 1.1rem;
   font-weight: 800;
   color: #f3f3f5;
@@ -3294,7 +3294,7 @@
   gap: 0.85rem;
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   cursor: pointer;
   transition: background 150ms ease;
 }
@@ -3355,7 +3355,7 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #f3f3f5;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.78rem;
   padding: 0.4rem 0.75rem;
   outline: 0;
@@ -3368,7 +3368,7 @@
   background: #ffffff;
   color: #000000;
   border: 0;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -3403,7 +3403,7 @@
 }
 
 .playlistName {
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 1.25rem;
   font-weight: 800;
   color: #f3f3f5;
@@ -3411,7 +3411,7 @@
 }
 
 .playlistCount {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.4);
 }
@@ -3428,7 +3428,7 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #f3f3f5;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -3453,7 +3453,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.65);
   padding: 0.3rem 0;
@@ -3502,7 +3502,7 @@
 }
 
 .queueRowIdx {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.4);
@@ -3539,7 +3539,7 @@
 }
 
 .queueTitle {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.85rem;
   font-weight: 600;
   color: #f3f3f5;
@@ -3553,7 +3553,7 @@
 }
 
 .queueArtist {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.45);
   overflow: hidden;
@@ -3600,7 +3600,7 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.6);
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -3741,7 +3741,7 @@
 }
 
 .timeDigit {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.45);
 }
@@ -3760,7 +3760,7 @@
 .lyricLine {
   background: transparent;
   border: 0;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(1.0rem, 1.8vw, 1.3rem);
   font-weight: 500;
   color: rgba(255, 255, 255, 0.22);
@@ -3806,7 +3806,7 @@
 }
 
 .signalDormantMeta {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -3814,7 +3814,7 @@
 }
 
 .signalDormantTitle {
-  font-family: var(--font-syne, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: clamp(1.2rem, 2vw, 1.8rem);
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -3823,7 +3823,7 @@
 }
 
 .signalDormantSub {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.35);
   margin: 0;
@@ -3859,7 +3859,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -3883,7 +3883,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   color: rgba(255, 255, 255, 0.75);
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-primary, sans-serif);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -3898,7 +3898,7 @@
 }
 
 .offsetBadge {
-  font-family: var(--font-outfit, sans-serif);
+  font-family: var(--font-mono, monospace);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;

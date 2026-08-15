@@ -10,7 +10,7 @@ type MobileChaptersProps = {
 const CHAPTERS = [
   { id: "memories", title: "MEMORIES", href: "/memories", num: "01" },
   { id: "music", title: "MUSIC", href: "/music", num: "02" },
-  { id: "work", title: "WORK", href: "/portfolio", num: "03" },
+  { id: "work", title: "PORTFOLIO", href: "/portfolio", num: "03" },
 ] as const;
 
 export function MobileChapters({ onSelect, onPrefetch }: MobileChaptersProps) {
@@ -86,4 +86,3 @@ export function MobileChapters({ onSelect, onPrefetch }: MobileChaptersProps) {
     </div>
   );
 }
-

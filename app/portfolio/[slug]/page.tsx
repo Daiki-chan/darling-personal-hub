@@ -46,7 +46,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
         <div className="section-shell phuc-cs-nav-back">
           <Link href="/portfolio" className="phuc-back-btn">
             <ArrowLeft size={18} strokeWidth={1.5} aria-hidden="true" />
-            <span>Quay lại Danh mục Portfolio</span>
+            <span>Quay lại danh mục PORTFOLIO</span>
           </Link>
           <span className="phuc-cs-demo-badge">DỮ LIỆU CASE STUDY DEMO</span>
         </div>

@@ -3,7 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "framer-motion";
-import { Zen_Kaku_Gothic_New } from "next/font/google";
+import { Sora, Zen_Kaku_Gothic_New } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { consumeInitialDocumentVisit } from "@/lib/document-visit";
@@ -18,12 +18,21 @@ const zenKakuGothic = Zen_Kaku_Gothic_New({
   display: "swap",
   subsets: ["latin"],
   variable: "--font-zen-gothic",
+  preload: false,
+});
+
+const portalDisplayFont = Sora({
+  weight: "800",
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-portal-display",
+  preload: false,
 });
 
 const DESTINATIONS = [
   { id: "memories" as const, label: "MEMORIES", href: "/memories" },
   { id: "music" as const, label: "MUSIC", href: "/music" },
-  { id: "work" as const, label: "WORK", href: "/portfolio" },
+  { id: "work" as const, label: "PORTFOLIO", href: "/portfolio" },
 ];
 
 export const TypographicPortal = memo(function TypographicPortal() {
@@ -402,7 +411,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
   return (
     <main
       ref={containerRef}
-      className={`typo-portal-root ${zenKakuGothic.variable}`}
+      className={`typo-portal-root ${zenKakuGothic.variable} ${portalDisplayFont.variable}`}
       data-step={step}
       data-leaving={isLeaving}
       data-font-direction={fontDirection}

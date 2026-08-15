@@ -17,13 +17,13 @@ export function SiteHeader({ active, guardInitialVisit = true }: SiteHeaderProps
         </Link>
         <nav className="nav-links" aria-label="Điều hướng chính">
           <Link href="/memories" aria-current={active === "gallery" || active === "memories" ? "page" : undefined}>
-            Thư viện ảnh
+            MEMORIES
           </Link>
           <Link href="/music" aria-current={active === "music" ? "page" : undefined}>
-            Thư viện nhạc
+            MUSIC
           </Link>
           <Link href="/portfolio" aria-current={active === "portfolio" ? "page" : undefined}>
-            Portfolio
+            PORTFOLIO
           </Link>
         </nav>
         <Link className="nav-action" href="/portfolio#contact">
