@@ -43,15 +43,15 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
   const handlePrev = useCallback(() => {
     if (currentIndex === -1) return;
     const nextIdx = (currentIndex - 1 + allMemories.length) % allMemories.length;
-    onSelectMemory(allMemories[nextIdx]);
     setDirection(-1);
+    onSelectMemory(allMemories[nextIdx]);
   }, [currentIndex, allMemories, onSelectMemory]);
 
   const handleNext = useCallback(() => {
     if (currentIndex === -1) return;
     const nextIdx = (currentIndex + 1) % allMemories.length;
-    onSelectMemory(allMemories[nextIdx]);
     setDirection(1);
+    onSelectMemory(allMemories[nextIdx]);
   }, [currentIndex, allMemories, onSelectMemory]);
 
   // Keyboard navigation & escape listener

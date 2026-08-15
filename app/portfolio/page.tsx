@@ -1,8 +1,6 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PortfolioHero } from "@/components/portfolio/portfolio-hero";
@@ -11,8 +9,6 @@ import { PortfolioArchive } from "@/components/portfolio/portfolio-archive";
 import { PortfolioApproach } from "@/components/portfolio/portfolio-approach";
 import { PortfolioAbout } from "@/components/portfolio/portfolio-about";
 import { PortfolioContact } from "@/components/portfolio/portfolio-contact";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function PortfolioPage() {
   // Navigation & Scroll Restoration Lifecycle

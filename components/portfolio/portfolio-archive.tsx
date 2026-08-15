@@ -38,21 +38,21 @@ export const PortfolioArchive = memo(function PortfolioArchive() {
         );
       }
 
-        const rows = containerRef.current?.querySelectorAll(".phuc-archive-row");
-        if (rows?.length) {
-          tl.fromTo(
-            rows,
-            { autoAlpha: 0, y: 16 },
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: MOTION_DURATION.enter,
-              ease: MOTION_EASE.gsap,
-              stagger: MOTION_STAGGER.tight,
-            },
-            "-=0.28"
-          );
-        }
+      const rows = containerRef.current?.querySelectorAll(".phuc-archive-row");
+      if (rows?.length) {
+        tl.fromTo(
+          rows,
+          { autoAlpha: 0, y: 16 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: MOTION_DURATION.enter,
+            ease: MOTION_EASE.gsap,
+            stagger: MOTION_STAGGER.tight,
+          },
+          "-=0.28"
+        );
+      }
     },
     { scope: containerRef }
   );
