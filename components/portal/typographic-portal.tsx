@@ -21,8 +21,8 @@ const zenKakuGothic = Zen_Kaku_Gothic_New({
 });
 
 const DESTINATIONS = [
-  { id: "memories" as const, label: "MEMORIES", href: "/thu-vien" },
-  { id: "music" as const, label: "MUSIC", href: "/am-nhac" },
+  { id: "memories" as const, label: "MEMORIES", href: "/memories" },
+  { id: "music" as const, label: "MUSIC", href: "/music" },
   { id: "work" as const, label: "WORK", href: "/portfolio" },
 ];
 
@@ -84,8 +84,8 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
   // Prefetch target routes
   useEffect(() => {
-    router.prefetch("/thu-vien");
-    router.prefetch("/am-nhac");
+    router.prefetch("/memories");
+    router.prefetch("/music");
     router.prefetch("/portfolio");
   }, [router]);
 

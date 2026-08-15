@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/am-nhac");
+    await page.goto("/music");
   });
 
   test("each card has exactly one play button on cover and one 3-dot menu button", async ({ page }) => {
@@ -135,7 +135,7 @@ test.describe("Music Hub Card Redesign, 3-Dot Menu & Deduplicated For-You", () =
   for (const vp of viewports) {
     test(`layout regression checks on viewport ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto("/am-nhac");
+      await page.goto("/music");
 
       // 1. Verify no document horizontal overflow
       const docOverflow = await page.evaluate(() => {

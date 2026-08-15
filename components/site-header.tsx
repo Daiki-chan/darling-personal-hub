@@ -3,7 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import { PortalBackGuard } from "@/components/portal-back-guard";
 
 type SiteHeaderProps = {
-  active?: "gallery" | "music" | "portfolio";
+  active?: "gallery" | "memories" | "music" | "portfolio";
   guardInitialVisit?: boolean;
 };
 
@@ -16,10 +16,10 @@ export function SiteHeader({ active, guardInitialVisit = true }: SiteHeaderProps
           Darling
         </Link>
         <nav className="nav-links" aria-label="Điều hướng chính">
-          <Link href="/thu-vien" aria-current={active === "gallery" ? "page" : undefined}>
+          <Link href="/memories" aria-current={active === "gallery" || active === "memories" ? "page" : undefined}>
             Thư viện ảnh
           </Link>
-          <Link href="/am-nhac" aria-current={active === "music" ? "page" : undefined}>
+          <Link href="/music" aria-current={active === "music" ? "page" : undefined}>
             Thư viện nhạc
           </Link>
           <Link href="/portfolio" aria-current={active === "portfolio" ? "page" : undefined}>

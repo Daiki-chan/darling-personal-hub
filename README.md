@@ -5,8 +5,10 @@ Personal hub tối màu dùng Next.js App Router, gồm thư viện ảnh, Music
 ## Các route chính
 
 - `/`: cổng vào ba không gian
-- `/thu-vien`: thư viện ảnh
-- `/am-nhac`: YouTube-powered Personal Music Hub
+- `/thu-vien`: redirect tự động sang `/memories`
+- `/memories`: Black Label Thematic Memory Archive
+- `/am-nhac`: redirect tự động sang `/music`
+- `/music`: YouTube-powered Personal Music Hub
 - `/portfolio`: dự án và thông tin liên hệ
 
 ## Kiến trúc Music Hub
@@ -22,7 +24,7 @@ Darling UI -> Obsidian AMOLED, ambient color, simulated visualizer
 
 Music Hub chỉ dùng một YouTube IFrame Player instance. Iframe luôn hiển thị trong player dock hoặc expanded player và không có audio proxy, direct media URL hay thẻ `<audio>` cho nội dung YouTube.
 
-Player được mount trong root layout nên cùng iframe, queue và tiến trình phát tồn tại khi điều hướng SPA sang route khác. Dock compact hiển thị ngoài `/am-nhac`; expanded player và mobile bottom sheet dùng lại chính node player đó.
+Player được mount trong root layout nên cùng iframe, queue và tiến trình phát tồn tại khi điều hướng SPA sang route khác. Dock compact hiển thị ngoài `/music`; expanded player và mobile bottom sheet dùng lại chính node player đó.
 
 Volume dùng thang 0-100 đồng nhất với YouTube IFrame API và lưu `previousVolume` để mute/unmute. Trending Vietnam cache 30 phút; Auto Radio chỉ chạy sau queue và repeat; lựa chọn lyrics thủ công được lưu theo từng `videoId`.
 
@@ -46,7 +48,7 @@ Khởi động:
 npm run dev
 ```
 
-Mở `http://localhost:3000/am-nhac`.
+Mở `http://localhost:3000/music`.
 
 ## Kiểm tra production
 
@@ -79,4 +81,4 @@ Route Handler cần runtime server, vì vậy bản export tĩnh hoặc GitHub P
 
 ## UI
 
-Trang nhạc dùng TasteSkill được cài tại `.agents/skills/design-taste-frontend/SKILL.md` theo hướng redesign audit-first. Theme `/am-nhac` khóa ở Obsidian AMOLED `#050505`; màu nhấn và ambient glow lấy từ thumbnail bài đang phát, có fallback xác định theo `videoId`.
+Trang nhạc dùng TasteSkill được cài tại `.agents/skills/design-taste-frontend/SKILL.md` theo hướng redesign audit-first. Theme `/music` khóa ở Obsidian AMOLED `#050505`; màu nhấn và ambient glow lấy từ thumbnail bài đang phát, có fallback xác định theo `videoId`.

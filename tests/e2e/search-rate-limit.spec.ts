@@ -35,7 +35,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
       });
     });
 
-    await page.goto("/am-nhac");
+    await page.goto("/music");
     const searchInput = page.locator("#music-search");
     await expect(searchInput).toBeVisible();
 
@@ -71,7 +71,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
       });
     });
 
-    await page.goto("/am-nhac");
+    await page.goto("/music");
     const suggestionBtn = page.locator('button:has-text("city pop")').first();
     await expect(suggestionBtn).toBeVisible();
     await suggestionBtn.click();
@@ -99,7 +99,7 @@ test.describe("Search Rate Limit & Request Control E2E Tests", () => {
       });
     });
 
-    await page.goto("/am-nhac");
+    await page.goto("/music");
     const searchInput = page.locator("#music-search");
     await searchInput.fill("rapid search");
     await page.locator('button:has-text("Tìm nhạc")').click();

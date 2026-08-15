@@ -58,7 +58,7 @@ function PersistentMusicSurface({ children }: { children: ReactNode }) {
   return (
     <div
       className={styles.musicGlobal}
-      data-music-page={pathname === "/am-nhac"}
+      data-music-page={pathname === "/music"}
       data-music-ui-state={uiState}
       style={style}
     >

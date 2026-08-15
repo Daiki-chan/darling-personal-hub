@@ -8,8 +8,8 @@ type MobileChaptersProps = {
 };
 
 const CHAPTERS = [
-  { id: "memories", title: "MEMORIES", href: "/thu-vien", num: "01" },
-  { id: "music", title: "MUSIC", href: "/am-nhac", num: "02" },
+  { id: "memories", title: "MEMORIES", href: "/memories", num: "01" },
+  { id: "music", title: "MUSIC", href: "/music", num: "02" },
   { id: "work", title: "WORK", href: "/portfolio", num: "03" },
 ] as const;
 

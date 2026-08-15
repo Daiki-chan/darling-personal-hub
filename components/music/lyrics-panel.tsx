@@ -80,11 +80,11 @@ export function LyricsPanel() {
       autoScrollTimerRef.current = null;
     }
     activeIndexRef.current = -1;
-    setActiveIndex(-1);
 
     if (!track) {
       queueMicrotask(() => {
         if (disposed) return;
+        setActiveIndex(-1);
         setStatus("idle");
         setLyrics(null);
       });
@@ -94,6 +94,7 @@ export function LyricsPanel() {
     const controller = new AbortController();
     queueMicrotask(() => {
       if (disposed) return;
+      setActiveIndex(-1);
       setEditTrack(normalized.track);
       setEditArtist(normalized.artist);
       setCorrectionOpen(false);

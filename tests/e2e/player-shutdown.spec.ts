@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Music Hub Shutdown & YouTube Stage Lifecycle", () => {
   test("shutting down player stops iframe, destroys stage and cleans session", async ({ page }) => {
-    await page.goto("/am-nhac");
+    await page.goto("/music");
 
     // Expect search section title
     await expect(page.getByRole("heading", { name: "Âm nhạc cho khoảng riêng." })).toBeVisible();

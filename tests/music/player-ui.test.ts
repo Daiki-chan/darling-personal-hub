@@ -14,9 +14,9 @@ describe("music UI lifecycle", () => {
   });
 
   it("minimizes only when an expanded player crosses a route boundary", () => {
-    expect(shouldMinimizeAfterNavigation("/am-nhac", "/thu-vien", "expanded")).toBe(true);
-    expect(shouldMinimizeAfterNavigation("/am-nhac", "/am-nhac", "expanded")).toBe(false);
-    expect(shouldMinimizeAfterNavigation("/am-nhac", "/portfolio", "minimized")).toBe(false);
+    expect(shouldMinimizeAfterNavigation("/music", "/memories", "expanded")).toBe(true);
+    expect(shouldMinimizeAfterNavigation("/music", "/music", "expanded")).toBe(false);
+    expect(shouldMinimizeAfterNavigation("/music", "/portfolio", "minimized")).toBe(false);
   });
 
   it("marks an expanded-player history entry without losing Next.js router state", () => {
