@@ -1557,6 +1557,10 @@ figcaption {
   min-height: 100dvh;
 }
 
+.phuc-cs-page {
+  padding-top: calc(var(--nav-height) + clamp(1.5rem, 3vw, 3rem));
+}
+
 .inner-page > section:not(:first-child) {
   content-visibility: auto;
   contain-intrinsic-size: auto 900px;
