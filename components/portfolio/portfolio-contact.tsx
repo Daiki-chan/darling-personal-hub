@@ -1,55 +1,139 @@
-import { PROFILE_DATA } from "@/lib/portfolio-data";
+"use client";
 
-export function PortfolioContact() {
+import { memo, useRef } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+export const PortfolioContact = memo(function PortfolioContact() {
+  const containerRef = useRef<HTMLElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (typeof window === "undefined" || !containerRef.current) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 65%",
+          toggleActions: "play reverse play reverse",
+        },
+      });
+
+      if (tagRef.current) {
+        tl.fromTo(
+          tagRef.current,
+          { autoAlpha: 0, y: -10 },
+          { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }
+        );
+      }
+
+      if (headlineRef.current) {
+        tl.fromTo(
+          headlineRef.current.children,
+          { autoAlpha: 0, y: 28 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            stagger: 0.12,
+            duration: 0.7,
+            ease: "power2.out",
+          },
+          "-=0.2"
+        );
+      }
+
+      if (actionsRef.current) {
+        tl.fromTo(
+          actionsRef.current,
+          { autoAlpha: 0, y: 16 },
+          { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" },
+          "-=0.3"
+        );
+      }
+
+      if (footerRef.current) {
+        tl.fromTo(
+          footerRef.current,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 0.4, ease: "power2.out" },
+          "-=0.2"
+        );
+      }
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <section id="contact" className="phuc-contact section-shell" aria-labelledby="contact-title">
+    <section
+      ref={containerRef}
+      id="contact"
+      className="phuc-contact section-shell"
+      aria-label="05 / CONTACT"
+    >
       <div className="phuc-contact__wrap">
-        <span className="phuc-label">06 / LIÊN HỆ</span>
+        {/* Chapter 05 Tag Bar */}
+        <div ref={tagRef} className="phuc-contact__chapter-bar">
+          <span className="phuc-label">05 / CONTACT</span>
+          <span className="phuc-contact__chapter-desc">OUTRO & DIRECT INQUIRIES</span>
+        </div>
 
-        <h2 id="contact-title" className="phuc-contact__headline">
-          CÙNG NHAU TẠO NÊN DỰ ÁN
-          <br />
-          ĐÁNG ĐỂ TÌM THẤY.
+        {/* Asymmetric Monumental Statement: MAKE IT (left) -> VISIBLE. (right) */}
+        <h2 ref={headlineRef} className="phuc-contact__headline">
+          <span className="phuc-contact-word phuc-contact-word--make">MAKE</span>
+          <span className="phuc-contact-word phuc-contact-word--it">IT</span>
+          <span className="phuc-contact-word phuc-contact-word--visible">VISIBLE.</span>
         </h2>
 
-        <p className="phuc-contact__sub">Sẵn sàng cho các cơ hội hợp tác Marketing, SEO và Tăng trưởng Kỹ thuật số.</p>
+        {/* Asymmetric Direct Action Links (Left / Right Split) */}
+        <div ref={actionsRef} className="phuc-contact__actions">
+          <div className="phuc-contact__line" aria-hidden="true" />
 
-        <div className="phuc-contact__actions">
-          <a
-            className="phuc-btn-primary"
-            href="mailto:your-email@example.com"
-            aria-label="Gửi email để bắt đầu trao đổi"
-          >
-            <span>BẮT ĐẦU TRÒ CHUYỆN</span>
-            <span className="phuc-btn-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </a>
-
-          <div className="phuc-contact__secondary">
-            <a href="mailto:your-email@example.com" className="phuc-link">
-              EMAIL
+          <div className="phuc-contact__link-row">
+            <a href="mailto:your-email@example.com" className="phuc-contact-link phuc-contact-link--email">
+              <span>EMAIL</span>
+              <span className="arrow" aria-hidden="true">
+                ↗
+              </span>
             </a>
-            <span className="dot">•</span>
+
             <a
               href="https://linkedin.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="phuc-link"
+              className="phuc-contact-link phuc-contact-link--linkedin"
             >
-              LINKEDIN ↗
+              <span>LINKEDIN</span>
+              <span className="arrow" aria-hidden="true">
+                ↗
+              </span>
             </a>
           </div>
         </div>
 
-        <div className="phuc-contact__meta">
-          <span>{PROFILE_DATA.name}</span>
-          <span className="dot">•</span>
-          <span>{PROFILE_DATA.location}</span>
-          <span className="dot">•</span>
-          <span>{PROFILE_DATA.role.toUpperCase()}</span>
+        {/* Closing Footnote Bar */}
+        <div ref={footerRef} className="phuc-contact__footnote-bar">
+          <div className="phuc-contact__footnote-left">
+            <span>FUJIWARA DAIKI</span>
+            <span className="dot" aria-hidden="true">·</span>
+            <span>PHẠM HOÀNG PHÚC</span>
+          </div>
+          <div className="phuc-contact__footnote-right">
+            <span>WORK / 03</span>
+            <span className="dot" aria-hidden="true">·</span>
+            <span>2026</span>
+          </div>
         </div>
       </div>
     </section>
   );
-}
+});
+
+

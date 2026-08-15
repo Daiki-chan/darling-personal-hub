@@ -7,21 +7,16 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CustomCursor } from "@/components/portfolio/custom-cursor";
 import { PortfolioHero } from "@/components/portfolio/portfolio-hero";
-import { PortfolioProfile } from "@/components/portfolio/portfolio-profile";
-import { SelectedWorkIntro } from "@/components/portfolio/selected-work-intro";
 import { HorizontalShowcase } from "@/components/portfolio/horizontal-showcase";
 import { PortfolioArchive } from "@/components/portfolio/portfolio-archive";
 import { PortfolioApproach } from "@/components/portfolio/portfolio-approach";
-import { PortfolioCapabilities } from "@/components/portfolio/portfolio-capabilities";
-import { PortfolioExperience } from "@/components/portfolio/portfolio-experience";
-import { PortfolioNumbers } from "@/components/portfolio/portfolio-numbers";
-import { PortfolioStatement } from "@/components/portfolio/portfolio-statement";
+import { PortfolioAbout } from "@/components/portfolio/portfolio-about";
 import { PortfolioContact } from "@/components/portfolio/portfolio-contact";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function PortfolioPage() {
-  // Navigation & Scroll Restoration Lifecycle (Rules 24, 25, 26, 29, 30, 31)
+  // Navigation & Scroll Restoration Lifecycle
   useGSAP(() => {
     if (typeof window === "undefined") return;
 
@@ -29,17 +24,13 @@ export default function PortfolioPage() {
     if (rawState) {
       try {
         const saved = JSON.parse(rawState);
-        // Consume state so manual reloads do not trigger stale scroll jumps
         sessionStorage.removeItem("portfolio:return-state");
 
-        // Verify timestamp freshness (within 2 hours)
         if (saved.scrollY && Date.now() - saved.timestamp < 7200000) {
-          // Wait for DOM layout and ScrollTrigger pin measurements to stabilize
           requestAnimationFrame(() => {
             ScrollTrigger.refresh(true);
             window.scrollTo({ top: saved.scrollY, behavior: "instant" });
 
-            // Secondary refresh pass after scroll position is restored
             requestAnimationFrame(() => {
               ScrollTrigger.refresh(true);
             });
@@ -51,7 +42,6 @@ export default function PortfolioPage() {
       }
     }
 
-    // Stabilize layout measurements after initial mount / route transition
     requestAnimationFrame(() => {
       ScrollTrigger.refresh(true);
     });
@@ -62,19 +52,27 @@ export default function PortfolioPage() {
       <CustomCursor />
       <SiteHeader active="portfolio" />
       <main className="phuc-portfolio-page inner-page">
+        {/* WORLD HERO HEADER */}
         <PortfolioHero />
-        <PortfolioProfile />
-        <SelectedWorkIntro />
+
+        {/* 01 / SELECTED WORK */}
         <HorizontalShowcase />
+
+        {/* 02 / WORK INDEX */}
         <PortfolioArchive />
+
+        {/* 03 / METHOD */}
         <PortfolioApproach />
-        <PortfolioCapabilities />
-        <PortfolioExperience />
-        <PortfolioNumbers />
-        <PortfolioStatement />
+
+        {/* 04 / ABOUT */}
+        <PortfolioAbout />
+
+        {/* 05 / CONTACT */}
         <PortfolioContact />
       </main>
       <SiteFooter />
     </>
   );
 }
+
+

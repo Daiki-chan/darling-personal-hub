@@ -1,311 +1,289 @@
 "use client";
 
-import { useRef } from "react";
+import { memo, useRef, useState } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { FEATURED_PROJECTS, savePortfolioNavigationState, type Project } from "@/lib/portfolio-data";
-import { PortfolioMediaPlaceholder } from "./portfolio-media-placeholder";
-import { setGlobalCursor } from "./custom-cursor";
+import { FEATURED_PROJECTS } from "@/lib/portfolio-data";
+import { ProjectMediaAperture } from "./project-media-aperture";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function HorizontalShowcase() {
-  const sectionRef = useRef<HTMLElement>(null);
+export const HorizontalShowcase = memo(function HorizontalShowcase() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const progressDotRef = useRef<HTMLDivElement>(null);
-  const progressCounterRef = useRef<HTMLSpanElement>(null);
+  const [activeProjectIndex, setActiveProjectIndex] = useState<number>(0);
 
   useGSAP(
     () => {
-      if (
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-        window.matchMedia("(max-width: 768px)").matches
-      ) {
-        return;
-      }
+      if (typeof window === "undefined" || !trackRef.current) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const section = sectionRef.current;
-      const track = trackRef.current;
-      if (!section || !track) return;
+      const mm = gsap.matchMedia();
 
-      const getScrollDistance = () => track.scrollWidth - window.innerWidth;
+      // Desktop Only Horizontal Scrubbing Track
+      mm.add("(min-width: 769px)", () => {
+        const track = trackRef.current;
+        if (!track) return;
 
-      // 1. Primary ScrollTrigger: Pure Horizontal X Translation (Pinned & Vertically Stable)
-      const horizontalTween = gsap.to(track, {
-        x: () => -getScrollDistance(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: () => `+=${getScrollDistance()}`,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            // Update progress dot position & counter (01/03, 02/03, 03/03)
-            if (progressDotRef.current) {
-              gsap.to(progressDotRef.current, {
-                xPercent: self.progress * 200,
-                duration: 0.1,
-                overwrite: "auto",
-              });
-            }
+        const getSpreadWidth = () => {
+          const firstSpread = track.querySelector<HTMLElement>(".phuc-editorial-spread");
+          return firstSpread ? firstSpread.offsetWidth : window.innerWidth;
+        };
 
-            if (progressCounterRef.current) {
-              const num = Math.min(3, Math.max(1, Math.ceil(self.progress * 3.2)));
-              progressCounterRef.current.textContent = `0${num} / 03`;
-            }
+        const getScrollDistance = () => (FEATURED_PROJECTS.length - 1) * getSpreadWidth();
+
+        const pinTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top top",
+            end: () => `+=${getScrollDistance()}`,
+            pin: true,
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+            onUpdate: (self) => {
+              const progress = self.progress;
+              // Cleanly segment progress into active project index
+              const idx = Math.min(
+                Math.floor(progress * FEATURED_PROJECTS.length + 0.15),
+                FEATURED_PROJECTS.length - 1
+              );
+              setActiveProjectIndex(idx);
+            },
           },
-        },
+        });
+
+        pinTl.to(track, {
+          x: () => -getScrollDistance(),
+          ease: "none",
+        });
+
+        return () => {
+          pinTl.kill();
+        };
       });
 
-      // 2. Project Active/Inactive Scale & Opacity via ContainerAnimation (Continuous 0-85% Horizontal Journey)
-      const projectEls = gsap.utils.toArray<HTMLElement>(".phuc-showcase-project");
-      projectEls.forEach((proj, idx) => {
-        const bg = proj.querySelector(".phuc-proj-bg-layer");
-        const num = proj.querySelector(".phuc-proj-fg-num");
-        const body = proj.querySelector(".phuc-proj-summary");
-        const metrics = proj.querySelector(".phuc-proj-metrics-row");
-        const title = proj.querySelector(".phuc-proj-title");
-
-        // Entrance: project approaches viewport center -> opacity 1, scale 1
-        gsap.fromTo(
-          proj,
-          { opacity: 0.4, scale: 0.94 },
-          {
-            opacity: 1,
-            scale: 1,
-            ease: "power1.out",
-            scrollTrigger: {
-              trigger: proj,
-              containerAnimation: horizontalTween,
-              start: "left 85%",
-              end: "center center",
-              scrub: true,
-            },
-          }
-        );
-
-        // Exit phase for Projects 01 & 02: project leaves center -> opacity 0.4, scale 0.94
-        if (idx < projectEls.length - 1) {
-          gsap.fromTo(
-            proj,
-            { opacity: 1, scale: 1 },
-            {
-              opacity: 0.4,
-              scale: 0.94,
-              ease: "power1.in",
-              scrollTrigger: {
-                trigger: proj,
-                containerAnimation: horizontalTween,
-                start: "center center",
-                end: "right 15%",
-                scrub: true,
-              },
-            }
-          );
-        } else {
-          // Phase B — 85-92%: Project 03 Outro (Local element fade, NO outer panel vertical translation!)
-          if (body && metrics && title) {
-            gsap.to(body, {
-              opacity: 0.2,
-              y: -12,
-              ease: "power1.inOut",
-              scrollTrigger: {
-                trigger: proj,
-                containerAnimation: horizontalTween,
-                start: "center center",
-                end: "right 35%",
-                scrub: true,
-              },
-            });
-
-            gsap.to(metrics, {
-              opacity: 0.25,
-              ease: "power1.inOut",
-              scrollTrigger: {
-                trigger: proj,
-                containerAnimation: horizontalTween,
-                start: "center center",
-                end: "right 30%",
-                scrub: true,
-              },
-            });
-
-            gsap.to(title, {
-              opacity: 0.4,
-              y: -8,
-              ease: "power1.inOut",
-              scrollTrigger: {
-                trigger: proj,
-                containerAnimation: horizontalTween,
-                start: "center center",
-                end: "right 20%",
-                scrub: true,
-              },
-            });
-          }
-        }
-
-        // Small local X parallax for background and giant index number
-        if (bg) {
-          gsap.to(bg, {
-            x: -30,
-            ease: "none",
-            scrollTrigger: {
-              trigger: proj,
-              containerAnimation: horizontalTween,
-              start: "left right",
-              end: "right left",
-              scrub: true,
-            },
-          });
-        }
-
-        if (num) {
-          gsap.to(num, {
-            x: 50,
-            ease: "none",
-            scrollTrigger: {
-              trigger: proj,
-              containerAnimation: horizontalTween,
-              start: "left right",
-              end: "right left",
-              scrub: true,
-            },
-          });
-        }
-      });
+      return () => mm.revert();
     },
-    { scope: sectionRef }
+    { scope: containerRef }
   );
 
-  const handleProjectClick = () => {
-    savePortfolioNavigationState();
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (window.matchMedia("(pointer: coarse)").matches) return;
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    const rotX = (y / rect.height) * -1.4;
-    const rotY = (x / rect.width) * 2.2;
-
-    gsap.to(card, {
-      rotateX: rotX,
-      rotateY: rotY,
-      x: x * 0.04,
-      y: y * 0.04,
-      duration: 0.4,
-      ease: "power2.out",
-    });
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    setGlobalCursor({ active: false });
-    gsap.to(e.currentTarget, {
-      rotateX: 0,
-      rotateY: 0,
-      x: 0,
-      y: 0,
-      duration: 0.6,
-      ease: "power2.out",
-    });
-  };
+  const project1 = FEATURED_PROJECTS[0];
+  const project2 = FEATURED_PROJECTS[1];
+  const project3 = FEATURED_PROJECTS[2];
 
   return (
-    <section ref={sectionRef} className="phuc-showcase-wrapper" aria-label="Featured Projects Showcase">
-      <div ref={trackRef} className="phuc-showcase-track">
-        {/* Track Intro Panel */}
-        <div className="phuc-showcase-intro-card">
-          <span className="phuc-tag">KHÔNG GIAN LƯU TRỮ NỔI BẬT</span>
-          <h2>NHỮNG HÀNH TRÌNH TÌM KIẾM & CHUYỂN ĐỔI.</h2>
-          <div className="phuc-intro-scroll-hint">
-            <span className="phuc-hint-text-desktop">CUỘN ĐỂ DI CHUYỂN</span>
-            <span className="phuc-hint-text-mobile">CUỘN ĐỂ KHÁM PHÁ</span>
-            <span className="phuc-hint-arrow phuc-hint-arrow--desktop">→</span>
-            <span className="phuc-hint-arrow phuc-hint-arrow--mobile">↓</span>
-          </div>
+    <section
+      ref={containerRef}
+      id="selected-work"
+      className="phuc-showcase-wrapper"
+      aria-label="01 / SELECTED WORK"
+    >
+      {/* Chapter 01 Heading Strip with increased breathing room */}
+      <div className="phuc-chapter-heading-strip section-shell">
+        <div className="phuc-chapter-heading-left">
+          <span className="phuc-label">01 / SELECTED WORK</span>
+          <span className="phuc-chapter-sub">THREE BLACK & WHITE EDITORIAL SPREADS</span>
         </div>
+        <div className="phuc-chapter-heading-right">
+          <span className="phuc-chapter-meta">2024 — 2026 ARCHIVE</span>
+        </div>
+      </div>
 
-        {/* Featured Projects List */}
-        {FEATURED_PROJECTS.map((project: Project, idx: number) => {
-          const layoutClass = `phuc-showcase-project--layout-${idx + 1}`;
+      <div ref={trackRef} className="phuc-showcase-track">
+        {/* =========================================================================
+            SPREAD 01 — ORGANIC SEARCH (LANDSCAPE / IMAGE-DOMINANT COMPOSITION)
+            ========================================================================= */}
+        <article
+          className={`phuc-editorial-spread phuc-editorial-spread--01 ${
+            activeProjectIndex === 0 ? "phuc-editorial-spread--active" : ""
+          }`}
+          onPointerEnter={() => setActiveProjectIndex(0)}
+        >
+          <div className="phuc-spread-inner">
+            <Link href={`/portfolio/${project1.slug}`} className="phuc-spread-link">
+              <div className="phuc-spread-01-grid">
+                {/* Top Section: Index & Overlapping Monumental Title */}
+                <div className="phuc-spread-01-top">
+                  <div className="phuc-spread-idx-row">
+                    <span className="phuc-spread-idx">01 / 03</span>
+                    <span className="phuc-spread-cat-tag">SEO / CONTENT STRATEGY</span>
+                  </div>
+                  <h2 className="phuc-spread-01-title">
+                    <span className="word-top">ORGANIC SEARCH</span>
+                  </h2>
+                </div>
 
-          return (
-            <article key={project.slug} className={`phuc-showcase-project ${layoutClass}`}>
-              <div className="phuc-proj-bg-layer" aria-hidden="true" />
+                {/* Center Main Stage: 55–65% Width Dominant Landscape Media */}
+                <div className="phuc-spread-01-media-wrap">
+                  <ProjectMediaAperture
+                    variant="search"
+                    aspect="landscape"
+                    index="01"
+                    className="phuc-spread-01-media"
+                  />
+                  <div className="phuc-spread-01-sub-title" aria-hidden="true">
+                    GROWTH
+                  </div>
+                </div>
 
-              <Link
-                href={`/portfolio/${project.slug}`}
-                className="phuc-proj-content-layer"
-                onClick={handleProjectClick}
-                onMouseMove={handleMouseMove}
-                onMouseEnter={() => setGlobalCursor({ active: true, text: "XEM CASE STUDY" })}
-                onMouseLeave={handleMouseLeave}
-              >
-                <div className="phuc-proj-media-wrap">
-                  <PortfolioMediaPlaceholder
-                    variant={project.mediaVariant}
-                    aspectRatio={project.aspectRatio}
-                    index={project.index}
-                    label={project.title}
+                {/* Bottom Architectural Row: Large Typographic KPI & Two-Zone Footer */}
+                <div className="phuc-spread-01-bottom">
+                  <div className="phuc-spread-01-kpi-block">
+                    <div className="phuc-spread-kpi-huge">{project1.metrics[0]?.value}</div>
+                    <div className="phuc-spread-kpi-sub">{project1.metrics[0]?.label}</div>
+                  </div>
+
+                  <div className="phuc-spread-01-meta-block">
+                    <div className="phuc-spread-tag-year">
+                      <span>{project1.category}</span>
+                      <span className="dot" aria-hidden="true">·</span>
+                      <span>{project1.year}</span>
+                    </div>
+
+                    <div className="phuc-spread-footer-bar">
+                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-cta">
+                        <span>XEM CASE STUDY</span>
+                        <span className="arrow" aria-hidden="true">↗</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </article>
+
+        {/* =========================================================================
+            SPREAD 02 — CONTENT CLUSTER (VERTICAL TENSION / TALL PORTRAIT APERTURE)
+            ========================================================================= */}
+        <article
+          className={`phuc-editorial-spread phuc-editorial-spread--02 ${
+            activeProjectIndex === 1 ? "phuc-editorial-spread--active" : ""
+          }`}
+          onPointerEnter={() => setActiveProjectIndex(1)}
+        >
+          <div className="phuc-spread-inner">
+            <Link href={`/portfolio/${project2.slug}`} className="phuc-spread-link">
+              <div className="phuc-spread-02-grid">
+                {/* Left Column: Typographic Stack, Huge KPI & Metadata */}
+                <div className="phuc-spread-02-left">
+                  <div className="phuc-spread-idx-row">
+                    <span className="phuc-spread-idx">02 / 03</span>
+                    <span className="phuc-spread-cat-tag">TOPIC ARCHITECTURE</span>
+                  </div>
+
+                  <h2 className="phuc-spread-02-title">
+                    <span>CONTENT</span>
+                    <span>CLUSTER</span>
+                  </h2>
+
+                  <div className="phuc-spread-02-kpi-wrap">
+                    <div className="phuc-spread-kpi-huge">{project2.metrics[0]?.value}</div>
+                    <div className="phuc-spread-kpi-sub">{project2.metrics[0]?.label}</div>
+                  </div>
+
+                  <div className="phuc-spread-02-meta">
+                    <div className="phuc-spread-tag-year">
+                      <span>{project2.category}</span>
+                      <span className="dot" aria-hidden="true">·</span>
+                      <span>{project2.year}</span>
+                    </div>
+
+                    <div className="phuc-spread-footer-bar">
+                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-cta">
+                        <span>XEM CASE STUDY</span>
+                        <span className="arrow" aria-hidden="true">↗</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Tall 4:5 Portrait Media Aperture (Vertical Tension) */}
+                <div className="phuc-spread-02-right">
+                  <ProjectMediaAperture
+                    variant="content"
+                    aspect="portrait"
+                    index="02"
+                    className="phuc-spread-02-media"
+                  />
+                </div>
+              </div>
+            </Link>
+          </div>
+        </article>
+
+        {/* =========================================================================
+            SPREAD 03 — SEARCH ──→ CONVERSION (WIDE CINEMATIC SPREAD / HORIZONTAL FLOW)
+            ========================================================================= */}
+        <article
+          className={`phuc-editorial-spread phuc-editorial-spread--03 ${
+            activeProjectIndex === 2 ? "phuc-editorial-spread--active" : ""
+          }`}
+          onPointerEnter={() => setActiveProjectIndex(2)}
+        >
+          <div className="phuc-spread-inner">
+            <Link href={`/portfolio/${project3.slug}`} className="phuc-spread-link">
+              <div className="phuc-spread-03-grid">
+                {/* Top Section: Index Tag */}
+                <div className="phuc-spread-idx-row">
+                  <span className="phuc-spread-idx">03 / 03</span>
+                  <span className="phuc-spread-cat-tag">INTENT TO CONVERSION FLOW</span>
+                </div>
+
+                {/* Center Top: Wide Cinematic Media Aperture */}
+                <div className="phuc-spread-03-media-wrap">
+                  <ProjectMediaAperture
+                    variant="analytics"
+                    aspect="wide"
+                    index="03"
+                    className="phuc-spread-03-media"
                   />
                 </div>
 
-                <div className="phuc-proj-copy">
-                  <div className="phuc-proj-header">
-                    <span className="phuc-proj-index">{project.index}</span>
-                    <span className="phuc-proj-cat">{project.category} · {project.year}</span>
+                {/* Bottom Floor: Typographic Title ──→ Split Metrics & Two-Zone Footer */}
+                <div className="phuc-spread-03-bottom">
+                  <div className="phuc-spread-03-title-col">
+                    <h2 className="phuc-spread-03-title">
+                      <span>SEARCH</span>
+                      <span className="arrow-sep">──→</span>
+                      <span>CONVERSION</span>
+                    </h2>
                   </div>
 
-                  <h3 className="phuc-proj-title">{project.title}</h3>
-                  <p className="phuc-proj-summary">{project.summary}</p>
-
-                  <div className="phuc-proj-metrics-row">
-                    {project.metrics.map((m) => (
-                      <div key={m.label} className="phuc-proj-metric">
-                        <span className="phuc-metric-val">{m.value}</span>
-                        <span className="phuc-metric-lbl">{m.label}</span>
+                  <div className="phuc-spread-03-metrics-col">
+                    <div className="phuc-spread-03-split-kpi">
+                      <div className="kpi-item">
+                        <span className="val">{project3.metrics[0]?.value}</span>
+                        <span className="lbl">{project3.metrics[0]?.label}</span>
                       </div>
-                    ))}
+                      <div className="kpi-divider" aria-hidden="true" />
+                      {project3.metrics[1] && (
+                        <div className="kpi-item">
+                          <span className="val">{project3.metrics[1].value}</span>
+                          <span className="lbl">{project3.metrics[1].label}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="phuc-spread-footer-bar">
+                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-cta">
+                        <span>XEM CASE STUDY</span>
+                        <span className="arrow" aria-hidden="true">↗</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </Link>
-
-              <div className="phuc-proj-fg-num" aria-hidden="true">
-                {project.index}
               </div>
-            </article>
-          );
-        })}
-
-        {/* Track Exit Transition Card - Secondary Bridge Cue */}
-        <div className="phuc-showcase-exit-card">
-          <span className="phuc-tag-sub">CHUYỂN TIẾP KHÔNG GIAN</span>
-          <div className="phuc-exit-cue">
-            <span>KHO LƯU TRỮ PHÍA TRƯỚC</span>
-            <span className="arrow">↘</span>
+            </Link>
           </div>
-        </div>
-      </div>
-
-      {/* Showcase Progress Motif */}
-      <div className="phuc-showcase-progress-bar">
-        <span className="phuc-progress-step">01</span>
-        <div className="phuc-progress-track">
-          <div ref={progressDotRef} className="phuc-progress-dot" />
-        </div>
-        <span className="phuc-progress-step">03</span>
-        <span ref={progressCounterRef} className="phuc-progress-counter">
-          01 / 03
-        </span>
+        </article>
       </div>
     </section>
   );
-}
+});
