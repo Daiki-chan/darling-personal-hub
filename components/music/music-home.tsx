@@ -38,6 +38,7 @@ function DiscoverRail({ tracks }: { tracks: MusicTrack[] }) {
           >
             <div className={styles.discoverCoverWrap}>
               <Image
+                loading={index === 0 ? "eager" : undefined}
                 alt={`Thumbnail ${track.title}`}
                 className={styles.discoverImage}
                 height={280}
@@ -123,10 +124,9 @@ function ForYouChapter({ tracks }: { tracks: MusicTrack[] }) {
               <Image
                 alt={`Preview ${previewTrack.title}`}
                 className={styles.forYouPreviewImage}
-                height={400}
-                sizes="(max-width: 767px) 100vw, 400px"
+                fill
                 src={previewTrack.thumbnail}
-                width={400}
+                sizes="(max-width: 767px) calc(100vw - 32px), 400px"
               />
             </div>
             <div className={styles.forYouPreviewMeta}>
