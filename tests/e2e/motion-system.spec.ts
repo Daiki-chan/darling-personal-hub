@@ -11,6 +11,48 @@ async function documentMetrics(page: import("@playwright/test").Page) {
 }
 
 test.describe("cross-page motion and scroll contract", () => {
+  test("first-visit portal leaves every destination hit-testable after its entrance settles", async ({ page }) => {
+    await page.setViewportSize({ width: 1914, height: 858 });
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+
+    const portal = page.locator(".typo-portal-root");
+    await expect(portal).toHaveAttribute("data-step", "0");
+    await page.waitForTimeout(350);
+
+    await page.locator(".typo-intro-stage--01").click();
+    await expect(portal).toHaveAttribute("data-step", "1");
+    await page.locator(".typo-intro-stage--02").click();
+    await expect(portal).toHaveAttribute("data-step", "2");
+    await page.waitForTimeout(800);
+
+    const hitTargets = await page.locator(".dest-word").evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const glyphs = button.querySelector<HTMLElement>(".dest-word__glyphs");
+        if (!glyphs) throw new Error("Destination glyphs are missing");
+
+        const rect = glyphs.getBoundingClientRect();
+        const hitTarget = document.elementFromPoint(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2
+        );
+
+        return {
+          destination: button.getAttribute("data-dest-id"),
+          hitDestination: hitTarget
+            ?.closest("[data-dest-id]")
+            ?.getAttribute("data-dest-id") ?? null,
+        };
+      })
+    );
+
+    expect(hitTargets).toEqual([
+      { destination: "memories", hitDestination: "memories" },
+      { destination: "music", hitDestination: "music" },
+      { destination: "work", hitDestination: "work" },
+    ]);
+  });
+
   for (const route of VERTICAL_ROUTES) {
     test(`${route} remains native vertical-only`, async ({ page }) => {
       await page.setViewportSize({ width: 1366, height: 768 });

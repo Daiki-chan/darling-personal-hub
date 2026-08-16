@@ -43,6 +43,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const destRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const intro01Ref = useRef<HTMLDivElement>(null);
+  const intro02StageRef = useRef<HTMLDivElement>(null);
   const intro02Ref = useRef<HTMLDivElement>(null);
   const slitMaskRef = useRef<HTMLDivElement>(null);
   const portalDesktopRef = useRef<HTMLDivElement>(null);
@@ -176,10 +177,16 @@ export const TypographicPortal = memo(function TypographicPortal() {
           clipPath: "inset(0% 48% 0% 48%)",
           willChange: "clip-path",
         });
+        if (intro02StageRef.current) {
+          gsap.set(intro02StageRef.current, {
+            display: "grid",
+            opacity: 1,
+            pointerEvents: "none",
+          });
+        }
         gsap.set(intro02Ref.current, {
           display: "flex",
           opacity: 0,
-          pointerEvents: "auto",
           willChange: "transform, opacity",
         });
 
@@ -422,8 +429,8 @@ export const TypographicPortal = memo(function TypographicPortal() {
       <div
         className="typo-intro-stage typo-intro-stage--01"
         style={{
-          display: step === 0 || isAnimatingRef.current ? "grid" : "none",
-          opacity: step === 0 || isAnimatingRef.current ? 1 : 0,
+          display: step === 0 ? "grid" : "none",
+          opacity: step === 0 ? 1 : 0,
           pointerEvents: step === 0 ? "auto" : "none",
         }}
         onClick={advanceStep}
@@ -457,10 +464,11 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
       {/* Layer 2: Intro 02 (私の人生へようこそ - Masked Editorial Aperture) */}
       <div
+        ref={intro02StageRef}
         className="typo-intro-stage typo-intro-stage--02"
         style={{
-          display: step === 1 || isAnimatingRef.current ? "grid" : "none",
-          opacity: step === 1 || isAnimatingRef.current ? 1 : 0,
+          display: step === 1 ? "grid" : "none",
+          opacity: step === 1 ? 1 : 0,
           pointerEvents: step === 1 ? "auto" : "none",
         }}
         onClick={advanceStep}
@@ -496,7 +504,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
         ref={portalDesktopRef}
         className="typo-world-desktop"
         style={{
-          display: step === 2 || isAnimatingRef.current ? "grid" : "none",
+          display: step === 2 ? "grid" : "none",
           opacity: step === 2 ? 1 : 0,
           pointerEvents: step === 2 ? "auto" : "none",
         }}
