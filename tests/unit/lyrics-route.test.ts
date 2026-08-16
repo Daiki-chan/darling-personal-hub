@@ -24,7 +24,7 @@ describe("lyrics API identity", () => {
 
     expect(fetchMock).toHaveBeenCalled();
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
-      "User-Agent": "FujiwaraDaiki/3.0 (https://darling-personal-hub.vercel.app)",
+      "User-Agent": "FujiwaraDaiki/3.0 (https://fujiwaradaiki.vercel.app)",
     });
   });
 });
