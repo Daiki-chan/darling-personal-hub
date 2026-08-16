@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 const LRCLIB_BASE = "https://lrclib.net/api";
 const REQUEST_HEADERS = {
   Accept: "application/json",
-  "User-Agent": "FujiwaraDaiki/3.0 (https://fujiwaradaiki-daiky.vercel.app)",
+  "User-Agent": "FujiwaraDaiki/3.0 (https://darling-personal-hub.vercel.app)",
 };
 
 class LrcLibError extends Error {
