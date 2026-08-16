@@ -58,7 +58,6 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const lastClickTimeRef = useRef(0);
   const activeTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const navigationTimerRef = useRef<number | null>(null);
-  const jpFontLoadPromiseRef = useRef<Promise<unknown> | null>(null);
   const reduceMotion = useReducedMotion();
 
   // Initial Document Visit Hydration & Hash Check
@@ -78,17 +77,12 @@ export const TypographicPortal = memo(function TypographicPortal() {
     setIsRouteReady(true);
   }, []);
 
-  // Pre-load exact Japanese font face during Intro 01 with 1200ms fail-safe timeout
+  // Warm the Japanese face without letting network timing control the handoff timeline.
   useEffect(() => {
     if (typeof document !== "undefined" && "fonts" in document) {
-      const loadPromise = document.fonts.load(
-        `900 1em ${zenKakuGothic.style.fontFamily}`,
-        "私の人生へようこそ"
-      );
-      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 1200));
-      jpFontLoadPromiseRef.current = Promise.race([loadPromise, timeoutPromise]).catch(() => {
-        // Fail-safe: prevent state machine freeze on network failure
-      });
+      void document.fonts
+        .load(`900 1em ${zenKakuGothic.style.fontFamily}`, "私の人生へようこそ")
+        .catch(() => undefined);
     }
   }, []);
 
@@ -154,7 +148,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
         return;
       }
 
-      // CLICK 01 MASTER TIMELINE: Editorial Slit / Language Reveal (~0.85s)
+      // CLICK 01 MASTER TIMELINE: centered aperture and deliberate language handoff (~1s)
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
         onComplete: () => {
@@ -172,76 +166,107 @@ export const TypographicPortal = memo(function TypographicPortal() {
         const line1_02 = intro02Ref.current.querySelector(".typo-jp-line--1");
         const line2_02 = intro02Ref.current.querySelector(".typo-jp-line--2");
 
-        gsap.set(intro01Ref.current, { willChange: "transform, opacity" });
-        gsap.set(slitMaskRef.current, {
-          clipPath: "inset(0% 48% 0% 48%)",
-          willChange: "clip-path",
-        });
+        tl.set(intro01Ref.current, { willChange: "transform, opacity" }, 0)
+          .set(
+            slitMaskRef.current,
+            {
+              "--intro-slit-inset": "48%",
+              clipPath:
+                "inset(0% var(--intro-slit-inset) 0% var(--intro-slit-inset))",
+              willChange: "clip-path",
+            },
+            0
+          )
+          .set(
+            intro02Ref.current,
+            {
+              display: "flex",
+              autoAlpha: 0,
+              willChange: "transform, opacity",
+            },
+            0
+          );
+
         if (intro02StageRef.current) {
-          gsap.set(intro02StageRef.current, {
-            display: "grid",
-            opacity: 1,
-            pointerEvents: "none",
-          });
+          tl.set(
+            intro02StageRef.current,
+            {
+              display: "grid",
+              opacity: 1,
+              pointerEvents: "none",
+            },
+            0
+          );
         }
-        gsap.set(intro02Ref.current, {
-          display: "flex",
-          opacity: 0,
-          willChange: "transform, opacity",
-        });
 
-        // Stage 1 (0ms - 80ms): 0ms Immediate Response - Latin tracking compression
-        tl.to([partLeft, partRight], { letterSpacing: "-0.06em", scale: 0.98, duration: 0.08, ease: "power1.out" }, 0);
+        if (line1_02) {
+          tl.set(line1_02, { autoAlpha: 0, x: -28 }, 0);
+        }
+        if (line2_02) {
+          tl.set(line2_02, { autoAlpha: 0, x: 28 }, 0);
+        }
 
-        // Stage 2 (60ms - 220ms): Latin structural split
-        tl.to(partLeft, { x: -75, y: -12, duration: 0.42, ease: "power2.out" }, 0.06)
-          .to(partRight, { x: 75, y: 12, duration: 0.42, ease: "power2.out" }, 0.06);
+        // Latin stays dominant through the initial response and creates the opening.
+        tl.to(
+          [partLeft, partRight],
+          {
+            letterSpacing: "-0.045em",
+            scale: 0.985,
+            duration: 0.12,
+            ease: "power1.out",
+          },
+          0
+        )
+          .to(partLeft, { x: -54, y: -8, duration: 0.34, ease: "power3.out" }, 0.06)
+          .to(partRight, { x: 54, y: 8, duration: 0.34, ease: "power3.out" }, 0.06)
+          .to(
+            slitMaskRef.current,
+            {
+              "--intro-slit-inset": "0%",
+              duration: 0.62,
+              ease: "power3.inOut",
+            },
+            0.18
+          );
 
         if (commaGlyph) {
-          tl.to(commaGlyph, { y: 4, opacity: 0.7, duration: 0.3 }, 0.06);
+          tl.to(commaGlyph, { y: 3, opacity: 0.62, duration: 0.28 }, 0.08);
         }
 
-        // Stage 3 (140ms - 300ms): Editorial Aperture Slit Opening
-        tl.to(
-          slitMaskRef.current,
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.52, ease: "power3.inOut" },
-          0.14
-        );
+        // The Japanese line enters only after the Latin title has begun to yield.
+        tl.to(intro01Ref.current, { autoAlpha: 0, duration: 0.32, ease: "power2.inOut" }, 0.3)
+          .to(
+            partLeft,
+            { xPercent: -125, autoAlpha: 0, duration: 0.4, ease: "power3.in" },
+            0.26
+          )
+          .to(
+            partRight,
+            { xPercent: 125, autoAlpha: 0, duration: 0.4, ease: "power3.in" },
+            0.26
+          )
+          .to(intro02Ref.current, { autoAlpha: 1, duration: 0.4, ease: "power2.out" }, 0.44);
 
-        // Stage 4 (220ms - 550ms): Japanese Layer Exposure with Font Gate
-        const revealJapanese = () => {
-          gsap.to(intro02Ref.current, { opacity: 1, duration: 0.4, ease: "power2.out" });
-          gsap.fromTo(
+        if (line1_02) {
+          tl.to(
             line1_02,
-            { opacity: 0, x: -35 },
-            { opacity: 1, x: 0, duration: 0.48, ease: "power3.out" }
+            { autoAlpha: 1, x: 0, duration: 0.48, ease: "power3.out" },
+            0.44
           );
-          gsap.fromTo(
+        }
+        if (line2_02) {
+          tl.to(
             line2_02,
-            { opacity: 0, x: 35 },
-            { opacity: 1, x: 0, duration: 0.48, ease: "power3.out" }
+            { autoAlpha: 1, x: 0, duration: 0.48, ease: "power3.out" },
+            0.48
           );
-        };
-
-        if (jpFontLoadPromiseRef.current) {
-          tl.add(() => {
-            jpFontLoadPromiseRef.current?.then(revealJapanese).catch(revealJapanese);
-          }, 0.22);
-        } else {
-          tl.add(revealJapanese, 0.22);
         }
 
-        // Stage 6 (500ms - 800ms): Latin Spatial Crop Exit
-        tl.to(partLeft, { x: "-140%", opacity: 0, duration: 0.38, ease: "power2.in" }, 0.5)
-          .to(partRight, { x: "140%", opacity: 0, duration: 0.38, ease: "power2.in" }, 0.5);
-
-        // Stage 7 (700ms - 950ms): Slit Retraction & Settle into clean Intro 02 posture
-        tl.to(intro01Ref.current, { opacity: 0, duration: 0.25 }, 0.7);
-        tl.add(() => {
-          if (slitMaskRef.current) {
-            gsap.set(slitMaskRef.current, { clearProps: "clipPath,willChange" });
-          }
-        }, 0.85);
+        tl.set(
+          slitMaskRef.current,
+          { clearProps: "clipPath,--intro-slit-inset,willChange" },
+          1
+        ).set(intro02Ref.current, { clearProps: "willChange" }, 1);
       }
     } else if (step === 1) {
       isAnimatingRef.current = true;

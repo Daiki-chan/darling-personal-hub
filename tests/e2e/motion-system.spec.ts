@@ -11,6 +11,71 @@ async function documentMetrics(page: import("@playwright/test").Page) {
 }
 
 test.describe("cross-page motion and scroll contract", () => {
+  test("Intro 1 establishes a centered aperture before Intro 2 becomes dominant", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 920 });
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(350);
+    await page.evaluate(() => document.fonts.ready);
+
+    await page.locator(".typo-intro-stage--01").click();
+    await page.waitForTimeout(360);
+
+    const handoff = await page.evaluate(() => {
+      const intro02 = document.querySelector<HTMLElement>(".typo-intro-copy--jp");
+      const slit = document.querySelector<HTMLElement>(".typo-slit-mask");
+      if (!intro02 || !slit) throw new Error("Intro handoff layers are missing");
+
+      const insetValues = getComputedStyle(slit).clipPath
+        .match(/-?\d*\.?\d+%/g)
+        ?.map((value) => Number.parseFloat(value)) ?? [];
+      const rightInset = insetValues[1] ?? 0;
+      const leftInset = insetValues.length >= 4
+        ? insetValues[3]
+        : insetValues[1] ?? 0;
+
+      return {
+        intro02Opacity: Number.parseFloat(getComputedStyle(intro02).opacity),
+        apertureInset: rightInset,
+        apertureImbalance: Math.abs(rightInset - leftInset),
+      };
+    });
+
+    expect(handoff.intro02Opacity).toBeLessThan(0.15);
+    expect(handoff.apertureInset).toBeGreaterThan(1);
+    expect(handoff.apertureImbalance).toBeLessThan(0.5);
+
+    await page.waitForTimeout(200);
+    const crossing = await page.evaluate(() => {
+      const intro01 = document.querySelector<HTMLElement>(".typo-intro-copy--en");
+      const intro02 = document.querySelector<HTMLElement>(".typo-intro-copy--jp");
+      if (!intro01 || !intro02) throw new Error("Intro copy is missing");
+
+      return {
+        intro01Opacity: Number.parseFloat(getComputedStyle(intro01).opacity),
+        intro02Opacity: Number.parseFloat(getComputedStyle(intro02).opacity),
+      };
+    });
+
+    expect(crossing.intro01Opacity).toBeLessThan(0.35);
+    expect(crossing.intro02Opacity).toBeGreaterThan(0.25);
+
+    await page.waitForTimeout(260);
+    const resolution = await page.evaluate(() => {
+      const intro01 = document.querySelector<HTMLElement>(".typo-intro-copy--en");
+      const intro02 = document.querySelector<HTMLElement>(".typo-intro-copy--jp");
+      if (!intro01 || !intro02) throw new Error("Intro copy is missing");
+
+      return {
+        intro01Opacity: Number.parseFloat(getComputedStyle(intro01).opacity),
+        intro02Opacity: Number.parseFloat(getComputedStyle(intro02).opacity),
+      };
+    });
+
+    expect(resolution.intro01Opacity).toBeLessThan(0.45);
+    expect(resolution.intro02Opacity).toBeGreaterThan(0.55);
+  });
+
   test("first-visit portal leaves every destination hit-testable after its entrance settles", async ({ page }) => {
     await page.setViewportSize({ width: 1914, height: 858 });
     await page.goto("/");
