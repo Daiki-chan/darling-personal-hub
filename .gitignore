@@ -38,3 +38,5 @@ CLAUDE.md
 
 # TypeScript cache
 *.tsbuildinfo
+.vercel
+.env*

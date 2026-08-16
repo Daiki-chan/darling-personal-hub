@@ -13,7 +13,7 @@ export function SiteHeader({ active, guardInitialVisit = true }: SiteHeaderProps
       {active && guardInitialVisit ? <PortalBackGuard /> : null}
       <header className="site-nav">
         <Link className="brand" href="/#portals" aria-label="Về màn hình chọn không gian">
-          Darling
+          FUJIWARA DAIKI
         </Link>
         <nav className="nav-links" aria-label="Điều hướng chính">
           <Link href="/memories" aria-current={active === "gallery" || active === "memories" ? "page" : undefined}>

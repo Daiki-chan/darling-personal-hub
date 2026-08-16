@@ -11,6 +11,22 @@ async function documentMetrics(page: import("@playwright/test").Page) {
 }
 
 test.describe("cross-page motion and scroll contract", () => {
+  test("shared header identifies Fujiwara Daiki without mobile overflow", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+
+    for (const route of ["/music", "/memories", "/portfolio"]) {
+      await page.goto(route);
+      await page.waitForLoadState("domcontentloaded");
+
+      const brand = page.locator(".site-nav .brand");
+      await expect(brand).toBeVisible();
+      await expect(brand).toHaveText("FUJIWARA DAIKI");
+
+      const metrics = await documentMetrics(page);
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+    }
+  });
+
   test("Intro 1 establishes a centered aperture before Intro 2 becomes dominant", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 920 });
     await page.goto("/");
