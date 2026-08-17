@@ -38,8 +38,7 @@ export type PortalStage =
   | "INTRO_1"
   | "TRANSITIONING_0_1"
   | "INTRO_2"
-  | "TRANSITIONING_1_2"
-  | "CLEANUP"
+  | "EXITING_INTRO_2"
   | "PORTAL_ACTIVE";
 
 export const TypographicPortal = memo(function TypographicPortal() {
@@ -71,46 +70,15 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const stepIndex: 0 | 1 | 2 =
     stage === "INTRO_1" || stage === "TRANSITIONING_0_1"
       ? 0
-      : stage === "INTRO_2" || stage === "TRANSITIONING_1_2"
+      : stage === "INTRO_2" || stage === "EXITING_INTRO_2"
         ? 1
         : 2;
 
-  // Comprehensive Intro Cleanup & Teardown Routine
-  const cleanupIntro = useCallback(() => {
+  // Cleanup helper to kill running timelines
+  const killActiveTimeline = useCallback(() => {
     if (activeTimelineRef.current) {
       activeTimelineRef.current.kill();
       activeTimelineRef.current = null;
-    }
-
-    if (identityRef.current) {
-      gsap.set(identityRef.current, { clearProps: "willChange" });
-      const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
-      gsap.set(glyphs, { clearProps: "willChange" });
-    }
-    if (navRef.current) {
-      gsap.set(navRef.current, { clearProps: "willChange" });
-      const words = navRef.current.querySelectorAll(".dest-word");
-      gsap.set(words, { clearProps: "willChange" });
-    }
-    if (portalDesktopRef.current) {
-      gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
-    }
-
-    if (intro01Ref.current) {
-      gsap.killTweensOf(intro01Ref.current);
-      gsap.set(intro01Ref.current, { clearProps: "all" });
-    }
-    if (intro02Ref.current) {
-      gsap.killTweensOf(intro02Ref.current);
-      gsap.set(intro02Ref.current, { clearProps: "all" });
-    }
-    if (intro02StageRef.current) {
-      gsap.killTweensOf(intro02StageRef.current);
-      gsap.set(intro02StageRef.current, { clearProps: "all" });
-    }
-    if (slitMaskRef.current) {
-      gsap.killTweensOf(slitMaskRef.current);
-      gsap.set(slitMaskRef.current, { clearProps: "all" });
     }
   }, []);
 
@@ -143,7 +111,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash === "#portals") {
-        cleanupIntro();
+        killActiveTimeline();
         isTransitioningRef.current = false;
         setStage("PORTAL_ACTIVE");
       }
@@ -151,7 +119,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [cleanupIntro]);
+  }, [killActiveTimeline]);
 
   // Warm the Japanese face without letting network timing control the handoff timeline.
   useEffect(() => {
@@ -175,9 +143,9 @@ export const TypographicPortal = memo(function TypographicPortal() {
       if (navigationTimerRef.current !== null) {
         window.clearTimeout(navigationTimerRef.current);
       }
-      cleanupIntro();
+      killActiveTimeline();
     };
-  }, [cleanupIntro]);
+  }, [killActiveTimeline]);
 
   // Safe Failsafe Navigation Function for Destination Clicks (Decoupled from Intro)
   const navigateWithFailsafe = useCallback(
@@ -195,15 +163,14 @@ export const TypographicPortal = memo(function TypographicPortal() {
     [isLeaving, reduceMotion, router]
   );
 
-  // Controlled Step Advancement with Atomic Lock & Clear Lifecycle
+  // Controlled Step Advancement with Atomic Lock & Sequential Handoff
   const advanceStep = useCallback(() => {
     // Strict Guard:
-    // Ignore if route not ready, leaving, or transition/cleanup is already running
+    // Ignore if route not ready, leaving, or transition is already running
     if (!isRouteReady || isLeaving || isTransitioningRef.current) return;
     if (
       stage === "TRANSITIONING_0_1" ||
-      stage === "TRANSITIONING_1_2" ||
-      stage === "CLEANUP" ||
+      stage === "EXITING_INTRO_2" ||
       stage === "PORTAL_ACTIVE"
     ) {
       return;
@@ -342,90 +309,42 @@ export const TypographicPortal = memo(function TypographicPortal() {
       }
     } else if (stage === "INTRO_2") {
       isTransitioningRef.current = true;
-      setStage("TRANSITIONING_1_2");
+      setStage("EXITING_INTRO_2");
 
       if (reduceMotion) {
-        cleanupIntro();
-        setStage("PORTAL_ACTIVE");
+        killActiveTimeline();
         isTransitioningRef.current = false;
+        setStage("PORTAL_ACTIVE");
         return;
       }
 
-      // CLICK 02 MASTER TIMELINE: Deconstruct -> Spatial Coexistence -> Reveal FUJIWARA DAIKI -> Portal (~1.25s)
+      // Exit sequence: Japanese lines separate & fade into depth
+      const line1 = intro02Ref.current?.querySelector(".typo-jp-line--1");
+      const line2 = intro02Ref.current?.querySelector(".typo-jp-line--2");
+
       const tl = gsap.timeline({
-        defaults: { ease: "power3.out" },
+        defaults: { ease: "power2.in" },
         onComplete: () => {
           if (!isMountedRef.current) return;
-          // Synchronous teardown and cleanup of all Intro layers
-          setStage("CLEANUP");
-          cleanupIntro();
+          killActiveTimeline();
           isTransitioningRef.current = false;
-          // Final activation of Portal
+          // Step handoff: Unmount Intro 2 and activate Portal
           setStage("PORTAL_ACTIVE");
         },
       });
       activeTimelineRef.current = tl;
 
-      const line1 = intro02Ref.current?.querySelector(".typo-jp-line--1");
-      const line2 = intro02Ref.current?.querySelector(".typo-jp-line--2");
-
-      // Pre-set initial hidden transforms at t=0 BEFORE revealing portal container to prevent first-paint flash
-      if (identityRef.current) {
-        const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
-        gsap.set(glyphs, { opacity: 0, scale: 0.86, y: 40, willChange: "transform, opacity" });
-      }
-      if (navRef.current) {
-        const words = navRef.current.querySelectorAll(".dest-word");
-        gsap.set(words, { opacity: 0, y: 35, willChange: "transform, opacity" });
-      }
-      if (portalDesktopRef.current) {
-        gsap.set(portalDesktopRef.current, {
-          display: "grid",
-          opacity: 1,
-          pointerEvents: "none",
-        });
-      }
-
-      // Phase A: Controlled Editorial Deconstruction & Baseline Separation (0.0s - 0.65s)
       if (line1) {
-        tl.to(line1, { x: -75, y: -40, opacity: 0.4, duration: 0.65, ease: "power2.inOut" }, 0);
+        tl.to(line1, { x: -65, y: -35, opacity: 0, duration: 0.42 }, 0);
       }
       if (line2) {
-        tl.to(line2, { x: 75, y: 40, opacity: 0.4, duration: 0.65, ease: "power2.inOut" }, 0);
+        tl.to(line2, { x: 65, y: 35, opacity: 0, duration: 0.42 }, 0);
       }
-
-      // Phase B: COEXISTENCE PHASE! (0.2s - 0.7s)
-      // While Japanese lines are separated & visible, FUJIWARA DAIKI emerges through the spatial gap!
-      if (identityRef.current) {
-        const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
-        tl.to(
-          glyphs,
-          { opacity: 1, scale: 1, y: 0, duration: 0.8, stagger: 0.03 },
-          0.2
-        );
-      }
-
-      // Phase C: Japanese layer retreats into depth (0.5s - 0.95s)
       if (intro02Ref.current) {
-        tl.to(intro02Ref.current, { opacity: 0, scale: 0.94, duration: 0.45 }, 0.5);
-      }
-
-      // Phase D: Destination Words stagger in (0.65s - 1.1s)
-      if (navRef.current) {
-        const words = navRef.current.querySelectorAll(".dest-word");
-        tl.to(
-          words,
-          { opacity: 1, y: 0, duration: 0.7, stagger: 0.09 },
-          0.65
-        );
-      }
-
-      // Prepare desktop portal for user interaction towards end of motion
-      if (portalDesktopRef.current) {
-        tl.set(portalDesktopRef.current, { pointerEvents: "auto" }, 0.95);
+        tl.to(intro02Ref.current, { opacity: 0, scale: 0.95, duration: 0.42 }, 0);
       }
     }
-  }, [cleanupIntro, isLeaving, isRouteReady, reduceMotion, stage]);
+  }, [isLeaving, isRouteReady, killActiveTimeline, reduceMotion, stage]);
 
   const handleKeyboardStep = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (
@@ -436,6 +355,60 @@ export const TypographicPortal = memo(function TypographicPortal() {
       advanceStep();
     }
   };
+
+  // Entrance animation for Portal when stage transitions to PORTAL_ACTIVE
+  useEffect(() => {
+    if (stage !== "PORTAL_ACTIVE") return;
+
+    if (reduceMotion) {
+      if (portalDesktopRef.current) {
+        gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
+      }
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      if (identityRef.current) {
+        const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
+        gsap.fromTo(
+          glyphs,
+          { opacity: 0, scale: 0.9, y: 30 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.7,
+            stagger: 0.03,
+            ease: "power3.out",
+          }
+        );
+      }
+
+      if (navRef.current) {
+        const words = navRef.current.querySelectorAll(".dest-word");
+        gsap.fromTo(
+          words,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.65,
+            stagger: 0.08,
+            ease: "power3.out",
+            delay: 0.1,
+            onComplete: () => {
+              if (navRef.current) gsap.set(navRef.current, { clearProps: "willChange" });
+              if (portalDesktopRef.current) gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
+            },
+          }
+        );
+      }
+    }, containerRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [stage, reduceMotion]);
 
   // Desktop Living Typography Pointer Gravity (gsap.quickSetter for 60fps)
   useEffect(() => {
@@ -517,9 +490,6 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const line1Text = "私の人生へ";
   const line2Text = "ようこそ";
 
-  const isPortalDesktopMounted =
-    stage === "TRANSITIONING_1_2" || stage === "CLEANUP" || stage === "PORTAL_ACTIVE";
-
   return (
     <main
       ref={containerRef}
@@ -532,7 +502,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
       <GlyphWindow activeDestination={activeDestination} />
 
       {/* Layer 1: Intro 01 (Darling, ohayō - Pure Typography Handoff) */}
-      {stage !== "PORTAL_ACTIVE" && stage !== "CLEANUP" && (
+      {stage !== "PORTAL_ACTIVE" && (
         <div
           className="typo-intro-stage typo-intro-stage--01"
           style={{
@@ -571,18 +541,18 @@ export const TypographicPortal = memo(function TypographicPortal() {
       )}
 
       {/* Layer 2: Intro 02 (私の人生へようこそ - Masked Editorial Aperture) */}
-      {stage !== "PORTAL_ACTIVE" && stage !== "CLEANUP" && (
+      {stage !== "PORTAL_ACTIVE" && (
         <div
           ref={intro02StageRef}
           className="typo-intro-stage typo-intro-stage--02"
           style={{
             display:
               stage === "INTRO_2" ||
-              stage === "TRANSITIONING_1_2" ||
+              stage === "EXITING_INTRO_2" ||
               stage === "TRANSITIONING_0_1"
                 ? "grid"
                 : "none",
-            opacity: stage === "INTRO_2" || stage === "TRANSITIONING_1_2" ? 1 : 0,
+            opacity: stage === "INTRO_2" || stage === "EXITING_INTRO_2" ? 1 : 0,
             pointerEvents: stage === "INTRO_2" ? "auto" : "none",
           }}
           onClick={advanceStep}
@@ -614,44 +584,46 @@ export const TypographicPortal = memo(function TypographicPortal() {
         </div>
       )}
 
-      {/* Layer 3: Main Typographic World (Desktop) */}
-      <div
-        ref={portalDesktopRef}
-        className="typo-world-desktop"
-        style={{
-          display: isPortalDesktopMounted ? "grid" : "none",
-          opacity: isPortalDesktopMounted ? 1 : 0,
-          pointerEvents: stage === "PORTAL_ACTIVE" ? "auto" : "none",
-        }}
-      >
-        <IdentityAnchor
-          ref={identityRef}
-          activeDestination={activeDestination}
-          fontDirection={fontDirection}
-        />
-
-        <nav
-          ref={navRef}
-          className="typo-world-nav"
-          aria-label="Điều hướng các không gian"
+      {/* Layer 3: Main Typographic World (Desktop) - Rendered only when PORTAL_ACTIVE */}
+      {stage === "PORTAL_ACTIVE" && (
+        <div
+          ref={portalDesktopRef}
+          className="typo-world-desktop"
+          style={{
+            display: "grid",
+            opacity: 1,
+            pointerEvents: "none",
+          }}
         >
-          {DESTINATIONS.map((d) => (
-            <DestinationWord
-              key={d.id}
-              ref={(node) => setDestRef(d.id, node)}
-              id={d.id}
-              label={d.label}
-              href={d.href}
-              isFocused={activeDestination === d.id}
-              onHover={setActiveDestination}
-              onSelect={navigateWithFailsafe}
-              onPrefetch={(href) => router.prefetch(href)}
-            />
-          ))}
-        </nav>
-      </div>
+          <IdentityAnchor
+            ref={identityRef}
+            activeDestination={activeDestination}
+            fontDirection={fontDirection}
+          />
 
-      {/* Layer 3: Touch-Optimized Mobile View */}
+          <nav
+            ref={navRef}
+            className="typo-world-nav"
+            aria-label="Điều hướng các không gian"
+          >
+            {DESTINATIONS.map((d) => (
+              <DestinationWord
+                key={d.id}
+                ref={(node) => setDestRef(d.id, node)}
+                id={d.id}
+                label={d.label}
+                href={d.href}
+                isFocused={activeDestination === d.id}
+                onHover={setActiveDestination}
+                onSelect={navigateWithFailsafe}
+                onPrefetch={(href) => router.prefetch(href)}
+              />
+            ))}
+          </nav>
+        </div>
+      )}
+
+      {/* Layer 3: Touch-Optimized Mobile View - Rendered only when PORTAL_ACTIVE */}
       {stage === "PORTAL_ACTIVE" ? (
         <div className="typo-world-mobile">
           <MobileChapters
