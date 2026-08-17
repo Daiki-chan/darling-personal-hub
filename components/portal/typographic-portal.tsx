@@ -1,6 +1,5 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "framer-motion";
 import { Sora, Zen_Kaku_Gothic_New } from "next/font/google";
@@ -35,6 +34,14 @@ const DESTINATIONS = [
   { id: "work" as const, label: "PORTFOLIO", href: "/portfolio" },
 ];
 
+export type PortalStage =
+  | "INTRO_1"
+  | "TRANSITIONING_0_1"
+  | "INTRO_2"
+  | "TRANSITIONING_1_2"
+  | "CLEANUP"
+  | "PORTAL_ACTIVE";
+
 export const TypographicPortal = memo(function TypographicPortal() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,20 +55,68 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const slitMaskRef = useRef<HTMLDivElement>(null);
   const portalDesktopRef = useRef<HTMLDivElement>(null);
 
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [stage, setStage] = useState<PortalStage>("INTRO_1");
   const [isRouteReady, setIsRouteReady] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [activeDestination, setActiveDestination] = useState<"memories" | "music" | "work" | null>(null);
   const [fontDirection] = useState<"kinetic" | "grotesk">("kinetic");
 
-  const isAnimatingRef = useRef(false);
-  const lastClickTimeRef = useRef(0);
+  const isTransitioningRef = useRef(false);
+  const isMountedRef = useRef(true);
   const activeTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const navigationTimerRef = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
 
+  // Map lifecycle stage to step index (0 | 1 | 2) for CSS attribute contract
+  const stepIndex: 0 | 1 | 2 =
+    stage === "INTRO_1" || stage === "TRANSITIONING_0_1"
+      ? 0
+      : stage === "INTRO_2" || stage === "TRANSITIONING_1_2"
+        ? 1
+        : 2;
+
+  // Comprehensive Intro Cleanup & Teardown Routine
+  const cleanupIntro = useCallback(() => {
+    if (activeTimelineRef.current) {
+      activeTimelineRef.current.kill();
+      activeTimelineRef.current = null;
+    }
+
+    if (identityRef.current) {
+      gsap.set(identityRef.current, { clearProps: "willChange" });
+      const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
+      gsap.set(glyphs, { clearProps: "willChange" });
+    }
+    if (navRef.current) {
+      gsap.set(navRef.current, { clearProps: "willChange" });
+      const words = navRef.current.querySelectorAll(".dest-word");
+      gsap.set(words, { clearProps: "willChange" });
+    }
+    if (portalDesktopRef.current) {
+      gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
+    }
+
+    if (intro01Ref.current) {
+      gsap.killTweensOf(intro01Ref.current);
+      gsap.set(intro01Ref.current, { clearProps: "all" });
+    }
+    if (intro02Ref.current) {
+      gsap.killTweensOf(intro02Ref.current);
+      gsap.set(intro02Ref.current, { clearProps: "all" });
+    }
+    if (intro02StageRef.current) {
+      gsap.killTweensOf(intro02StageRef.current);
+      gsap.set(intro02StageRef.current, { clearProps: "all" });
+    }
+    if (slitMaskRef.current) {
+      gsap.killTweensOf(slitMaskRef.current);
+      gsap.set(slitMaskRef.current, { clearProps: "all" });
+    }
+  }, []);
+
   // Initial Document Visit Hydration & Hash Check
   useEffect(() => {
+    isMountedRef.current = true;
     const isInitialVisit = consumeInitialDocumentVisit();
     if (isInitialVisit) {
       if (window.location.hash) {
@@ -71,11 +126,32 @@ export const TypographicPortal = memo(function TypographicPortal() {
           `${window.location.pathname}${window.location.search}`
         );
       }
+      setStage("INTRO_1");
     } else if (window.location.hash === "#portals") {
-      setStep(2);
+      setStage("PORTAL_ACTIVE");
+    } else {
+      setStage("INTRO_1");
     }
     setIsRouteReady(true);
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
+
+  // Hashchange listener to support back navigation and deep-links
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === "#portals") {
+        cleanupIntro();
+        isTransitioningRef.current = false;
+        setStage("PORTAL_ACTIVE");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [cleanupIntro]);
 
   // Warm the Japanese face without letting network timing control the handoff timeline.
   useEffect(() => {
@@ -99,9 +175,9 @@ export const TypographicPortal = memo(function TypographicPortal() {
       if (navigationTimerRef.current !== null) {
         window.clearTimeout(navigationTimerRef.current);
       }
-      activeTimelineRef.current?.kill();
+      cleanupIntro();
     };
-  }, []);
+  }, [cleanupIntro]);
 
   // Safe Failsafe Navigation Function for Destination Clicks (Decoupled from Intro)
   const navigateWithFailsafe = useCallback(
@@ -119,32 +195,27 @@ export const TypographicPortal = memo(function TypographicPortal() {
     [isLeaving, reduceMotion, router]
   );
 
-  // Controlled Step Advancement & State Machine Safety across Persistent Mounted Layers
+  // Controlled Step Advancement with Atomic Lock & Clear Lifecycle
   const advanceStep = useCallback(() => {
-    if (!isRouteReady || isLeaving) return;
-
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTimeRef.current;
-    lastClickTimeRef.current = now;
-
-    // Debounce rapid double clicks within 350ms
-    if (isAnimatingRef.current && timeSinceLastClick < 350) {
+    // Strict Guard:
+    // Ignore if route not ready, leaving, or transition/cleanup is already running
+    if (!isRouteReady || isLeaving || isTransitioningRef.current) return;
+    if (
+      stage === "TRANSITIONING_0_1" ||
+      stage === "TRANSITIONING_1_2" ||
+      stage === "CLEANUP" ||
+      stage === "PORTAL_ACTIVE"
+    ) {
       return;
     }
 
-    // Intentional skip after 350ms during transition completes timeline directly to Step 2
-    if (isAnimatingRef.current && timeSinceLastClick >= 350) {
-      activeTimelineRef.current?.progress(1);
-      setStep(2);
-      isAnimatingRef.current = false;
-      return;
-    }
+    if (stage === "INTRO_1") {
+      isTransitioningRef.current = true;
+      setStage("TRANSITIONING_0_1");
 
-    if (step === 0) {
-      isAnimatingRef.current = true;
       if (reduceMotion) {
-        setStep(1);
-        isAnimatingRef.current = false;
+        setStage("INTRO_2");
+        isTransitioningRef.current = false;
         return;
       }
 
@@ -152,8 +223,9 @@ export const TypographicPortal = memo(function TypographicPortal() {
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
         onComplete: () => {
-          setStep(1);
-          isAnimatingRef.current = false;
+          if (!isMountedRef.current) return;
+          isTransitioningRef.current = false;
+          setStage("INTRO_2");
         },
       });
       activeTimelineRef.current = tl;
@@ -268,11 +340,14 @@ export const TypographicPortal = memo(function TypographicPortal() {
           1
         ).set(intro02Ref.current, { clearProps: "willChange" }, 1);
       }
-    } else if (step === 1) {
-      isAnimatingRef.current = true;
+    } else if (stage === "INTRO_2") {
+      isTransitioningRef.current = true;
+      setStage("TRANSITIONING_1_2");
+
       if (reduceMotion) {
-        setStep(2);
-        isAnimatingRef.current = false;
+        cleanupIntro();
+        setStage("PORTAL_ACTIVE");
+        isTransitioningRef.current = false;
         return;
       }
 
@@ -280,11 +355,13 @@ export const TypographicPortal = memo(function TypographicPortal() {
       const tl = gsap.timeline({
         defaults: { ease: "power3.out" },
         onComplete: () => {
-          setStep(2);
-          isAnimatingRef.current = false;
-          // Clear will-change after sequence settles
-          if (identityRef.current) gsap.set(identityRef.current, { clearProps: "willChange" });
-          if (navRef.current) gsap.set(navRef.current, { clearProps: "willChange" });
+          if (!isMountedRef.current) return;
+          // Synchronous teardown and cleanup of all Intro layers
+          setStage("CLEANUP");
+          cleanupIntro();
+          isTransitioningRef.current = false;
+          // Final activation of Portal
+          setStage("PORTAL_ACTIVE");
         },
       });
       activeTimelineRef.current = tl;
@@ -343,18 +420,18 @@ export const TypographicPortal = memo(function TypographicPortal() {
         );
       }
 
-      // Portal becomes interactive at ~0.95s while residual motion settles
-      tl.add(() => {
-        setStep(2);
-        if (portalDesktopRef.current) {
-          gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
-        }
-      }, 0.95);
+      // Prepare desktop portal for user interaction towards end of motion
+      if (portalDesktopRef.current) {
+        tl.set(portalDesktopRef.current, { pointerEvents: "auto" }, 0.95);
+      }
     }
-  }, [isLeaving, isRouteReady, reduceMotion, step]);
+  }, [cleanupIntro, isLeaving, isRouteReady, reduceMotion, stage]);
 
   const handleKeyboardStep = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (step < 2 && (e.key === "Enter" || e.key === " ")) {
+    if (
+      (stage === "INTRO_1" || stage === "INTRO_2") &&
+      (e.key === "Enter" || e.key === " ")
+    ) {
       e.preventDefault();
       advanceStep();
     }
@@ -362,7 +439,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
   // Desktop Living Typography Pointer Gravity (gsap.quickSetter for 60fps)
   useEffect(() => {
-    if (step !== 2 || reduceMotion || typeof window === "undefined") return;
+    if (stage !== "PORTAL_ACTIVE" || reduceMotion || typeof window === "undefined") return;
 
     let rAfId: number | null = null;
     let mouseX = 0;
@@ -430,7 +507,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
       window.removeEventListener("pointermove", handlePointerMove);
       if (rAfId !== null) cancelAnimationFrame(rAfId);
     };
-  }, [step, reduceMotion]);
+  }, [stage, reduceMotion]);
 
   const setDestRef = (id: string, node: HTMLButtonElement | null) => {
     if (node) destRefs.current.set(id, node);
@@ -440,98 +517,111 @@ export const TypographicPortal = memo(function TypographicPortal() {
   const line1Text = "私の人生へ";
   const line2Text = "ようこそ";
 
+  const isPortalDesktopMounted =
+    stage === "TRANSITIONING_1_2" || stage === "CLEANUP" || stage === "PORTAL_ACTIVE";
+
   return (
     <main
       ref={containerRef}
       className={`typo-portal-root ${zenKakuGothic.variable} ${portalDisplayFont.variable}`}
-      data-step={step}
+      data-step={stepIndex}
+      data-stage={stage}
       data-leaving={isLeaving}
       data-font-direction={fontDirection}
     >
       <GlyphWindow activeDestination={activeDestination} />
 
       {/* Layer 1: Intro 01 (Darling, ohayō - Pure Typography Handoff) */}
-      <div
-        className="typo-intro-stage typo-intro-stage--01"
-        style={{
-          display: step === 0 ? "grid" : "none",
-          opacity: step === 0 ? 1 : 0,
-          pointerEvents: step === 0 ? "auto" : "none",
-        }}
-        onClick={advanceStep}
-        onKeyDown={handleKeyboardStep}
-        role="button"
-        tabIndex={step === 0 ? 0 : -1}
-        aria-label="Khai mở trải nghiệm Darling, ohayō"
-      >
-        <div className="typo-intro-copy typo-intro-copy--en" ref={intro01Ref}>
-          <h1 className="typo-intro-title typo-intro-title--en">
-            <span className="typo-latin-part typo-latin-part--left">
-              {"Darling,".split("").map((char, index) => (
-                <span
-                  key={`en-l-${index}-${char}`}
-                  className={`typo-glyph ${char === "," ? "typo-comma-glyph" : ""}`}
-                >
-                  {char}
-                </span>
-              ))}
-            </span>
-            <span className="typo-latin-part typo-latin-part--right">
-              {"ohayō".split("").map((char, index) => (
-                <span key={`en-r-${index}-${char}`} className="typo-glyph">
-                  {char}
-                </span>
-              ))}
-            </span>
-          </h1>
-        </div>
-      </div>
-
-      {/* Layer 2: Intro 02 (私の人生へようこそ - Masked Editorial Aperture) */}
-      <div
-        ref={intro02StageRef}
-        className="typo-intro-stage typo-intro-stage--02"
-        style={{
-          display: step === 1 ? "grid" : "none",
-          opacity: step === 1 ? 1 : 0,
-          pointerEvents: step === 1 ? "auto" : "none",
-        }}
-        onClick={advanceStep}
-        onKeyDown={handleKeyboardStep}
-        role="button"
-        tabIndex={step === 1 ? 0 : -1}
-        aria-label="Khai mở thế giới chữ FUJIWARA DAIKI"
-      >
-        <div className="typo-slit-mask" ref={slitMaskRef}>
-          <div className="typo-intro-copy typo-intro-copy--jp" ref={intro02Ref}>
-            <h1 className="typo-intro-title typo-intro-title--jp">
-              <div className="typo-jp-line typo-jp-line--1">
-                {line1Text.split("").map((char, index) => (
-                  <span key={`jp1-${index}-${char}`} className="jp-glyph">
+      {stage !== "PORTAL_ACTIVE" && stage !== "CLEANUP" && (
+        <div
+          className="typo-intro-stage typo-intro-stage--01"
+          style={{
+            display: stage === "INTRO_1" || stage === "TRANSITIONING_0_1" ? "grid" : "none",
+            opacity: stage === "INTRO_1" || stage === "TRANSITIONING_0_1" ? 1 : 0,
+            pointerEvents: stage === "INTRO_1" ? "auto" : "none",
+          }}
+          onClick={advanceStep}
+          onKeyDown={handleKeyboardStep}
+          role="button"
+          tabIndex={stage === "INTRO_1" ? 0 : -1}
+          aria-label="Khai mở trải nghiệm Darling, ohayō"
+        >
+          <div className="typo-intro-copy typo-intro-copy--en" ref={intro01Ref}>
+            <h1 className="typo-intro-title typo-intro-title--en">
+              <span className="typo-latin-part typo-latin-part--left">
+                {"Darling,".split("").map((char, index) => (
+                  <span
+                    key={`en-l-${index}-${char}`}
+                    className={`typo-glyph ${char === "," ? "typo-comma-glyph" : ""}`}
+                  >
                     {char}
                   </span>
                 ))}
-              </div>
-              <div className="typo-jp-line typo-jp-line--2">
-                {line2Text.split("").map((char, index) => (
-                  <span key={`jp2-${index}-${char}`} className="jp-glyph">
+              </span>
+              <span className="typo-latin-part typo-latin-part--right">
+                {"ohayō".split("").map((char, index) => (
+                  <span key={`en-r-${index}-${char}`} className="typo-glyph">
                     {char}
                   </span>
                 ))}
-              </div>
+              </span>
             </h1>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Layer 2: Intro 02 (私の人生へようこそ - Masked Editorial Aperture) */}
+      {stage !== "PORTAL_ACTIVE" && stage !== "CLEANUP" && (
+        <div
+          ref={intro02StageRef}
+          className="typo-intro-stage typo-intro-stage--02"
+          style={{
+            display:
+              stage === "INTRO_2" ||
+              stage === "TRANSITIONING_1_2" ||
+              stage === "TRANSITIONING_0_1"
+                ? "grid"
+                : "none",
+            opacity: stage === "INTRO_2" || stage === "TRANSITIONING_1_2" ? 1 : 0,
+            pointerEvents: stage === "INTRO_2" ? "auto" : "none",
+          }}
+          onClick={advanceStep}
+          onKeyDown={handleKeyboardStep}
+          role="button"
+          tabIndex={stage === "INTRO_2" ? 0 : -1}
+          aria-label="Khai mở thế giới chữ FUJIWARA DAIKI"
+        >
+          <div className="typo-slit-mask" ref={slitMaskRef}>
+            <div className="typo-intro-copy typo-intro-copy--jp" ref={intro02Ref}>
+              <h1 className="typo-intro-title typo-intro-title--jp">
+                <div className="typo-jp-line typo-jp-line--1">
+                  {line1Text.split("").map((char, index) => (
+                    <span key={`jp1-${index}-${char}`} className="jp-glyph">
+                      {char}
+                    </span>
+                  ))}
+                </div>
+                <div className="typo-jp-line typo-jp-line--2">
+                  {line2Text.split("").map((char, index) => (
+                    <span key={`jp2-${index}-${char}`} className="jp-glyph">
+                      {char}
+                    </span>
+                  ))}
+                </div>
+              </h1>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Layer 3: Main Typographic World (Desktop) */}
       <div
         ref={portalDesktopRef}
         className="typo-world-desktop"
         style={{
-          display: step === 2 ? "grid" : "none",
-          opacity: step === 2 ? 1 : 0,
-          pointerEvents: step === 2 ? "auto" : "none",
+          display: isPortalDesktopMounted ? "grid" : "none",
+          opacity: isPortalDesktopMounted ? 1 : 0,
+          pointerEvents: stage === "PORTAL_ACTIVE" ? "auto" : "none",
         }}
       >
         <IdentityAnchor
@@ -562,7 +652,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
       </div>
 
       {/* Layer 3: Touch-Optimized Mobile View */}
-      {step === 2 ? (
+      {stage === "PORTAL_ACTIVE" ? (
         <div className="typo-world-mobile">
           <MobileChapters
             onSelect={navigateWithFailsafe}
