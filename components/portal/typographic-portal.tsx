@@ -380,9 +380,9 @@ export const TypographicPortal = memo(function TypographicPortal() {
     }
   };
 
-  // Entrance animation for Portal when stage transitions to PORTAL_ACTIVE
+  // Master GSAP context for PORTAL_ACTIVE stage (Entrance + Living Typography Pointer Gravity)
   useEffect(() => {
-    if (stage !== "PORTAL_ACTIVE") return;
+    if (stage !== "PORTAL_ACTIVE" || typeof window === "undefined") return;
 
     if (reduceMotion) {
       if (portalDesktopRef.current) {
@@ -392,117 +392,161 @@ export const TypographicPortal = memo(function TypographicPortal() {
     }
 
     const ctx = gsap.context(() => {
+      // 1. Coordinated, non-blocking entrance sequence
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out" },
+        onComplete: () => {
+          if (portalDesktopRef.current) {
+            portalDesktopRef.current.style.pointerEvents = "auto";
+          }
+        },
+      });
+
       if (identityRef.current) {
         const glyphs = identityRef.current.querySelectorAll(".identity-glyph");
-        gsap.fromTo(
+        tl.fromTo(
           glyphs,
-          { opacity: 0, scale: 0.9, y: 30 },
+          { opacity: 0, scale: 0.94, y: 24 },
           {
             opacity: 1,
             scale: 1,
             y: 0,
-            duration: 0.7,
-            stagger: 0.03,
-            ease: "power3.out",
-          }
+            duration: 0.6,
+            stagger: 0.02,
+          },
+          0
         );
       }
 
       if (navRef.current) {
         const words = navRef.current.querySelectorAll(".dest-word");
-        gsap.fromTo(
+        tl.fromTo(
           words,
-          { opacity: 0, y: 30 },
+          { opacity: 0, y: 24 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.65,
-            stagger: 0.08,
-            ease: "power3.out",
-            delay: 0.1,
-            onComplete: () => {
-              if (navRef.current) gsap.set(navRef.current, { clearProps: "willChange" });
-              if (portalDesktopRef.current) gsap.set(portalDesktopRef.current, { pointerEvents: "auto" });
-            },
-          }
+            duration: 0.55,
+            stagger: 0.06,
+          },
+          0.05
+        );
+      }
+
+      // Mobile chapters smooth reveal
+      const mobileChapters = containerRef.current?.querySelectorAll(".mobile-chapter");
+      if (mobileChapters && mobileChapters.length > 0) {
+        tl.fromTo(
+          mobileChapters,
+          { opacity: 0, y: 16 },
+          {
+            opacity: 0.45,
+            y: 0,
+            duration: 0.45,
+            stagger: 0.06,
+          },
+          0
         );
       }
     }, containerRef);
 
-    return () => {
-      ctx.revert();
-    };
-  }, [stage, reduceMotion]);
+    // 2. High-Performance Living Typography Pointer Gravity using gsap.quickTo & Cached Positions
+    const buttonSetters = new Map<
+      string,
+      {
+        centerX: number;
+        centerY: number;
+        xTo: (value: number) => void;
+        yTo: (value: number) => void;
+      }
+    >();
 
-  // Desktop Living Typography Pointer Gravity (gsap.quickSetter for 60fps)
-  useEffect(() => {
-    if (stage !== "PORTAL_ACTIVE" || reduceMotion || typeof window === "undefined") return;
+    const updateGeometry = () => {
+      buttonSetters.clear();
+      for (const [id, btnNode] of destRefs.current) {
+        if (!btnNode) continue;
+        const rect = btnNode.getBoundingClientRect();
+        buttonSetters.set(id, {
+          centerX: rect.left + rect.width / 2,
+          centerY: rect.top + rect.height / 2,
+          xTo: gsap.quickTo(btnNode, "x", { duration: 0.45, ease: "power2.out" }),
+          yTo: gsap.quickTo(btnNode, "y", { duration: 0.45, ease: "power2.out" }),
+        });
+      }
+    };
+
+    const initialMeasureTimeout = setTimeout(updateGeometry, 60);
+
+    const idXTo = identityRef.current
+      ? gsap.quickTo(identityRef.current, "x", { duration: 0.75, ease: "power2.out" })
+      : null;
+    const idYTo = identityRef.current
+      ? gsap.quickTo(identityRef.current, "y", { duration: 0.75, ease: "power2.out" })
+      : null;
 
     let rAfId: number | null = null;
-    let mouseX = 0;
-    let mouseY = 0;
+    let lastEvent: PointerEvent | null = null;
 
     const handlePointerMove = (e: PointerEvent) => {
       if (e.pointerType === "touch") return;
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+      lastEvent = e;
 
       if (rAfId === null) {
         rAfId = requestAnimationFrame(() => {
           rAfId = null;
+          if (!lastEvent) return;
 
-          for (const [, btnNode] of destRefs.current) {
-            if (!btnNode) continue;
-            const rect = btnNode.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
+          const mouseX = lastEvent.clientX;
+          const mouseY = lastEvent.clientY;
 
-            if (dist < 320) {
-              const pullFactor = (1 - dist / 320) * 8;
-              const moveX = (mouseX - centerX) * 0.04 * (pullFactor / 8);
-              const moveY = (mouseY - centerY) * 0.04 * (pullFactor / 8);
-
-              gsap.to(btnNode, {
-                x: moveX,
-                y: moveY,
-                duration: 0.4,
-                ease: "power2.out",
-                overwrite: "auto",
-              });
+          for (const [, entry] of buttonSetters) {
+            const dist = Math.hypot(mouseX - entry.centerX, mouseY - entry.centerY);
+            if (dist < 340) {
+              const pull = 1 - dist / 340;
+              const moveX = (mouseX - entry.centerX) * 0.045 * pull;
+              const moveY = (mouseY - entry.centerY) * 0.045 * pull;
+              entry.xTo(moveX);
+              entry.yTo(moveY);
             } else {
-              gsap.to(btnNode, {
-                x: 0,
-                y: 0,
-                duration: 0.6,
-                ease: "power2.out",
-                overwrite: "auto",
-              });
+              entry.xTo(0);
+              entry.yTo(0);
             }
           }
 
-          if (identityRef.current) {
+          if (idXTo && idYTo) {
             const windowCenterX = window.innerWidth / 2;
             const windowCenterY = window.innerHeight / 2;
             const shiftX = (mouseX - windowCenterX) * 0.015;
             const shiftY = (mouseY - windowCenterY) * 0.015;
-
-            gsap.to(identityRef.current, {
-              x: shiftX,
-              y: shiftY,
-              duration: 0.8,
-              ease: "power2.out",
-              overwrite: "auto",
-            });
+            idXTo(shiftX);
+            idYTo(shiftY);
           }
         });
       }
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
+    const handlePointerLeave = () => {
+      for (const [, entry] of buttonSetters) {
+        entry.xTo(0);
+        entry.yTo(0);
+      }
+      if (idXTo && idYTo) {
+        idXTo(0);
+        idYTo(0);
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerleave", handlePointerLeave, { passive: true });
+    window.addEventListener("resize", updateGeometry, { passive: true });
+
     return () => {
+      clearTimeout(initialMeasureTimeout);
       window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("resize", updateGeometry);
       if (rAfId !== null) cancelAnimationFrame(rAfId);
+      ctx.revert();
     };
   }, [stage, reduceMotion]);
 

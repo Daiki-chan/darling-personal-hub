@@ -4850,8 +4850,8 @@ figcaption {
   pointer-events: none;
   z-index: 1;
   opacity: 0.22;
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .identity-anchor--kinetic {
@@ -4868,7 +4868,6 @@ figcaption {
 
 .identity-anchor[data-focused="true"] {
   opacity: 0.08;
-  transform: scale(0.96) translateY(-16px);
 }
 
 .identity-anchor__line {
@@ -4949,7 +4948,7 @@ figcaption {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  transition: opacity 0.5s ease;
+  will-change: transform;
 }
 
 .dest-word--memories {
@@ -4981,7 +4980,7 @@ figcaption {
   text-transform: uppercase;
   color: #f3f3f5;
   scale: var(--portal-word-scale-x) 1.02;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s ease;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .dest-word--memories .dest-word__glyphs {
@@ -4999,7 +4998,6 @@ figcaption {
 .dest-word:hover .dest-word__glyphs,
 .dest-word:focus-visible .dest-word__glyphs {
   color: #ffffff;
-  transform: scale(1.05);
   text-shadow: 0 0 50px rgba(255, 255, 255, 0.35);
 }
 
@@ -5030,7 +5028,9 @@ figcaption {
   border-radius: 50%;
   opacity: 0;
   filter: blur(80px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.96);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 
 .glyph-window-aura--memories {
@@ -5055,6 +5055,7 @@ figcaption {
 .glyph-window-layer[data-active-dest="music"] .glyph-window-aura--music,
 .glyph-window-layer[data-active-dest="work"] .glyph-window-aura--work {
   opacity: 1;
+  transform: scale(1.04);
 }
 
 /* 5. Touch-Optimized Mobile View */
