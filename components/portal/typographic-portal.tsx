@@ -85,19 +85,13 @@ export const TypographicPortal = memo(function TypographicPortal() {
   // Initial Document Visit Hydration & Hash Check
   useEffect(() => {
     isMountedRef.current = true;
-    const isInitialVisit = consumeInitialDocumentVisit();
-    if (isInitialVisit) {
-      if (window.location.hash) {
-        window.history.replaceState(
-          window.history.state,
-          "",
-          `${window.location.pathname}${window.location.search}`
-        );
-      }
-      setStage("INTRO_1");
-    } else if (window.location.hash === "#portals") {
+    consumeInitialDocumentVisit();
+
+    // Priority check: #portals always renders PORTAL_ACTIVE directly
+    if (window.location.hash === "#portals") {
       setStage("PORTAL_ACTIVE");
     } else {
+      // Root '/' without #portals starts at INTRO_1
       setStage("INTRO_1");
     }
     setIsRouteReady(true);
@@ -107,18 +101,39 @@ export const TypographicPortal = memo(function TypographicPortal() {
     };
   }, []);
 
-  // Hashchange listener to support back navigation and deep-links
+  // Sync URL hash with PORTAL_ACTIVE stage to guarantee history entry predecessor
   useEffect(() => {
-    const handleHashChange = () => {
+    if (stage === "PORTAL_ACTIVE") {
+      if (typeof window !== "undefined" && window.location.hash !== "#portals") {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${window.location.pathname}${window.location.search}#portals`
+        );
+      }
+    }
+  }, [stage]);
+
+  // Hashchange & Popstate listener to support back/forward navigation and deep-links
+  useEffect(() => {
+    const handleNavigationChange = () => {
       if (window.location.hash === "#portals") {
         killActiveTimeline();
         isTransitioningRef.current = false;
         setStage("PORTAL_ACTIVE");
+      } else if (window.location.pathname === "/" && !window.location.hash) {
+        killActiveTimeline();
+        isTransitioningRef.current = false;
+        setStage("INTRO_1");
       }
     };
 
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("hashchange", handleNavigationChange);
+    window.addEventListener("popstate", handleNavigationChange);
+    return () => {
+      window.removeEventListener("hashchange", handleNavigationChange);
+      window.removeEventListener("popstate", handleNavigationChange);
+    };
   }, [killActiveTimeline]);
 
   // Warm the Japanese face without letting network timing control the handoff timeline.
@@ -152,6 +167,15 @@ export const TypographicPortal = memo(function TypographicPortal() {
     (targetHref: string) => {
       if (isLeaving) return;
       setIsLeaving(true);
+
+      // Ensure history entry for portal is #portals before pushing next route
+      if (typeof window !== "undefined" && window.location.hash !== "#portals") {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${window.location.pathname}${window.location.search}#portals`
+        );
+      }
 
       router.prefetch(targetHref);
       const maxWaitTimeout = reduceMotion ? 50 : 800;
