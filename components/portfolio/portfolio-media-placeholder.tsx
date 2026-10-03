@@ -1,6 +1,7 @@
 import { memo } from "react";
+import type { MediaVariant } from "@/lib/portfolio-data";
 
-export type MediaVariant = "search" | "content" | "analytics" | "technical" | "local" | "growth";
+export type { MediaVariant };
 
 interface PortfolioMediaPlaceholderProps {
   variant: MediaVariant;
@@ -24,34 +25,69 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
       aria-label={label || `Editorial ${variant} visual cut`}
     >
       <div className="phuc-placeholder__canvas">
-        {/* Subtle Architectural Corner Registration Marks */}
+        {/* Architectural Corner Registration Marks */}
         <div className="phuc-media-reg phuc-media-reg--tl" aria-hidden="true" />
         <div className="phuc-media-reg phuc-media-reg--tr" aria-hidden="true" />
         <div className="phuc-media-reg phuc-media-reg--bl" aria-hidden="true" />
         <div className="phuc-media-reg phuc-media-reg--br" aria-hidden="true" />
 
-        {/* VARIANT 01: SEARCH & ORGANIC GROWTH */}
+        {/* VARIANT 01: SYSTEM (DARLING PERSONAL HUB) */}
+        {variant === "system" && (
+          <div className="phuc-placeholder__art phuc-placeholder__art--system">
+            <span className="phuc-media-bg-type" aria-hidden="true">
+              SYSTEM
+            </span>
+
+            <div className="phuc-editorial-graphic phuc-editorial-graphic--system">
+              <div className="phuc-edit-top-bar">
+                <span className="phuc-edit-badge">DARLING HUB // CORE</span>
+                <span className="phuc-edit-query">v2-runtime / unified-architecture</span>
+              </div>
+
+              <div className="phuc-edit-body-block">
+                <span className="phuc-edit-micro-tag">01 / ARCHITECTURE</span>
+                <h4 className="phuc-edit-main-title">DIGITAL WORKSPACE CORE</h4>
+              </div>
+
+              <div className="phuc-edit-kpi-strip">
+                <div className="phuc-edit-kpi-item">
+                  <span className="val">0.08s</span>
+                  <span className="lbl">TTFB LATENCY</span>
+                </div>
+                <div className="phuc-edit-kpi-divider" />
+                <div className="phuc-edit-kpi-item">
+                  <span className="val">100/100</span>
+                  <span className="lbl">LIGHTHOUSE</span>
+                </div>
+                <div className="phuc-edit-kpi-divider" />
+                <div className="phuc-edit-kpi-item">
+                  <span className="val">60 FPS</span>
+                  <span className="lbl">COMPOSITOR</span>
+                </div>
+              </div>
+            </div>
+            {index && <span className="phuc-placeholder__giant-num">{index}</span>}
+          </div>
+        )}
+
+        {/* VARIANT 02: SEARCH & ORGANIC GROWTH */}
         {variant === "search" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--search">
-            {/* Background Cropped Kinetic Typography */}
             <span className="phuc-media-bg-type" aria-hidden="true">
               SEARCH
             </span>
 
             <div className="phuc-editorial-graphic phuc-editorial-graphic--search">
-              {/* Header Telemetry Bar */}
               <div className="phuc-edit-top-bar">
                 <span className="phuc-edit-badge">INDEXED / LIVE</span>
-                <span className="phuc-edit-query">site:growth-system/search-intent</span>
+                <span className="phuc-edit-query">site:growth-system / search-intent</span>
               </div>
 
-              {/* Central Typographic Architecture */}
               <div className="phuc-edit-body-block">
-                <span className="phuc-edit-micro-tag">01 / ARCHITECTURE</span>
+                <span className="phuc-edit-micro-tag">02 / ARCHITECTURE</span>
                 <h4 className="phuc-edit-main-title">ORGANIC SEARCH SYSTEM</h4>
               </div>
 
-              {/* Data & KPI Strip */}
               <div className="phuc-edit-kpi-strip">
                 <div className="phuc-edit-kpi-item">
                   <span className="val">+148%</span>
@@ -60,7 +96,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
                 <div className="phuc-edit-kpi-divider" />
                 <div className="phuc-edit-kpi-item">
                   <span className="val">32</span>
-                  <span className="lbl">TOP 10 KEYWORDS</span>
+                  <span className="lbl">TOP 10 TARGETS</span>
                 </div>
                 <div className="phuc-edit-kpi-divider" />
                 <div className="phuc-edit-kpi-item">
@@ -73,7 +109,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
           </div>
         )}
 
-        {/* VARIANT 02: CONTENT CLUSTER & TOPIC GRAPH */}
+        {/* VARIANT 03: CONTENT CLUSTER & TOPIC GRAPH */}
         {variant === "content" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--content">
             <span className="phuc-media-bg-type" aria-hidden="true">
@@ -81,13 +117,11 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
             </span>
 
             <div className="phuc-editorial-graphic phuc-editorial-graphic--content">
-              {/* Top Pillar Header */}
               <div className="phuc-edit-tree-pillar">
                 <span className="tag">PILLAR HUB / CORE PROTOCOL</span>
                 <span className="meta">100K VOLUME TARGET</span>
               </div>
 
-              {/* Staggered Spatial Spoke Branches */}
               <div className="phuc-edit-tree-branches">
                 <div className="phuc-edit-branch-row">
                   <span className="num">01</span>
@@ -106,7 +140,6 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
                 </div>
               </div>
 
-              {/* Bottom Metadata */}
               <div className="phuc-edit-cluster-footer">
                 <span>HIGH-DENSITY TOPIC GRAPH</span>
                 <span>VERIFIED RELEVANCE</span>
@@ -116,7 +149,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
           </div>
         )}
 
-        {/* VARIANT 03: ANALYTICS & CONVERSION FUNNEL (CINEMATIC SPREAD 03 MEDIA) */}
+        {/* VARIANT 04: ANALYTICS & CONVERSION FUNNEL */}
         {variant === "analytics" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--analytics">
             <span className="phuc-media-bg-type" aria-hidden="true">
@@ -124,7 +157,6 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
             </span>
 
             <div className="phuc-editorial-graphic phuc-editorial-graphic--analytics">
-              {/* 3-Step Cinematic Conversion Stage Cards */}
               <div className="phuc-funnel-stages-row">
                 <div className="phuc-funnel-card">
                   <div className="phuc-funnel-card-head">
@@ -167,7 +199,6 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
                 </div>
               </div>
 
-              {/* Bottom Telemetry Baseline */}
               <div className="phuc-funnel-telemetry">
                 <span>INTENT-TO-CONVERSION CONTINUOUS FLOW</span>
                 <span>REAL-TIME GA4 TELEMETRY</span>
@@ -177,7 +208,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
           </div>
         )}
 
-        {/* VARIANT 04: TECHNICAL SEO */}
+        {/* VARIANT 05: TECHNICAL SEO */}
         {variant === "technical" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--technical">
             <span className="phuc-media-bg-type" aria-hidden="true">
@@ -205,7 +236,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
           </div>
         )}
 
-        {/* VARIANT 05: LOCAL SEO */}
+        {/* VARIANT 06: LOCAL SEO */}
         {variant === "local" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--local">
             <span className="phuc-media-bg-type" aria-hidden="true">
@@ -231,7 +262,7 @@ export const PortfolioMediaPlaceholder = memo(function PortfolioMediaPlaceholder
           </div>
         )}
 
-        {/* VARIANT 06: GROWTH & EXPERIMENT */}
+        {/* VARIANT 07: GROWTH & EXPERIMENT */}
         {variant === "growth" && (
           <div className="phuc-placeholder__art phuc-placeholder__art--growth">
             <span className="phuc-media-bg-type" aria-hidden="true">

@@ -4,9 +4,10 @@ import { ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PortfolioHero } from "@/components/portfolio/portfolio-hero";
-import { HorizontalShowcase } from "@/components/portfolio/horizontal-showcase";
+import { PortfolioSelectedWork } from "@/components/portfolio/portfolio-selected-work";
 import { PortfolioArchive } from "@/components/portfolio/portfolio-archive";
-import { PortfolioApproach } from "@/components/portfolio/portfolio-approach";
+import { PortfolioWhatIBuild } from "@/components/portfolio/portfolio-what-i-build";
+import { PortfolioExperiments } from "@/components/portfolio/portfolio-experiments";
 import { PortfolioAbout } from "@/components/portfolio/portfolio-about";
 import { PortfolioContact } from "@/components/portfolio/portfolio-contact";
 
@@ -46,27 +47,28 @@ export default function PortfolioPage() {
     <>
       <SiteHeader active="portfolio" />
       <main className="phuc-portfolio-page inner-page">
-        {/* WORLD HERO HEADER */}
+        {/* HERO */}
         <PortfolioHero />
 
         {/* 01 / SELECTED WORK */}
-        <HorizontalShowcase />
+        <PortfolioSelectedWork />
 
-        {/* 02 / WORK INDEX */}
+        {/* 02 / ARCHIVE */}
         <PortfolioArchive />
 
-        {/* 03 / METHOD */}
-        <PortfolioApproach />
+        {/* 03 / WHAT I BUILD */}
+        <PortfolioWhatIBuild />
 
-        {/* 04 / ABOUT */}
+        {/* 04 / EXPERIMENTS */}
+        <PortfolioExperiments />
+
+        {/* 05 / ABOUT */}
         <PortfolioAbout />
 
-        {/* 05 / CONTACT */}
+        {/* 06 / CONTACT */}
         <PortfolioContact />
       </main>
       <SiteFooter />
     </>
   );
 }
-
-
