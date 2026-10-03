@@ -2045,11 +2045,11 @@ figcaption {
 /* 01 / HERO HEADER & WORLD ANCHOR (DRAMATIC COVER MOMENT) */
 .phuc-hero-root {
   position: relative;
-  min-height: 85dvh;
+  min-height: 90dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-top: calc(var(--nav-height, 72px) + clamp(2rem, 4vw, 4.5rem));
+  padding-top: calc(var(--v2-nav-height, 52px) + clamp(3rem, 6vw, 6rem));
   padding-bottom: 2.5rem;
   overflow: hidden;
   background: var(--work-black);
