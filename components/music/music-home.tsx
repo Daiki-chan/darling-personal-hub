@@ -145,8 +145,20 @@ export function MusicHome() {
   const { state } = useMusicPlayer();
   const [status, setStatus] = useState<TrendingStatus>("loading");
   const [trending, setTrending] = useState<MusicTrack[]>([]);
+  const [vaultTracks, setVaultTracks] = useState<MusicTrack[]>([]);
   const discoverMotionRef = useSectionMotion<HTMLElement>();
   const forYouMotionRef = useSectionMotion<HTMLElement>();
+
+  useEffect(() => {
+    fetch("/api/music/catalog")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.tracks && Array.isArray(data.tracks)) {
+          setVaultTracks(data.tracks);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const load = useCallback((signal: AbortSignal) => {
     fetchTrendingMusic(signal)
@@ -168,15 +180,29 @@ export function MusicHome() {
 
   const recommended = useMemo(() => {
     const reference = state.history[0] ?? state.favorites[0];
-    if (!reference) return trending.slice(6, 14);
-    return rankMusicTracks(trending, {
+    const sourcePool = [...vaultTracks, ...trending];
+    if (!reference) return sourcePool.slice(0, 8);
+    return rankMusicTracks(sourcePool, {
       targetArtist: reference.artist,
       recentVideoIds: state.history.slice(0, 20).map((track) => track.videoId),
     }).filter((track) => !state.history.some((entry) => entry.videoId === track.videoId)).slice(0, 8);
-  }, [state.favorites, state.history, trending]);
+  }, [state.favorites, state.history, trending, vaultTracks]);
 
   return (
     <div className={styles.musicHomeContainer}>
+      {/* Chapter 00: Darling Vault (Supabase Published Tracks) */}
+      {vaultTracks.length > 0 ? (
+        <section className={styles.editorialChapter} id="vault" aria-labelledby="vault-title">
+          <div className={styles.chapterHeading} data-motion-reveal>
+            <h2 id="vault-title" className={styles.chapterTitle}>
+              00 / DARLING VAULT
+            </h2>
+            <span className={styles.chapterSub}>BẢN THU PHÁT HÀNH TỪ SUPABASE STORAGE</span>
+          </div>
+          <DiscoverRail tracks={vaultTracks} />
+        </section>
+      ) : null}
+
       {/* Chapter 01: Discover */}
       <section ref={discoverMotionRef} className={styles.editorialChapter} id="discover" aria-labelledby="discover-title">
         <div className={styles.chapterHeading} data-motion-reveal>

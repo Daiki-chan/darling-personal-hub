@@ -107,6 +107,7 @@ export function YouTubeVideoStage() {
   const targetRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const readyRef = useRef(false);
   const loadedVideoIdRef = useRef<string | null>(null);
   const playerGenerationRef = useRef(0);
@@ -117,6 +118,74 @@ export function YouTubeVideoStage() {
     stateRef.current = state;
   }, [state]);
 
+  // Direct Audio Track Handling (Supabase Storage audio files)
+  useEffect(() => {
+    const track = state.currentTrack;
+    const audio = audioRef.current;
+    if (state.isShutdown || !track || !audio || !track.isDirectAudio || !track.audioUrl) return;
+
+    audio.src = track.audioUrl;
+    clock.set(0, track.duration ?? 0);
+    reportPlayerStatus("ready", state.isPlaying);
+
+    const onPlay = () => reportPlayerStatus("playing", true);
+    const onPause = () => reportPlayerStatus("paused", false);
+    const onWaiting = () => reportPlayerStatus("buffering", true);
+    const onEnded = () => void next(true);
+    const onError = () => handlePlaybackError("NETWORK_ERROR", "Không thể phát tệp âm thanh trực tiếp.");
+    const onTimeUpdate = () => {
+      if (document.hidden) return;
+      clock.set(audio.currentTime, audio.duration || track.duration || 0);
+    };
+
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("error", onError);
+    audio.addEventListener("timeupdate", onTimeUpdate);
+
+    if (state.isPlaying) {
+      audio.play().catch(() => {});
+    }
+
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+    };
+  }, [clock, handlePlaybackError, next, reportPlayerStatus, state.currentTrack, state.isPlaying, state.isShutdown]);
+
+  // Direct Audio play/pause sync
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !state.currentTrack?.isDirectAudio || state.isShutdown) return;
+    if (state.isPlaying) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [state.isPlaying, state.currentTrack?.isDirectAudio, state.isShutdown]);
+
+  // Direct Audio volume sync
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !state.currentTrack?.isDirectAudio || state.isShutdown) return;
+    audio.volume = clampVolume(state.volume.volume) / 100;
+    audio.muted = state.volume.muted;
+  }, [state.volume, state.currentTrack?.isDirectAudio, state.isShutdown]);
+
+  // Direct Audio seek sync
+  useEffect(() => {
+    const audio = audioRef.current;
+    const request = state.seekRequest;
+    if (!audio || !state.currentTrack?.isDirectAudio || state.isShutdown || !request) return;
+    audio.currentTime = request.seconds;
+  }, [state.seekRequest, state.currentTrack?.isDirectAudio, state.isShutdown]);
+
   // Teardown when shutdown action is dispatched
   useEffect(() => {
     if (state.isShutdown) {
@@ -124,6 +193,7 @@ export function YouTubeVideoStage() {
       readyRef.current = false;
       loadedVideoIdRef.current = null;
       resumeHandledRef.current = false;
+      audioRef.current?.pause();
       try {
         playerRef.current?.stopVideo();
       } catch {
@@ -143,7 +213,7 @@ export function YouTubeVideoStage() {
     let active = true;
     const target = targetRef.current;
     const track = stateRef.current.currentTrack;
-    if (!target || !track) return;
+    if (!target || !track || track.isDirectAudio) return;
 
     const generation = ++playerGenerationRef.current;
     reportPlayerStatus("loading", stateRef.current.isPlaying);
@@ -229,7 +299,7 @@ export function YouTubeVideoStage() {
   useEffect(() => {
     const track = state.currentTrack;
     const player = playerRef.current;
-    if (state.isShutdown || !track || !player || !readyRef.current || loadedVideoIdRef.current === track.videoId) return;
+    if (state.isShutdown || !track || !player || !readyRef.current || loadedVideoIdRef.current === track.videoId || track.isDirectAudio) return;
     loadedVideoIdRef.current = track.videoId;
     clock.set(0, track.duration ?? 0);
     try {
@@ -242,33 +312,33 @@ export function YouTubeVideoStage() {
 
   useEffect(() => {
     const player = playerRef.current;
-    if (state.isShutdown || !player || !readyRef.current) return;
+    if (state.isShutdown || !player || !readyRef.current || state.currentTrack?.isDirectAudio) return;
     try {
       if (state.isPlaying) player.playVideo();
       else player.pauseVideo();
     } catch {
       handlePlaybackError("PLAYER_NOT_READY", "YouTube Player chưa sẵn sàng. Vui lòng thử lại.");
     }
-  }, [handlePlaybackError, state.isPlaying, state.isShutdown]);
+  }, [handlePlaybackError, state.isPlaying, state.isShutdown, state.currentTrack?.isDirectAudio]);
 
   useEffect(() => {
     const player = playerRef.current;
-    if (state.isShutdown || !player || !readyRef.current) return;
+    if (state.isShutdown || !player || !readyRef.current || state.currentTrack?.isDirectAudio) return;
     const desired = clampVolume(state.volume.volume);
     player.setVolume(desired);
     if (state.volume.muted) player.mute();
     else player.unMute();
-  }, [state.volume, state.isShutdown]);
+  }, [state.volume, state.isShutdown, state.currentTrack?.isDirectAudio]);
 
   useEffect(() => {
     const request = state.seekRequest;
-    if (state.isShutdown || !request || !playerRef.current || !readyRef.current) return;
+    if (state.isShutdown || !request || !playerRef.current || !readyRef.current || state.currentTrack?.isDirectAudio) return;
     playerRef.current.seekTo(request.seconds, true);
-  }, [state.seekRequest, state.isShutdown]);
+  }, [state.seekRequest, state.isShutdown, state.currentTrack?.isDirectAudio]);
 
   useEffect(() => {
     const syncClock = () => {
-      if (document.hidden || stateRef.current.isShutdown) return;
+      if (document.hidden || stateRef.current.isShutdown || stateRef.current.currentTrack?.isDirectAudio) return;
       const player = playerRef.current;
       if (!player || !readyRef.current) return;
       try {
@@ -300,9 +370,20 @@ export function YouTubeVideoStage() {
       data-volume={state.volume.volume}
       ref={stageRef}
     >
-      <div className={styles.videoMount} ref={targetRef} />
+      <audio ref={audioRef} style={{ display: "none" }} preload="auto" />
+      <div
+        className={styles.videoMount}
+        ref={targetRef}
+        style={{ display: state.currentTrack.isDirectAudio ? "none" : undefined }}
+      />
       <div className={styles.videoStatus} aria-live="polite">
-        {state.status === "loading" || state.status === "buffering" ? "Đang kết nối video" : "YouTube Player"}
+        {state.currentTrack.isDirectAudio
+          ? state.status === "loading" || state.status === "buffering"
+            ? "Đang phát audio từ Supabase Storage"
+            : "Darling Audio Vault"
+          : state.status === "loading" || state.status === "buffering"
+          ? "Đang kết nối video"
+          : "YouTube Player"}
       </div>
     </div>
   );

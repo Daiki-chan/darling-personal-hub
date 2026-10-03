@@ -40,6 +40,9 @@ export type MusicTrack = {
   ranking?: MusicRanking;
   source?: "search" | "trending" | "auto-radio";
   tags?: string[];
+  audioUrl?: string;
+  isDirectAudio?: boolean;
+  album?: string;
 };
 
 export type MusicHistoryEntry = MusicTrack & { playedAt: number };
