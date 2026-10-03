@@ -139,7 +139,7 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
                     </div>
 
                     <div className="phuc-spread-footer-bar">
-                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-client-tag">{project1.client}</span>
                       <span className="phuc-spread-cta">
                         <span>XEM CASE STUDY</span>
                         <span className="arrow" aria-hidden="true">↗</span>
@@ -192,7 +192,7 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
                     </div>
 
                     <div className="phuc-spread-footer-bar">
-                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-client-tag">{project2.client}</span>
                       <span className="phuc-spread-cta">
                         <span>XEM CASE STUDY</span>
                         <span className="arrow" aria-hidden="true">↗</span>
@@ -272,7 +272,7 @@ export const HorizontalShowcase = memo(function HorizontalShowcase() {
                     </div>
 
                     <div className="phuc-spread-footer-bar">
-                      <span className="phuc-spread-sample-badge">PROJECT SAMPLE DATA</span>
+                      <span className="phuc-spread-client-tag">{project3.client}</span>
                       <span className="phuc-spread-cta">
                         <span>XEM CASE STUDY</span>
                         <span className="arrow" aria-hidden="true">↗</span>

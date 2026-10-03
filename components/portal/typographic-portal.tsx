@@ -625,6 +625,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
           <nav
             ref={navRef}
             className="typo-world-nav"
+            data-active-dest={activeDestination ?? "none"}
             aria-label="Điều hướng các không gian"
           >
             {DESTINATIONS.map((d) => (

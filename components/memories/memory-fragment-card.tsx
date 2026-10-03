@@ -47,11 +47,17 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
           </span>
           <div className="mem-card__corner-marks" aria-hidden="true">
             <span className="mem-card__corner-mark mem-card__corner-mark--tl" />
+            <span className="mem-card__corner-mark mem-card__corner-mark--tr" />
+            <span className="mem-card__corner-mark mem-card__corner-mark--bl" />
             <span className="mem-card__corner-mark mem-card__corner-mark--br" />
+          </div>
+          <div className="mem-card__view-prompt" aria-hidden="true">
+            <span>DARKROOM RECALL</span>
+            <span className="prompt-arrow">↗</span>
           </div>
         </div>
 
-        {/* Disciplined, Clean Archival Metadata (Strict 2-line baseline) */}
+        {/* Disciplined, Clean Archival Metadata */}
         <div className="mem-card__meta">
           <div className="mem-card__meta-line-1">
             <span className="mem-card__id">{memory.id}</span>
@@ -61,12 +67,19 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
           </div>
 
           <div className="mem-card__meta-line-2">
+            <span className="mem-card__title">{memory.title}</span>
             <span className="mem-card__secondary">
               {isGame
                 ? [gameMeta?.area, memory.year].filter(Boolean).join(" · ")
                 : [memory.date || memory.year].filter(Boolean).join(" · ")}
             </span>
           </div>
+
+          {memory.caption && (
+            <p className="mem-card__caption">
+              &ldquo;{memory.caption}&rdquo;
+            </p>
+          )}
         </div>
       </button>
     </article>

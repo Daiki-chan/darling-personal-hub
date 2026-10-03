@@ -48,7 +48,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
             <ArrowLeft size={18} strokeWidth={1.5} aria-hidden="true" />
             <span>Quay lại danh mục PORTFOLIO</span>
           </Link>
-          <span className="phuc-cs-demo-badge">DỮ LIỆU CASE STUDY DEMO</span>
+          <span className="phuc-cs-monograph-tag">MONOGRAPH ARCHIVE // {project.index}</span>
         </div>
 
         {/* Hero Section */}
