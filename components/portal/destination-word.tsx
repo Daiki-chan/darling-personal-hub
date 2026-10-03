@@ -55,6 +55,9 @@ export const DestinationWord = forwardRef<HTMLButtonElement, DestinationWordProp
         onKeyDown={handleKeyDown}
         aria-label={`Đi tới không gian ${label}`}
       >
+        <span className="dest-word__num" aria-hidden="true">
+          {id === "memories" ? "01" : id === "music" ? "02" : "03"}
+        </span>
         <span className="dest-word__glyphs">
           {characters.map((char, index) => (
             <span key={`${id}-${index}-${char}`} className="dest-glyph">
@@ -62,6 +65,11 @@ export const DestinationWord = forwardRef<HTMLButtonElement, DestinationWordProp
             </span>
           ))}
         </span>
+        <span className="dest-word__sub" aria-hidden="true">
+          {id === "memories" ? "VISUAL ARCHIVE" : id === "music" ? "KINETIC AUDIO" : "SELECTED PRACTICE"}
+        </span>
+        <span className="dest-word__meta" aria-hidden="true"></span>
+        <span className="dest-word__line" aria-hidden="true" />
       </button>
     );
   }

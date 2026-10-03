@@ -19,6 +19,9 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
   const isGame = memory.subject === "game";
   const gameMeta = isGame ? (memory as GameMemoryFragment) : null;
   const placeMeta = !isGame ? (memory as PlaceMemoryFragment) : null;
+  const aspectStyle = memory.aspectRatio
+    ? { aspectRatio: memory.aspectRatio.replace(":", " / ") }
+    : undefined;
 
   return (
     <article className={`mem-card mem-card--${memory.subject} ${className}`} data-motion-reveal>
@@ -28,8 +31,8 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
         onClick={() => onSelect(memory)}
         aria-label={`Xem chi tiết ký ức ${memory.id}: ${memory.title}`}
       >
-        {/* Maximum 800x800 presentation frame */}
-        <div className="mem-card__image-wrap">
+        {/* Archival presentation frame conforming to genuine photograph aspect */}
+        <div className="mem-card__image-wrap" style={aspectStyle}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={memory.image}
@@ -42,6 +45,10 @@ export const MemoryFragmentCard = memo(function MemoryFragmentCard({
           <span className="mem-card__tag" aria-hidden="true">
             {memory.id}
           </span>
+          <div className="mem-card__corner-marks" aria-hidden="true">
+            <span className="mem-card__corner-mark mem-card__corner-mark--tl" />
+            <span className="mem-card__corner-mark mem-card__corner-mark--br" />
+          </div>
         </div>
 
         {/* Disciplined, Clean Archival Metadata (Strict 2-line baseline) */}

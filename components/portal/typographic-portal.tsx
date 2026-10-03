@@ -450,33 +450,7 @@ export const TypographicPortal = memo(function TypographicPortal() {
       }
     }, containerRef);
 
-    // 2. High-Performance Living Typography Pointer Gravity using gsap.quickTo & Cached Positions
-    const buttonSetters = new Map<
-      string,
-      {
-        centerX: number;
-        centerY: number;
-        xTo: (value: number) => void;
-        yTo: (value: number) => void;
-      }
-    >();
-
-    const updateGeometry = () => {
-      buttonSetters.clear();
-      for (const [id, btnNode] of destRefs.current) {
-        if (!btnNode) continue;
-        const rect = btnNode.getBoundingClientRect();
-        buttonSetters.set(id, {
-          centerX: rect.left + rect.width / 2,
-          centerY: rect.top + rect.height / 2,
-          xTo: gsap.quickTo(btnNode, "x", { duration: 0.45, ease: "power2.out" }),
-          yTo: gsap.quickTo(btnNode, "y", { duration: 0.45, ease: "power2.out" }),
-        });
-      }
-    };
-
-    const initialMeasureTimeout = setTimeout(updateGeometry, 60);
-
+    // 2. Identity Anchor Pointer Parallax (Subtle mouse following)
     const idXTo = identityRef.current
       ? gsap.quickTo(identityRef.current, "x", { duration: 0.75, ease: "power2.out" })
       : null;
@@ -499,20 +473,6 @@ export const TypographicPortal = memo(function TypographicPortal() {
           const mouseX = lastEvent.clientX;
           const mouseY = lastEvent.clientY;
 
-          for (const [, entry] of buttonSetters) {
-            const dist = Math.hypot(mouseX - entry.centerX, mouseY - entry.centerY);
-            if (dist < 340) {
-              const pull = 1 - dist / 340;
-              const moveX = (mouseX - entry.centerX) * 0.045 * pull;
-              const moveY = (mouseY - entry.centerY) * 0.045 * pull;
-              entry.xTo(moveX);
-              entry.yTo(moveY);
-            } else {
-              entry.xTo(0);
-              entry.yTo(0);
-            }
-          }
-
           if (idXTo && idYTo) {
             const windowCenterX = window.innerWidth / 2;
             const windowCenterY = window.innerHeight / 2;
@@ -526,10 +486,6 @@ export const TypographicPortal = memo(function TypographicPortal() {
     };
 
     const handlePointerLeave = () => {
-      for (const [, entry] of buttonSetters) {
-        entry.xTo(0);
-        entry.yTo(0);
-      }
       if (idXTo && idYTo) {
         idXTo(0);
         idYTo(0);
@@ -538,13 +494,10 @@ export const TypographicPortal = memo(function TypographicPortal() {
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     window.addEventListener("pointerleave", handlePointerLeave, { passive: true });
-    window.addEventListener("resize", updateGeometry, { passive: true });
 
     return () => {
-      clearTimeout(initialMeasureTimeout);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerleave", handlePointerLeave);
-      window.removeEventListener("resize", updateGeometry);
       if (rAfId !== null) cancelAnimationFrame(rAfId);
       ctx.revert();
     };

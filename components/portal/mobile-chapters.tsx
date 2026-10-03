@@ -76,7 +76,12 @@ export function MobileChapters({ onSelect, onPrefetch }: MobileChaptersProps) {
                 onClick={() => onSelect(ch.href)}
                 aria-label={`Đi tới không gian ${ch.title}`}
               >
-                <span className="mobile-chapter__num">{ch.num}</span>
+                <div className="mobile-chapter__header-row">
+                  <span className="mobile-chapter__num">{ch.num}</span>
+                  <span className="mobile-chapter__tag">
+                    {ch.id === "memories" ? "ARCHIVE" : ch.id === "music" ? "AUDIO" : "WORK"}
+                  </span>
+                </div>
                 <h2 className="mobile-chapter__title">{ch.title}</h2>
               </button>
             </article>

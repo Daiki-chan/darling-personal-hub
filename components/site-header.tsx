@@ -16,19 +16,34 @@ export function SiteHeader({ active, guardInitialVisit = true }: SiteHeaderProps
           FUJIWARA DAIKI
         </Link>
         <nav className="nav-links" aria-label="Điều hướng chính">
-          <Link href="/memories" aria-current={active === "gallery" || active === "memories" ? "page" : undefined}>
-            MEMORIES
+          <Link
+            href="/memories"
+            className="nav-item"
+            aria-current={active === "gallery" || active === "memories" ? "page" : undefined}
+          >
+            <span className="nav-item-num">01</span>
+            <span className="nav-item-name">MEMORIES</span>
           </Link>
-          <Link href="/music" aria-current={active === "music" ? "page" : undefined}>
-            MUSIC
+          <Link
+            href="/music"
+            className="nav-item"
+            aria-current={active === "music" ? "page" : undefined}
+          >
+            <span className="nav-item-num">02</span>
+            <span className="nav-item-name">MUSIC</span>
           </Link>
-          <Link href="/portfolio" aria-current={active === "portfolio" ? "page" : undefined}>
-            PORTFOLIO
+          <Link
+            href="/portfolio"
+            className="nav-item"
+            aria-current={active === "portfolio" ? "page" : undefined}
+          >
+            <span className="nav-item-num">03</span>
+            <span className="nav-item-name">PORTFOLIO</span>
           </Link>
         </nav>
         <Link className="nav-action" href="/portfolio#contact">
-          Gửi lời chào
-          <ArrowUpRight aria-hidden="true" size={16} strokeWidth={1.5} />
+          <span>Gửi lời chào</span>
+          <ArrowUpRight aria-hidden="true" size={14} strokeWidth={1.5} />
         </Link>
       </header>
     </>

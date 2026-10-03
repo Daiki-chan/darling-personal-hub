@@ -1,10 +1,10 @@
 .hub {
   --music-accent: #8f8a82;
-  --music-bg: #050505;
-  --music-surface: #0b0b0d;
-  --music-elevated: #111114;
+  --music-bg: #040406;
+  --music-surface: #0a0a0e;
+  --music-elevated: #111116;
   --music-border: rgba(255, 255, 255, 0.08);
-  --music-border-strong: rgba(255, 255, 255, 0.14);
+  --music-border-strong: rgba(255, 255, 255, 0.16);
   --music-text: rgba(255, 255, 255, 0.94);
   --music-secondary: rgba(255, 255, 255, 0.6);
   --music-muted: rgba(255, 255, 255, 0.4);
@@ -13,7 +13,7 @@
   position: relative;
   isolation: isolate;
   min-height: 100dvh;
-  padding: calc(var(--nav-height) + clamp(2rem, 4vw, 4.5rem)) clamp(1rem, 4vw, 4rem) 6rem;
+  padding: calc(var(--v2-nav-height, 52px) + clamp(2rem, 4vw, 4.5rem)) clamp(1rem, 4vw, 4rem) 6rem;
   overflow-x: clip;
   color: var(--music-text);
   background: var(--music-bg);
@@ -45,10 +45,10 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 78% 4%, color-mix(in srgb, var(--music-accent) 18%, transparent), transparent 34rem),
-    radial-gradient(circle at 6% 52%, color-mix(in srgb, var(--music-accent) 7%, transparent), transparent 28rem),
+    radial-gradient(circle at 78% 4%, color-mix(in srgb, var(--music-accent) 12%, transparent), transparent 34rem),
+    radial-gradient(circle at 6% 52%, color-mix(in srgb, var(--music-accent) 5%, transparent), transparent 28rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 35%),
-    #050505;
+    #040406;
   transition: background 900ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -84,9 +84,9 @@
   max-width: 12ch;
   margin: 0;
   text-wrap: balance;
-  font-size: clamp(2.85rem, 5.4vw, 5.8rem);
+  font-size: clamp(2.6rem, 5vw, 5rem);
   font-weight: 510;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
   line-height: 0.96;
 }
 
@@ -260,9 +260,10 @@
 .playlistIntro h2,
 .libraryEmpty h2 {
   margin: 0;
-  font-size: clamp(1.35rem, 2vw, 2rem);
-  font-weight: 540;
-  letter-spacing: -0.035em;
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .sectionHeading > span,
@@ -1028,14 +1029,14 @@
   width: min(1220px, calc(100vw - 2rem));
   transform: translateX(-50%);
   overflow: hidden;
-  border: 1px solid var(--music-border-strong);
-  border-radius: var(--music-radius);
-  background: rgba(9, 9, 11, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(8, 8, 12, 0.88);
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.66),
+    0 16px 48px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.055);
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
 }
 
 .dockAmbient {
@@ -1051,8 +1052,8 @@
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   align-items: center;
-  gap: 1rem;
-  padding: 0.7rem;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem;
 }
 
 .videoColumn {
@@ -1272,7 +1273,7 @@
   overflow-y: auto;
   border: 0;
   border-radius: 0;
-  background: #050505;
+  background: rgba(6, 6, 9, 0.97);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -1295,7 +1296,7 @@
 }
 
 .playerDockExpanded .videoMount {
-  border-radius: var(--music-radius);
+  border-radius: 12px;
   box-shadow: 0 24px 70px color-mix(in srgb, var(--music-accent) 13%, rgba(0, 0, 0, 0.72));
 }
 
@@ -2753,7 +2754,9 @@
 .heroAnchorTag {
   color: #ffffff;
   padding: 0.2rem 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .heroTitle {
@@ -3093,7 +3096,9 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: #111114;
+  background: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
 }
 
 .discoverImage {
@@ -3113,10 +3118,13 @@
   top: 0.5rem;
   left: 0.5rem;
   font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   color: #ffffff;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(4, 4, 6, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
   padding: 0.15rem 0.45rem;
 }
 
@@ -3226,9 +3234,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
   padding: 1.25rem;
-  background: #08080a;
+  background: #060608;
 }
 
 .forYouImageWrap {
@@ -3236,6 +3245,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
+  border-radius: 2px;
 }
 
 .forYouPreviewImage {
@@ -3624,8 +3634,11 @@
 
 /* Responsive Density PlayerDock (Target 72-92px height in compact mode) */
 .playerDock {
-  background: #030304;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 4, 6, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -10px 40px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 /* COMPACT MODE SCOPED RULES */
@@ -3751,6 +3764,8 @@
 .timeDigit {
   font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.45);
 }
 

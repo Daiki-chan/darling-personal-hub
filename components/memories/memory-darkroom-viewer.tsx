@@ -225,6 +225,41 @@ export const MemoryDarkroomViewer = function MemoryDarkroomViewer({
             </button>
           </div>
 
+          {/* Physical Filmstrip Navigation Dock */}
+          {allMemories.length > 1 ? (
+            <div
+              className="darkroom-modal__filmstrip"
+              role="tablist"
+              aria-label="Các mảnh ký ức trong kho lưu trữ"
+            >
+              {allMemories.map((m) => {
+                const isActive = m.id === memory.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-label={`Chuyển tới ảnh ${m.id}: ${m.title}`}
+                    className={`darkroom-modal__film-thumb ${isActive ? "darkroom-modal__film-thumb--active" : ""}`}
+                    onClick={() => onSelectMemory(m)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={m.image}
+                      alt={m.title}
+                      className="darkroom-modal__thumb-img"
+                      loading="lazy"
+                    />
+                    <span className="darkroom-modal__thumb-id" aria-hidden="true">
+                      {m.id}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
           {/* Bottom Context & Adaptive Metadata Panel */}
           <footer className="darkroom-modal__footer">
             <div className="darkroom-modal__info-left">

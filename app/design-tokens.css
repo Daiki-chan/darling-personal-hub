@@ -1,0 +1,133 @@
+/* ================================================================
+   DARLING PERSONAL HUB — V2 DESIGN TOKENS
+   ================================================================ */
+
+/* 1. COLOR SYSTEM */
+:root {
+  /* Backgrounds */
+  --v2-bg: #050507;
+  --v2-bg-deep: #020203;
+  --v2-bg-elevated: #0a0a0e;
+  
+  /* Surfaces */
+  --v2-surface: #0e0e13;
+  --v2-surface-raised: #141419;
+  --v2-surface-overlay: rgba(10, 10, 15, 0.92);
+  
+  /* Text */
+  --v2-text: #edeaf2;
+  --v2-text-secondary: #9895a3;
+  --v2-text-tertiary: rgba(237, 234, 242, 0.45);
+  --v2-text-ghost: rgba(237, 234, 242, 0.2);
+  
+  /* Lines & Borders */
+  --v2-line: rgba(255, 255, 255, 0.06);
+  --v2-line-subtle: rgba(255, 255, 255, 0.03);
+  --v2-line-strong: rgba(255, 255, 255, 0.12);
+  --v2-line-active: rgba(255, 255, 255, 0.28);
+  
+  /* Accent - used sparingly */
+  --v2-accent: #a78bfa;
+  --v2-accent-dim: rgba(167, 139, 250, 0.12);
+  --v2-accent-glow: rgba(167, 139, 250, 0.25);
+  
+  /* Destination atmospheres */
+  --v2-memories-accent: rgba(196, 181, 253, 0.18);
+  --v2-music-accent: rgba(129, 140, 248, 0.18);
+  --v2-work-accent: rgba(209, 213, 219, 0.14);
+}
+
+/* 2. TYPOGRAPHY SCALE */
+:root {
+  /* Display — portal, hero, major transitions */
+  --v2-display-1: clamp(4rem, 10vw, 10rem);
+  --v2-display-2: clamp(3rem, 7.5vw, 7.5rem);
+  --v2-display-3: clamp(2.4rem, 5.5vw, 5.5rem);
+  
+  /* Section — page headers, section titles */
+  --v2-section-1: clamp(2rem, 4vw, 4rem);
+  --v2-section-2: clamp(1.6rem, 3vw, 3rem);
+  --v2-section-3: clamp(1.3rem, 2.2vw, 2.2rem);
+  
+  /* Body */
+  --v2-body: 1rem;
+  --v2-body-lg: 1.1rem;
+  --v2-body-sm: 0.9rem;
+  
+  /* Labels & Metadata */
+  --v2-label: 0.78rem;
+  --v2-label-sm: 0.7rem;
+  --v2-meta: 0.68rem;
+  
+  /* Tracking */
+  --v2-tracking-tight: -0.04em;
+  --v2-tracking-tighter: -0.06em;
+  --v2-tracking-wide: 0.12em;
+  --v2-tracking-wider: 0.2em;
+  
+  /* Leading */
+  --v2-leading-tight: 0.92;
+  --v2-leading-snug: 1.1;
+  --v2-leading-body: 1.65;
+}
+
+/* 3. SPACING SYSTEM (8px base) */
+:root {
+  --v2-space-1: 0.25rem;  /* 4px */
+  --v2-space-2: 0.5rem;   /* 8px */
+  --v2-space-3: 0.75rem;  /* 12px */
+  --v2-space-4: 1rem;     /* 16px */
+  --v2-space-5: 1.5rem;   /* 24px */
+  --v2-space-6: 2rem;     /* 32px */
+  --v2-space-7: 3rem;     /* 48px */
+  --v2-space-8: 4rem;     /* 64px */
+  --v2-space-9: 6rem;     /* 96px */
+  --v2-space-10: 8rem;    /* 128px */
+  --v2-space-11: 12rem;   /* 192px */
+  --v2-space-12: 16rem;   /* 256px */
+}
+
+/* 4. LAYOUT */
+:root {
+  --v2-page-max: 1400px;
+  --v2-page-gutter: max(24px, calc((100vw - var(--v2-page-max)) / 2));
+  --v2-page-width: min(var(--v2-page-max), calc(100vw - 48px));
+  --v2-nav-height: 56px;
+}
+
+/* 5. MOTION TOKENS */
+:root {
+  --v2-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --v2-ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --v2-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --v2-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  --v2-duration-fast: 150ms;
+  --v2-duration-normal: 280ms;
+  --v2-duration-slow: 500ms;
+  --v2-duration-hero: 800ms;
+}
+
+/* 6. SURFACE SYSTEM */
+:root {
+  --v2-radius-sm: 4px;
+  --v2-radius-md: 8px;
+  --v2-radius-lg: 14px;
+  --v2-radius-full: 999px;
+}
+
+/* 7. RESPONSIVE BREAKPOINTS (reference only, use in media queries) */
+/* sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1440px */
+
+@media (max-width: 1024px) {
+  :root {
+    --v2-page-width: min(100% - 48px, 900px);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --v2-page-width: calc(100% - 32px);
+    --v2-nav-height: 48px;
+  }
+}

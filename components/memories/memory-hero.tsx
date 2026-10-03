@@ -63,7 +63,10 @@ export const MemoryHero = memo(function MemoryHero({
               aria-label={`Đi tới mục 01 Game, ${gameCount} mảnh ký ức`}
             >
               <div className="mem-hero__cat-info">
-                <span className="mem-hero__cat-idx">01 / GAME</span>
+                <div className="mem-hero__cat-idx-row">
+                  <span className="mem-hero__cat-dot" aria-hidden="true" />
+                  <span className="mem-hero__cat-idx">01 / GAME</span>
+                </div>
                 <span className="mem-hero__cat-name">VIRTUAL WORLDS</span>
               </div>
               <div className="mem-hero__cat-action">
@@ -81,7 +84,10 @@ export const MemoryHero = memo(function MemoryHero({
               aria-label={`Đi tới mục 02 Place, ${placeCount} mảnh ký ức`}
             >
               <div className="mem-hero__cat-info">
-                <span className="mem-hero__cat-idx">02 / PLACE</span>
+                <div className="mem-hero__cat-idx-row">
+                  <span className="mem-hero__cat-dot" aria-hidden="true" />
+                  <span className="mem-hero__cat-idx">02 / PLACE</span>
+                </div>
                 <span className="mem-hero__cat-name">PLACES I REMEMBER</span>
               </div>
               <div className="mem-hero__cat-action">

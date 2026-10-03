@@ -1,7 +1,14 @@
 "use client";
 
-import { memo } from "react";
-import type { MemoryFragment, MemorySubject } from "@/lib/memories-data";
+import { memo, useMemo } from "react";
+import {
+  composeGameSpreads,
+  composePlaceSpreads,
+  type GameMemoryFragment,
+  type MemoryFragment,
+  type MemorySubject,
+  type PlaceMemoryFragment,
+} from "@/lib/memories-data";
 import { useSectionMotion } from "@/components/motion/use-section-motion";
 import { MemoryFragmentCard } from "./memory-fragment-card";
 
@@ -27,6 +34,13 @@ export const MemoryChapter = memo(function MemoryChapter({
   const formattedCount = String(memories.length).padStart(3, "0");
   const motionRef = useSectionMotion<HTMLElement>();
 
+  const spreads = useMemo(() => {
+    if (subject === "game") {
+      return composeGameSpreads(memories as GameMemoryFragment[]);
+    }
+    return composePlaceSpreads(memories as PlaceMemoryFragment[]);
+  }, [subject, memories]);
+
   return (
     <section
       ref={motionRef}
@@ -46,16 +60,25 @@ export const MemoryChapter = memo(function MemoryChapter({
         </div>
       </header>
 
-      {/* Auto-Positioning Responsive Grid or Elegant Empty State */}
+      {/* Controlled Editorial Spreads Stack or Elegant Empty State */}
       {memories.length > 0 ? (
-        <div className="mem-chapter__grid" role="region" aria-label={`Kho ảnh ${subtitle}`}>
-          {memories.map((memory, idx) => (
-            <MemoryFragmentCard
-              key={memory.id}
-              memory={memory}
-              onSelect={onSelectMemory}
-              priority={idx < 2}
-            />
+        <div className="mem-chapter__grid mem-chapter__spreads-stack" role="region" aria-label={`Kho ảnh ${subtitle}`}>
+          {spreads.map((spread) => (
+            <div
+              key={spread.id}
+              className={`mem-spread mem-spread--${spread.pattern}`}
+              data-pattern={spread.pattern}
+            >
+              {spread.items.map((memory, itemIdx) => (
+                <MemoryFragmentCard
+                  key={memory.id}
+                  memory={memory}
+                  onSelect={onSelectMemory}
+                  priority={itemIdx === 0}
+                  className={`mem-spread__item mem-spread__item--${itemIdx === 0 ? "lead" : "secondary"}`}
+                />
+              ))}
+            </div>
           ))}
         </div>
       ) : (
