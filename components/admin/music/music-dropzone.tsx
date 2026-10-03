@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type DragEvent, useRef, useState } from "react";
 import {
-  AlertCircle,
-  CheckCircle2,
+  Check,
   FileAudio,
   ImageIcon,
   Loader2,
@@ -158,6 +157,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
       }
 
       setUploadProgress(50);
+
       const res = await uploadTrackAction(formData);
 
       if (res.error) {
@@ -172,7 +172,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
     } catch (err: unknown) {
       setStatus("error");
       setErrorMessage(
-        err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định trong quá trình tải lên."
+        err instanceof Error ? err.message : "Đã xảy ra lỗi trong quá trình tải lên máy chủ."
       );
     }
   };
@@ -214,13 +214,13 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
               onChange={handleFileInputChange}
             />
 
-            <UploadCloud size={40} style={{ color: "var(--v2-accent, #a78bfa)" }} />
-            <h3 className={styles.dropzoneTitle}>KÉO & THẢ TỆP ÂM THANH VÀO ĐÂY</h3>
+            <UploadCloud size={36} style={{ color: "#ffffff", opacity: 0.8 }} />
+            <h3 className={styles.dropzoneTitle}>KÉO VÀ THẢ TỆP ÂM THANH VÀO ĐÂY</h3>
             <p className={styles.dropzoneSub}>
-              hoặc nhấn để chọn tệp từ thiết bị của bạn
+              hoặc nhấn để duyệt tệp từ thiết bị của bạn
             </p>
             <span className={styles.dropzoneFormats}>
-              MP3 · FLAC · WAV · M4A · OGG (Tối đa 100MB)
+              MP3 · FLAC · WAV · M4A · OGG · TỐI ĐA 100MB
             </span>
           </div>
 
@@ -233,12 +233,12 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                 gap: 8,
                 marginTop: 16,
                 fontFamily: "var(--font-mono), monospace",
-                fontSize: "0.8rem",
-                color: "var(--v2-text-secondary, #9895a3)",
+                fontSize: "0.75rem",
+                color: "var(--adm-text-secondary)",
               }}
             >
-              <Loader2 size={16} className="animate-spin" />
-              <span>Đang phân tích cấu trúc tệp âm thanh...</span>
+              <Loader2 size={14} className="animate-spin" />
+              <span>[ ĐANG GIẢI MÃ THÔNG SỐ TỆP ÂM THANH... ]</span>
             </div>
           ) : null}
         </div>
@@ -249,27 +249,28 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
         <div
           role="alert"
           style={{
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            color: "#f87171",
+            background: "var(--adm-surface-3)",
+            border: "1px solid var(--adm-line-strong)",
+            color: "#ffffff",
             padding: "16px 20px",
-            borderRadius: 10,
+            borderRadius: 2,
             marginBottom: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            fontSize: "0.85rem",
+            fontSize: "0.8rem",
+            fontFamily: "var(--font-mono), monospace",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <AlertCircle size={18} />
-            <span>{errorMessage}</span>
+            <span style={{ fontWeight: 700 }}>[ ! ]</span>
+            <span>LỖI TẢI LÊN: {errorMessage}</span>
           </div>
           <button
             onClick={() => setStatus("ready")}
             className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
           >
-            <RotateCcw size={12} />
+            <RotateCcw size={11} />
             <span>Thử lại</span>
           </button>
         </div>
@@ -282,18 +283,30 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
           style={{
             textAlign: "center",
             padding: "48px 24px",
-            background: "rgba(34, 197, 94, 0.04)",
-            borderColor: "rgba(34, 197, 94, 0.2)",
+            background: "var(--adm-surface-2)",
+            borderColor: "var(--adm-line-medium)",
           }}
         >
-          <CheckCircle2
-            size={44}
-            style={{ color: "#4ade80", margin: "0 auto 16px auto" }}
-          />
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: "50%",
+              background: "#ffffff",
+              color: "#000000",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px auto",
+            }}
+          >
+            <Check size={22} />
+          </div>
           <h2
             style={{
               fontFamily: "var(--font-editorial), serif",
-              fontSize: "1.8rem",
+              fontSize: "1.9rem",
+              fontWeight: 400,
               color: "#ffffff",
               margin: "0 0 8px 0",
             }}
@@ -303,26 +316,28 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
           <p
             style={{
               fontFamily: "var(--font-mono), monospace",
-              fontSize: "0.82rem",
-              color: "var(--v2-text-secondary, #9895a3)",
-              margin: "0 0 24px 0",
+              fontSize: "0.76rem",
+              color: "var(--adm-text-secondary)",
+              margin: "0 0 28px 0",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
             }}
           >
-            Bản nhạc đã được lưu trữ an toàn trong Supabase Storage và xuất bản vào cơ sở dữ liệu.
+            BẢN GHI ĐÃ ĐƯỢC LƯU TRỮ VÀO SUPABASE STORAGE & CƠ SỞ DỮ LIỆU POSTGRESQL
           </p>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
             <button
               onClick={resetAll}
               className={`${styles.btn} ${styles.btnSecondary}`}
             >
-              <span>Tải lên bài khác</span>
+              <span>Tải lên bản khác</span>
             </button>
             <button
               onClick={() => router.push(successTrackId ? `/admin/music/${successTrackId}` : "/admin/music")}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              <span>Chỉnh sửa chi tiết</span>
+              <span>Biên tập chi tiết</span>
             </button>
             <button
               onClick={() => router.push("/music")}
@@ -339,8 +354,8 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
         <form onSubmit={handleSubmit} className={styles.panel}>
           <div className={styles.panelHeader}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <FileAudio size={18} style={{ color: "var(--v2-accent, #a78bfa)" }} />
-              <h2 className={styles.panelTitle}>Xác nhận thông tin bài hát</h2>
+              <FileAudio size={16} style={{ color: "#ffffff" }} />
+              <h2 className={styles.panelTitle}>[ THÔNG TIN BIÊN TẬP BẢN NHẠC ]</h2>
             </div>
             <button
               type="button"
@@ -348,7 +363,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
               className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
               disabled={status === "uploading"}
             >
-              <X size={13} />
+              <X size={12} />
               <span>Hủy bỏ</span>
             </button>
           </div>
@@ -376,7 +391,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 18,
+              gap: 16,
             }}
           >
             <div className={styles.formGroup}>
@@ -417,7 +432,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                 id="track-album"
                 type="text"
                 className={styles.formInput}
-                placeholder="Single / Album title"
+                placeholder="VD: Night Drive / Single"
                 value={meta.album}
                 onChange={(e) => setMeta({ ...meta, album: e.target.value })}
                 disabled={status === "uploading"}
@@ -464,19 +479,19 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                 disabled={status === "uploading"}
               >
                 <option value="published">Xuất bản công khai (Hiển thị trên /music)</option>
-                <option value="draft">Bản nháp (Chỉ xem trong Admin)</option>
+                <option value="draft">Bản nháp (Chỉ lưu trữ trong Admin)</option>
               </select>
             </div>
           </div>
 
-          {/* Cover image picker & file summary */}
+          {/* Cover image picker & file summary telemetry */}
           <div
             style={{
               marginTop: 12,
               padding: 16,
-              borderRadius: 8,
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.06))",
+              borderRadius: 2,
+              background: "var(--adm-surface-2)",
+              border: "1px solid var(--adm-line-hairline)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -489,13 +504,13 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                 style={{
                   width: 56,
                   height: 56,
-                  borderRadius: 6,
-                  background: "#181820",
+                  borderRadius: 2,
+                  background: "var(--adm-surface-3)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.08))",
+                  border: "1px solid var(--adm-line-subtle)",
                 }}
               >
                 {meta.coverPreviewUrl ? (
@@ -506,7 +521,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
-                  <ImageIcon size={22} style={{ opacity: 0.4 }} />
+                  <ImageIcon size={20} style={{ opacity: 0.3 }} />
                 )}
               </div>
 
@@ -518,7 +533,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                   style={{
                     fontFamily: "var(--font-mono), monospace",
                     fontSize: "0.7rem",
-                    color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+                    color: "var(--adm-text-muted)",
                     marginTop: 3,
                   }}
                 >
@@ -541,7 +556,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
                 className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                 disabled={status === "uploading"}
               >
-                <ImageIcon size={13} />
+                <ImageIcon size={12} />
                 <span>{meta.coverFile ? "Thay đổi ảnh bìa" : "Chọn ảnh bìa (Cover)"}</span>
               </button>
             </div>
@@ -563,7 +578,7 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
           </div>
 
           {/* Form Actions */}
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
             <button
               type="button"
               onClick={resetAll}
@@ -579,12 +594,12 @@ export function MusicDropzone({ isConfigured }: { isConfigured: boolean }) {
             >
               {status === "uploading" ? (
                 <>
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={13} className="animate-spin" />
                   <span>Đang tải lên...</span>
                 </>
               ) : (
                 <>
-                  <UploadCloud size={14} />
+                  <UploadCloud size={13} />
                   <span>Xác nhận & Tải lên Storage</span>
                 </>
               )}

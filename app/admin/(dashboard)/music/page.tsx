@@ -34,6 +34,7 @@ export default async function MusicLibraryPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>02 · AUDIO ARCHIVE</div>
           <h1 className={styles.pageHeaderTitle}>Thư viện Âm nhạc</h1>
           <p className={styles.pageHeaderSub}>
             TỔNG SỐ {tracks.length} BẢN GHI TRONG CƠ SỞ DỮ LIỆU SUPABASE

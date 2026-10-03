@@ -62,7 +62,7 @@ export function PlaylistManager({
           className={`${styles.btn} ${styles.btnPrimary}`}
           disabled={!isConfigured}
         >
-          <Plus size={14} />
+          <Plus size={13} />
           <span>Tạo danh sách phát mới</span>
         </button>
       </div>
@@ -71,11 +71,13 @@ export function PlaylistManager({
         <form
           onSubmit={handleCreate}
           className={styles.panel}
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: 24, border: "1px solid var(--adm-line-medium)" }}
         >
-          <h3 className={styles.panelTitle} style={{ marginBottom: 16 }}>
-            Tạo Danh sách phát mới
-          </h3>
+          <div className={styles.panelHeader}>
+            <h3 className={styles.panelTitle}>
+              [ TẠO DANH SÁCH PHÁT MỚI ]
+            </h3>
+          </div>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Tên danh sách phát *</label>
             <input
@@ -84,7 +86,7 @@ export function PlaylistManager({
               className={styles.formInput}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Night Ambient Selects"
+              placeholder="VD: Midnight Ambient Archive"
             />
           </div>
           <div className={styles.formGroup}>
@@ -94,7 +96,7 @@ export function PlaylistManager({
               className={styles.formInput}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mô tả danh sách phát..."
+              placeholder="Mô tả tuyển tập âm thanh..."
             />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
@@ -103,12 +105,21 @@ export function PlaylistManager({
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
+              style={{ accentColor: "#ffffff" }}
             />
-            <label htmlFor="playlist-public" style={{ fontSize: "0.82rem", cursor: "pointer" }}>
-              Công khai trên /music
+            <label
+              htmlFor="playlist-public"
+              style={{
+                fontSize: "0.78rem",
+                fontFamily: "var(--font-mono), monospace",
+                cursor: "pointer",
+                color: "var(--adm-text-secondary)",
+              }}
+            >
+              CÔNG KHAI TRÊN KÊNH /MUSIC
             </label>
           </div>
-          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
@@ -121,7 +132,7 @@ export function PlaylistManager({
               disabled={isPending}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              {isPending ? "Đang tạo..." : "Tạo danh sách"}
+              {isPending ? "Đang tạo..." : "Xác nhận tạo danh sách"}
             </button>
           </div>
         </form>
@@ -132,18 +143,18 @@ export function PlaylistManager({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Tên danh sách</th>
-                <th>Mô tả</th>
-                <th>Hiển thị</th>
-                <th>Tạo lúc</th>
-                <th style={{ textAlign: "right" }}>Thao tác</th>
+                <th>TÊN DANH SÁCH</th>
+                <th>MÔ TẢ</th>
+                <th>HIỂN THỊ</th>
+                <th>NGÀY TẠO</th>
+                <th style={{ textAlign: "right" }}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
               {playlists.map((playlist) => (
                 <tr key={playlist.id}>
-                  <td style={{ fontWeight: 600 }}>{playlist.name}</td>
-                  <td style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
+                  <td style={{ fontWeight: 500 }}>{playlist.name}</td>
+                  <td style={{ color: "var(--adm-text-secondary)" }}>
                     {playlist.description || "—"}
                   </td>
                   <td>
@@ -154,10 +165,10 @@ export function PlaylistManager({
                           : styles.statusDraft
                       }`}
                     >
-                      {playlist.is_public ? "Công khai" : "Riêng tư"}
+                      {playlist.is_public ? "● PUBLIC" : "○ PRIVATE"}
                     </span>
                   </td>
-                  <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.75rem" }}>
+                  <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.74rem" }}>
                     {new Date(playlist.created_at).toLocaleDateString("vi-VN")}
                   </td>
                   <td style={{ textAlign: "right" }}>
@@ -165,9 +176,10 @@ export function PlaylistManager({
                       onClick={() => handleDelete(playlist.id, playlist.name)}
                       disabled={isPending}
                       className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
+                      title="Xóa danh sách phát"
+                      style={{ padding: "5px 7px" }}
                     >
-                      <Trash2 size={12} />
-                      <span>Xóa</span>
+                      <Trash2 size={11} />
                     </button>
                   </td>
                 </tr>
@@ -178,14 +190,25 @@ export function PlaylistManager({
       ) : (
         <div
           className={styles.panel}
-          style={{ textAlign: "center", padding: 48, color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))" }}
+          style={{
+            textAlign: "center",
+            padding: "48px 20px",
+            color: "var(--adm-text-muted)",
+          }}
         >
-          <ListMusic size={36} style={{ margin: "0 auto 12px auto", opacity: 0.3 }} />
-          <h3 style={{ color: "#ffffff", margin: "0 0 6px 0" }}>Chưa có danh sách phát nào</h3>
-          <p style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.78rem", margin: 0 }}>
-            {isConfigured
-              ? "Tạo danh sách phát mới để nhóm các bài hát trong cơ sở dữ liệu."
-              : "Cần cấu hình Supabase để lưu trữ danh sách phát."}
+          <ListMusic size={32} style={{ margin: "0 auto 12px auto", opacity: 0.3 }} />
+          <h3 style={{ margin: "0 0 6px 0", color: "#ffffff", fontSize: "0.95rem", fontFamily: "var(--font-mono), monospace" }}>
+            CHƯA CÓ DANH SÁCH PHÁT NÀO
+          </h3>
+          <p
+            style={{
+              fontFamily: "var(--font-mono), monospace",
+              fontSize: "0.74rem",
+              margin: 0,
+              color: "var(--adm-text-muted)",
+            }}
+          >
+            Tạo tuyển tập đầu tiên để gom nhóm các bài hát theo concept.
           </p>
         </div>
       )}

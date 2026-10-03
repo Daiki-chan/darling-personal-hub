@@ -11,11 +11,13 @@ export function ConfigAlert() {
 
   return (
     <div className={styles.bannerAlert} role="alert">
-      <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+      <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2, color: "#ffffff" }} />
       <div>
-        <div className={styles.bannerAlertTitle}>MISSING CONFIGURATION — YÊU CẦU CẤU HÌNH SUPABASE</div>
-        <p style={{ margin: "4px 0 8px 0" }}>
-          Hệ thống Admin Dashboard cần kết nối với dự án Supabase thực tế. Hiện tại các biến môi trường sau chưa được cung cấp:
+        <div className={styles.bannerAlertTitle}>
+          [ THÔNG BÁO HẠ TẦNG ] CẦN CẤU HÌNH THÔNG SỐ KẾT NỐI SUPABASE
+        </div>
+        <p style={{ margin: "4px 0 8px 0", color: "var(--adm-text-secondary)", fontSize: "0.8rem" }}>
+          Hệ thống Quản trị yêu cầu kết nối với instance Supabase cá nhân để kích hoạt PostgreSQL, RLS và Storage Buckets. Hiện các biến sau chưa được khai báo:
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
           {status.missing.map((key) => (
@@ -29,8 +31,8 @@ export function ConfigAlert() {
             </span>
           ) : null}
         </div>
-        <p style={{ margin: 0, fontSize: "0.78rem", opacity: 0.85 }}>
-          Vui lòng thêm các biến trên vào file <code>.env.local</code> hoặc bảng biến môi trường Vercel. Sau khi thêm biến, các tính năng lưu trữ PostgreSQL, xác thực Supabase Auth và tải lên audio vào Storage sẽ hoạt động trực tiếp.
+        <p style={{ margin: 0, fontSize: "0.74rem", color: "var(--adm-text-muted)", fontFamily: "var(--font-mono), monospace" }}>
+          Khai báo các biến trên trong <code>.env.local</code> hoặc trên Vercel Project Settings để mở khóa toàn bộ tính năng quản trị.
         </p>
       </div>
     </div>

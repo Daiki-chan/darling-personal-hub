@@ -40,15 +40,16 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarBrand}>
           <div className={styles.brandTitle}>
-            <span>DARLING</span>
-            <span className={styles.brandBadge}>CMS V1</span>
+            <span className={styles.brandIndicator} />
+            <span>DARLING // CONTROL</span>
           </div>
+          <span className={styles.brandBadge}>V1.0</span>
           <button
             className={styles.mobileMenuBtn}
             onClick={onClose}
             aria-label="Đóng menu điều hướng"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
@@ -60,8 +61,9 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               className={`${styles.navItem} ${isCurrent("/admin") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>01</span>
               <LayoutDashboard className={styles.navItemIcon} />
-              <span>Tổng quan</span>
+              <span className={styles.navItemTitle}>Tổng quan</span>
             </Link>
           </div>
 
@@ -72,24 +74,27 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               className={`${styles.navItem} ${pathname === "/admin/music" ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>02</span>
               <Music2 className={styles.navItemIcon} />
-              <span>Thư viện nhạc</span>
+              <span className={styles.navItemTitle}>Thư viện nhạc</span>
             </Link>
             <Link
               href="/admin/music/upload"
               className={`${styles.navItem} ${isCurrent("/admin/music/upload") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>↳</span>
               <UploadCloud className={styles.navItemIcon} />
-              <span>Tải lên audio</span>
+              <span className={styles.navItemTitle}>Tải lên audio</span>
             </Link>
             <Link
               href="/admin/music/playlists"
               className={`${styles.navItem} ${isCurrent("/admin/music/playlists") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>↳</span>
               <ListMusic className={styles.navItemIcon} />
-              <span>Danh sách phát</span>
+              <span className={styles.navItemTitle}>Danh sách phát</span>
             </Link>
           </div>
 
@@ -100,16 +105,18 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               className={`${styles.navItem} ${isCurrent("/admin/memories") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>03</span>
               <Film className={styles.navItemIcon} />
-              <span>Ký ức (Memories)</span>
+              <span className={styles.navItemTitle}>Ký ức số</span>
             </Link>
             <Link
               href="/admin/portfolio"
               className={`${styles.navItem} ${isCurrent("/admin/portfolio") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>04</span>
               <Layers className={styles.navItemIcon} />
-              <span>Hồ sơ (Portfolio)</span>
+              <span className={styles.navItemTitle}>Hồ sơ Case Study</span>
             </Link>
           </div>
 
@@ -120,22 +127,23 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               className={`${styles.navItem} ${isCurrent("/admin/system") ? styles.navItemActive : ""}`}
               onClick={onClose}
             >
+              <span className={styles.navItemIndex}>05</span>
               <Database className={styles.navItemIcon} />
-              <span>Trạng thái Supabase</span>
+              <span className={styles.navItemTitle}>Chẩn đoán Supabase</span>
             </Link>
           </div>
         </nav>
 
         <div className={styles.sidebarFooter}>
           <Link href="/" className={styles.publicSiteLink} target="_blank">
-            <Compass size={14} />
-            <span>Xem Website công khai</span>
-            <ExternalLink size={12} style={{ marginLeft: "auto", opacity: 0.6 }} />
+            <Compass size={13} />
+            <span>Xem Hub công khai</span>
+            <ExternalLink size={11} style={{ marginLeft: "auto", opacity: 0.5 }} />
           </Link>
           <Link href="/music" className={styles.publicSiteLink} target="_blank">
-            <Sparkles size={14} />
-            <span>Kênh /music (/am-nhac)</span>
-            <ExternalLink size={12} style={{ marginLeft: "auto", opacity: 0.6 }} />
+            <Sparkles size={13} />
+            <span>Kênh /music</span>
+            <ExternalLink size={11} style={{ marginLeft: "auto", opacity: 0.5 }} />
           </Link>
         </div>
       </aside>

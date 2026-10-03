@@ -31,16 +31,21 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           <div
             role="alert"
             style={{
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              color: "#f87171",
+              background: "var(--adm-surface-3)",
+              border: "1px solid var(--adm-line-strong)",
+              color: "#ffffff",
               padding: "20px 24px",
-              borderRadius: 12,
+              borderRadius: 2,
               marginTop: 20,
+              fontFamily: "var(--font-mono), monospace",
             }}
           >
-            <h2 style={{ margin: "0 0 8px 0", fontSize: "1.1rem" }}>Truy cập bị từ chối</h2>
-            <p style={{ margin: 0, fontSize: "0.85rem" }}>{guard.message}</p>
+            <h2 style={{ margin: "0 0 8px 0", fontSize: "1rem", letterSpacing: "0.06em" }}>
+              [ ! ] TRUY CẬP BỊ TỪ CHỐI — UNAUTHORIZED
+            </h2>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--adm-text-secondary)" }}>
+              {guard.message}
+            </p>
           </div>
         </AdminShell>
       );

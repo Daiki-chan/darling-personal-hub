@@ -20,15 +20,15 @@ export function AdminHeader({
   const pathname = usePathname();
 
   const getBreadcrumb = () => {
-    if (pathname === "/admin") return "Tổng quan";
-    if (pathname === "/admin/music") return "Thư viện nhạc";
-    if (pathname === "/admin/music/upload") return "Tải lên nhạc";
-    if (pathname === "/admin/music/playlists") return "Danh sách phát";
-    if (pathname.startsWith("/admin/music/")) return "Chỉnh sửa bài hát";
-    if (pathname === "/admin/memories") return "Ký ức (Memories)";
-    if (pathname === "/admin/portfolio") return "Hồ sơ (Portfolio)";
-    if (pathname === "/admin/system") return "Trạng thái hệ thống";
-    return pathname.replace("/admin/", "");
+    if (pathname === "/admin") return "01 // TỔNG QUAN";
+    if (pathname === "/admin/music") return "02 // THƯ VIỆN NHẠC";
+    if (pathname === "/admin/music/upload") return "02 // TẢI LÊN AUDIO";
+    if (pathname === "/admin/music/playlists") return "02 // DANH SÁCH PHÁT";
+    if (pathname.startsWith("/admin/music/")) return "02 // BIÊN TẬP BẢN NHẠC";
+    if (pathname === "/admin/memories") return "03 // KÝ ỨC SỐ (MEMORIES)";
+    if (pathname === "/admin/portfolio") return "04 // HỒ SƠ CASE STUDY";
+    if (pathname === "/admin/system") return "05 // CHẨN ĐOÁN HỆ THỐNG";
+    return pathname.replace("/admin/", "").toUpperCase();
   };
 
   return (
@@ -39,35 +39,40 @@ export function AdminHeader({
           onClick={onOpenMobileMenu}
           aria-label="Mở menu quản trị"
         >
-          <Menu size={18} />
+          <Menu size={16} />
         </button>
 
         <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
           <Link href="/admin" style={{ color: "inherit", textDecoration: "none" }}>
-            ADMIN
+            CONTROL ROOM
           </Link>
-          <span>/</span>
+          <span className={styles.breadcrumbSeparator}>/</span>
           <span className={styles.breadcrumbCurrent}>{getBreadcrumb()}</span>
         </nav>
       </div>
 
       <div className={styles.headerRight}>
+        <div className={styles.systemStatusPill}>
+          <span className={styles.statusDot} />
+          <span>SYS.ONLINE</span>
+        </div>
+
         {userEmail ? (
           <div className={styles.userBadge}>
             <div className={styles.userAvatar} title={userEmail}>
               {userEmail.charAt(0).toUpperCase()}
             </div>
-            <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {userEmail}
             </span>
-            <span className={styles.brandBadge} style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+            <span className={styles.brandBadge} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
               <Shield size={10} />
               {role.toUpperCase()}
             </span>
 
             <form action={signOutAdminAction}>
-              <button type="submit" className={styles.logoutBtn} title="Đăng xuất">
-                <LogOut size={13} />
+              <button type="submit" className={styles.logoutBtn} title="Đăng xuất khỏi hệ thống">
+                <LogOut size={12} />
                 <span>Thoát</span>
               </button>
             </form>

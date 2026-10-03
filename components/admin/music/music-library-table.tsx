@@ -66,7 +66,7 @@ export function MusicLibraryTable({
   };
 
   const handleDelete = (trackId: string, trackTitle: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa bản nhạc "${trackTitle}"? Hành động này sẽ xóa cả tệp trong Storage.`)) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa bản nhạc "${trackTitle}"? Hành động này sẽ xóa cả tệp trong Supabase Storage.`)) {
       return;
     }
 
@@ -111,14 +111,14 @@ export function MusicLibraryTable({
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 14,
+          gap: 12,
           marginBottom: 20,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 260 }}>
-          <div style={{ position: "relative", width: "100%", maxWidth: 320 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 260 }}>
+          <div style={{ position: "relative", width: "100%", maxWidth: 300 }}>
             <Search
-              size={15}
+              size={13}
               style={{
                 position: "absolute",
                 left: 12,
@@ -129,9 +129,9 @@ export function MusicLibraryTable({
             />
             <input
               type="text"
-              placeholder="Tìm theo tên bài, nghệ sĩ, album..."
+              placeholder="Tìm kiếm theo tiêu đề, nghệ sĩ, album..."
               className={styles.formInput}
-              style={{ paddingLeft: 36, height: 38, fontSize: "0.8rem" }}
+              style={{ paddingLeft: 34, height: 36, fontSize: "0.78rem", fontFamily: "var(--font-mono), monospace" }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -139,36 +139,36 @@ export function MusicLibraryTable({
 
           <select
             className={styles.formSelect}
-            style={{ width: "auto", height: 38, fontSize: "0.8rem" }}
+            style={{ width: "auto", height: 36, fontSize: "0.75rem", fontFamily: "var(--font-mono), monospace" }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="published">Đã phát hành</option>
-            <option value="draft">Bản nháp</option>
-            <option value="archived">Lưu trữ</option>
+            <option value="all">TẤT CẢ TRẠNG THÁI</option>
+            <option value="published">ĐÃ XUẤT BẢN</option>
+            <option value="draft">BẢN NHÁP</option>
+            <option value="archived">LƯU TRỮ</option>
           </select>
 
           <select
             className={styles.formSelect}
-            style={{ width: "auto", height: 38, fontSize: "0.8rem" }}
+            style={{ width: "auto", height: 36, fontSize: "0.75rem", fontFamily: "var(--font-mono), monospace" }}
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
           >
-            <option value="newest">Mới nhất</option>
-            <option value="oldest">Cũ nhất</option>
-            <option value="title">Tên bài hát</option>
-            <option value="artist">Nghệ sĩ</option>
+            <option value="newest">MỚI NHẤT</option>
+            <option value="oldest">CŨ NHẤT</option>
+            <option value="title">TÊN BÀI HÁT (A-Z)</option>
+            <option value="artist">NGHỆ SĨ (A-Z)</option>
           </select>
         </div>
 
         <Link
           href="/admin/music/upload"
           className={`${styles.btn} ${styles.btnPrimary}`}
-          style={{ height: 38 }}
+          style={{ height: 36 }}
         >
-          <Plus size={15} />
-          <span>Tải lên nhạc</span>
+          <Plus size={13} />
+          <span>Tải lên audio</span>
         </Link>
       </div>
 
@@ -178,14 +178,14 @@ export function MusicLibraryTable({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: 44 }}>Phát</th>
-                <th style={{ width: 48 }}>Bìa</th>
-                <th>Tiêu đề & Album</th>
-                <th>Nghệ sĩ</th>
-                <th>Thời lượng</th>
-                <th>Định dạng</th>
-                <th>Trạng thái</th>
-                <th style={{ textAlign: "right" }}>Thao tác</th>
+                <th style={{ width: 44, textAlign: "center" }}>PHÁT</th>
+                <th style={{ width: 48 }}>BÌA</th>
+                <th>TIÊU ĐỀ & ALBUM</th>
+                <th>NGHỆ SĨ</th>
+                <th>THỜI LƯỢNG</th>
+                <th>ĐỊNH DẠNG</th>
+                <th>TRẠNG THÁI</th>
+                <th style={{ textAlign: "right" }}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
@@ -193,17 +193,17 @@ export function MusicLibraryTable({
                 const isPlaying = playingTrackId === track.id;
                 return (
                   <tr key={track.id}>
-                    <td>
+                    <td style={{ textAlign: "center" }}>
                       <button
                         onClick={() => handleTogglePreview(track)}
                         aria-label={isPlaying ? "Dừng nghe thử" : "Nghe thử"}
-                        className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-                        style={{ width: 32, height: 32, padding: 0 }}
+                        className={`${styles.btn} ${isPlaying ? styles.btnPrimary : styles.btnSecondary} ${styles.btnSm}`}
+                        style={{ width: 28, height: 28, padding: 0, borderRadius: 2 }}
                       >
                         {isPlaying ? (
-                          <Pause size={13} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+                          <Pause size={12} />
                         ) : (
-                          <Play size={13} />
+                          <Play size={12} />
                         )}
                       </button>
                     </td>
@@ -211,15 +211,15 @@ export function MusicLibraryTable({
                     <td>
                       <div
                         style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 4,
-                          background: "#181820",
+                          width: 36,
+                          height: 36,
+                          borderRadius: 2,
+                          background: "var(--adm-surface-3)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           overflow: "hidden",
-                          border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.08))",
+                          border: "1px solid var(--adm-line-subtle)",
                         }}
                       >
                         {track.cover_url ? (
@@ -230,7 +230,7 @@ export function MusicLibraryTable({
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                           />
                         ) : (
-                          <FileAudio size={16} style={{ opacity: 0.4 }} />
+                          <FileAudio size={14} style={{ opacity: 0.3 }} />
                         )}
                       </div>
                     </td>
@@ -247,8 +247,9 @@ export function MusicLibraryTable({
                       {track.album ? (
                         <div
                           style={{
-                            fontSize: "0.72rem",
-                            color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+                            fontSize: "0.7rem",
+                            fontFamily: "var(--font-mono), monospace",
+                            color: "var(--adm-text-muted)",
                             marginTop: 2,
                           }}
                         >
@@ -257,11 +258,11 @@ export function MusicLibraryTable({
                       ) : null}
                     </td>
 
-                    <td style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
+                    <td style={{ color: "var(--adm-text-secondary)" }}>
                       {track.artist}
                     </td>
 
-                    <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.75rem" }}>
+                    <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.74rem" }}>
                       {Math.floor(track.duration / 60)}:
                       {String(track.duration % 60).padStart(2, "0")}
                     </td>
@@ -269,9 +270,9 @@ export function MusicLibraryTable({
                     <td
                       style={{
                         fontFamily: "var(--font-mono), monospace",
-                        fontSize: "0.72rem",
+                        fontSize: "0.7rem",
                         textTransform: "uppercase",
-                        color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+                        color: "var(--adm-text-muted)",
                       }}
                     >
                       {track.format || "MP3"}
@@ -288,10 +289,10 @@ export function MusicLibraryTable({
                         }`}
                       >
                         {track.status === "published"
-                          ? "Đã phát hành"
+                          ? "● PUBLISHED"
                           : track.status === "draft"
-                          ? "Bản nháp"
-                          : "Lưu trữ"}
+                          ? "○ DRAFT"
+                          : "× ARCHIVED"}
                       </span>
                     </td>
 
@@ -306,9 +307,9 @@ export function MusicLibraryTable({
                         <Link
                           href={`/admin/music/${track.id}`}
                           className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-                          title="Chỉnh sửa chi tiết"
+                          title="Biên tập siêu dữ liệu chi tiết"
                         >
-                          <Edit2 size={12} />
+                          <Edit2 size={11} />
                           <span>Sửa</span>
                         </Link>
 
@@ -338,9 +339,9 @@ export function MusicLibraryTable({
                           disabled={isPending}
                           className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`}
                           title="Xóa bản nhạc"
-                          style={{ padding: "6px 8px" }}
+                          style={{ padding: "5px 7px" }}
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={11} />
                         </button>
                       </div>
                     </td>
@@ -356,33 +357,34 @@ export function MusicLibraryTable({
           style={{
             textAlign: "center",
             padding: "48px 20px",
-            color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+            color: "var(--adm-text-muted)",
           }}
         >
-          <FileAudio size={36} style={{ margin: "0 auto 12px auto", opacity: 0.3 }} />
-          <h3 style={{ margin: "0 0 6px 0", color: "#ffffff", fontSize: "1rem" }}>
+          <FileAudio size={32} style={{ margin: "0 auto 12px auto", opacity: 0.3 }} />
+          <h3 style={{ margin: "0 0 6px 0", color: "#ffffff", fontSize: "0.95rem", fontFamily: "var(--font-mono), monospace" }}>
             {searchTerm || statusFilter !== "all"
-              ? "Không tìm thấy bài hát nào phù hợp với bộ lọc"
-              : "Thư viện âm nhạc chưa có bài hát nào"}
+              ? "KHÔNG TÌM THẤY BẢN NHẠC PHÙ HỢP"
+              : "KHO LƯU TRỮ ÂM THANH TRỐNG"}
           </h3>
           <p
             style={{
               fontFamily: "var(--font-mono), monospace",
-              fontSize: "0.78rem",
+              fontSize: "0.74rem",
               margin: "0 0 20px 0",
+              color: "var(--adm-text-muted)",
             }}
           >
             {isConfigured
-              ? "Bắt đầu bằng cách kéo thả tệp âm thanh vào trang Tải lên."
-              : "Cần cấu hình Supabase để lưu trữ và quản lý bài hát."}
+              ? "Kéo và thả tệp âm thanh vào trang Tải lên để bắt đầu lưu trữ."
+              : "Cần kết nối Supabase để lưu trữ và quản lý bài hát."}
           </p>
           {isConfigured ? (
             <Link
               href="/admin/music/upload"
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              <Plus size={14} />
-              <span>Tải lên bài hát đầu tiên</span>
+              <Plus size={13} />
+              <span>Tải lên bản nhạc đầu tiên</span>
             </Link>
           ) : null}
         </div>

@@ -14,25 +14,30 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
         <div
           role="alert"
           style={{
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            color: "#f87171",
+            background: "var(--adm-surface-3)",
+            border: "1px solid var(--adm-line-strong)",
+            color: "#ffffff",
             padding: "10px 14px",
-            borderRadius: 8,
-            fontSize: "0.82rem",
+            borderRadius: 2,
+            fontSize: "0.78rem",
+            fontFamily: "var(--font-mono), monospace",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          {state.error}
+          <span style={{ fontWeight: 700 }}>[ ! ]</span>
+          <span>{state.error}</span>
         </div>
       ) : null}
 
       <div className={styles.formGroup} style={{ marginBottom: 0 }}>
         <label className={styles.formLabel} htmlFor="admin-email">
-          Email quản trị
+          Email Quản trị
         </label>
         <div style={{ position: "relative" }}>
           <Mail
-            size={16}
+            size={14}
             style={{
               position: "absolute",
               left: 12,
@@ -50,7 +55,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
             autoComplete="email"
             placeholder="admin@darling.internal"
             className={styles.formInput}
-            style={{ paddingLeft: 38 }}
+            style={{ paddingLeft: 36, fontFamily: "var(--font-mono), monospace", fontSize: "0.8rem" }}
             disabled={!isConfigured || isPending}
           />
         </div>
@@ -62,7 +67,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
         </label>
         <div style={{ position: "relative" }}>
           <Lock
-            size={16}
+            size={14}
             style={{
               position: "absolute",
               left: 12,
@@ -80,7 +85,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
             autoComplete="current-password"
             placeholder="••••••••••••"
             className={styles.formInput}
-            style={{ paddingLeft: 38 }}
+            style={{ paddingLeft: 36, fontFamily: "var(--font-mono), monospace", fontSize: "0.8rem" }}
             disabled={!isConfigured || isPending}
           />
         </div>
@@ -90,10 +95,10 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
         type="submit"
         className={`${styles.btn} ${styles.btnPrimary}`}
         disabled={!isConfigured || isPending}
-        style={{ marginTop: 8, height: 42, width: "100%" }}
+        style={{ marginTop: 8, height: 40, width: "100%" }}
       >
-        <span>{isPending ? "Đang xác thực..." : "Đăng nhập Dashboard"}</span>
-        <ArrowRight size={15} />
+        <span>{isPending ? "Đang xác thực bảo mật..." : "Đăng nhập Dashboard"}</span>
+        <ArrowRight size={14} />
       </button>
     </form>
   );

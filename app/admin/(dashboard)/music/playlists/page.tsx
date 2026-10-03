@@ -31,6 +31,7 @@ export default async function AdminPlaylistsPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>02 · AUDIO ARCHIVE // PLAYLIST MATRIX</div>
           <h1 className={styles.pageHeaderTitle}>Danh sách phát</h1>
           <p className={styles.pageHeaderSub}>
             QUẢN LÝ CÁC DANH SÁCH BÀI HÁT THEO CHỦ ĐỀ & TUYỂN TẬP
@@ -41,7 +42,7 @@ export default async function AdminPlaylistsPage() {
             href="/admin/music"
             className={`${styles.btn} ${styles.btnSecondary}`}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={13} />
             <span>Thư viện nhạc</span>
           </Link>
         </div>

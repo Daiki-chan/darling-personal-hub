@@ -17,9 +17,10 @@ export default function MusicUploadPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>02 · AUDIO ARCHIVE // INGESTION</div>
           <h1 className={styles.pageHeaderTitle}>Tải lên Âm thanh</h1>
           <p className={styles.pageHeaderSub}>
-            SUPABASE STORAGE PIPELINE · HỖ TRỢ MP3, FLAC, WAV, M4A, OGG
+            SUPABASE STORAGE PIPELINE · HỖ TRỢ MP3, FLAC, WAV, M4A, OGG (TỐI ĐA 100MB)
           </p>
         </div>
         <div className={styles.pageHeaderActions}>
@@ -27,7 +28,7 @@ export default function MusicUploadPage() {
             href="/admin/music"
             className={`${styles.btn} ${styles.btnSecondary}`}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={13} />
             <span>Thư viện nhạc</span>
           </Link>
         </div>

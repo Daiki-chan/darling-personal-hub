@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPortfolioPage() {
-
   return (
     <div>
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>04 · CASE STUDIES // SYSTEM ARCHIVE</div>
           <h1 className={styles.pageHeaderTitle}>Hồ sơ Case Study (Portfolio CMS)</h1>
           <p className={styles.pageHeaderSub}>
             QUẢN LÝ DỰ ÁN KỸ THUẬT & HỆ THỐNG SỐNG TẠI /PORTFOLIO
@@ -25,11 +25,11 @@ export default function AdminPortfolioPage() {
       <div className={styles.panel} style={{ marginBottom: 28 }}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>
-            <Layers size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+            <Layers size={14} style={{ color: "#ffffff" }} />
             <span>Dự án Hiện hành (Baseline Architecture)</span>
           </h2>
-          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.75rem", opacity: 0.6 }}>
-            {FEATURED_PROJECTS.length} PROJECTS
+          <span className={styles.panelMeta}>
+            {FEATURED_PROJECTS.length} PRODUCTION RELEASES
           </span>
         </div>
 
@@ -37,28 +37,28 @@ export default function AdminPortfolioPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: 44 }}>Mã</th>
-                <th>Tên dự án</th>
-                <th>Khách hàng / Hệ thống</th>
-                <th>Năm</th>
-                <th>Chuyên mục</th>
-                <th>Trạng thái</th>
-                <th style={{ textAlign: "right" }}>Xem</th>
+                <th style={{ width: 44 }}>MÃ</th>
+                <th>TÊN DỰ ÁN</th>
+                <th>KHÁCH HÀNG / HỆ THỐNG</th>
+                <th>NĂM</th>
+                <th>CHUYÊN MỤC</th>
+                <th>TRẠNG THÁI</th>
+                <th style={{ textAlign: "right" }}>XEM</th>
               </tr>
             </thead>
             <tbody>
               {FEATURED_PROJECTS.map((proj) => (
                 <tr key={proj.slug}>
-                  <td style={{ fontFamily: "var(--font-mono), monospace", color: "var(--v2-accent, #a78bfa)" }}>
+                  <td style={{ fontFamily: "var(--font-mono), monospace", color: "#ffffff", fontWeight: 600 }}>
                     {proj.index}
                   </td>
-                  <td style={{ fontWeight: 600 }}>{proj.title}</td>
-                  <td style={{ color: "var(--v2-text-secondary, #9895a3)" }}>{proj.client}</td>
-                  <td style={{ fontFamily: "var(--font-mono), monospace" }}>{proj.year}</td>
-                  <td style={{ fontSize: "0.75rem" }}>{proj.category}</td>
+                  <td style={{ fontWeight: 500 }}>{proj.title}</td>
+                  <td style={{ color: "var(--adm-text-secondary)" }}>{proj.client}</td>
+                  <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.74rem" }}>{proj.year}</td>
+                  <td style={{ fontSize: "0.74rem", fontFamily: "var(--font-mono), monospace" }}>{proj.category}</td>
                   <td>
                     <span className={`${styles.statusBadge} ${styles.statusPublished}`}>
-                      PUBLISHED
+                      ● PUBLISHED
                     </span>
                   </td>
                   <td style={{ textAlign: "right" }}>
@@ -67,7 +67,7 @@ export default function AdminPortfolioPage() {
                       target="_blank"
                       className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                     >
-                      <ExternalLink size={12} />
+                      <ExternalLink size={11} />
                       <span>Xem</span>
                     </Link>
                   </td>
@@ -83,17 +83,20 @@ export default function AdminPortfolioPage() {
           <h2 className={styles.panelTitle}>
             <span>Kiến trúc Mở rộng Database Abstraction</span>
           </h2>
+          <span className={styles.panelMeta}>
+            SCHEMA: public.portfolio_projects
+          </span>
         </div>
         <p
           style={{
             fontFamily: "var(--font-mono), monospace",
-            fontSize: "0.8rem",
+            fontSize: "0.76rem",
             lineHeight: 1.6,
-            color: "var(--v2-text-secondary, #9895a3)",
+            color: "var(--adm-text-secondary)",
             margin: 0,
           }}
         >
-          Theo nguyên tắc kiến trúc: Dữ liệu hồ sơ hiện hành được cấu trúc tĩnh có hệ thống tại <code>lib/portfolio-data.ts</code> để bảo đảm hiệu năng SSG tối đa. Bảng <code>portfolio_projects</code> đã được tạo trong Supabase migration để hỗ trợ thêm các dự án động trong tương lai mà không làm gián đoạn các bài viết hiện tại.
+          Theo nguyên tắc kiến trúc bảo toàn: Dữ liệu hồ sơ hiện hành được cấu trúc tĩnh có hệ thống tại <code>lib/portfolio-data.ts</code> để bảo đảm hiệu năng SSG tối đa. Bảng <code>portfolio_projects</code> đã được tạo trong Supabase migration schema để hỗ trợ mở rộng thêm các dự án động trong tương lai mà không làm ảnh hưởng đến các case study hiện hành.
         </p>
       </div>
     </div>

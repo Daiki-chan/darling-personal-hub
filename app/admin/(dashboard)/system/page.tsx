@@ -18,7 +18,7 @@ export default async function AdminSystemPage() {
   const status = getSupabaseConfigStatus();
 
   let dbConnectionResult = "Chưa kiểm tra";
-  let dbTablesCount = "N/A";
+  let dbTablesCount = "—";
   let audioBucketStatus = "Chưa kiểm tra";
   let coversBucketStatus = "Chưa kiểm tra";
 
@@ -28,22 +28,22 @@ export default async function AdminSystemPage() {
       if (supabase) {
         const { error } = await supabase.from("tracks").select("id", { count: "exact", head: true });
         if (!error) {
-          dbConnectionResult = "Kết nối thành công (200 OK)";
-          dbTablesCount = "Bảng public.tracks hoạt động tốt";
+          dbConnectionResult = "● KẾT NỐI THÀNH CÔNG (200 OK)";
+          dbTablesCount = "BẢNG public.tracks ACTIVE";
         } else {
-          dbConnectionResult = `Lỗi truy vấn: ${error.message}`;
+          dbConnectionResult = `[!] TRUY VẤN: ${error.message}`;
         }
 
         // Test audio bucket
         const { error: audioErr } = await supabase.storage.from("audio").list("", { limit: 1 });
-        audioBucketStatus = audioErr ? `Lỗi: ${audioErr.message}` : "Sẵn sàng (200 OK)";
+        audioBucketStatus = audioErr ? `[!] LỖI: ${audioErr.message}` : "● SẴN SÀNG (200 OK)";
 
         // Test covers bucket
         const { error: coverErr } = await supabase.storage.from("covers").list("", { limit: 1 });
-        coversBucketStatus = coverErr ? `Lỗi: ${coverErr.message}` : "Sẵn sàng (200 OK)";
+        coversBucketStatus = coverErr ? `[!] LỖI: ${coverErr.message}` : "● SẴN SÀNG (200 OK)";
       }
     } catch (err: unknown) {
-      dbConnectionResult = err instanceof Error ? err.message : "Lỗi không xác định";
+      dbConnectionResult = err instanceof Error ? `[!] ${err.message}` : "[!] LỖI NGOẠI LỆ";
     }
   }
 
@@ -51,6 +51,7 @@ export default async function AdminSystemPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>05 · INFRASTRUCTURE // TELEMETRY & DIAGNOSTICS</div>
           <h1 className={styles.pageHeaderTitle}>Chẩn đoán Hệ thống</h1>
           <p className={styles.pageHeaderSub}>
             TRẠNG THÁI DỊCH VỤ SUPABASE, BẢO MẬT RLS & TIÊU CHUẨN KẾT NỐI
@@ -58,26 +59,29 @@ export default async function AdminSystemPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18 }}>
         {/* Environment status */}
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <Key size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <Key size={14} style={{ color: "#ffffff" }} />
               <span>Biến môi trường (Environment)</span>
             </h2>
+            <span className={styles.panelMeta}>ENV_TELEMETRY</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.82rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.8rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontFamily: "var(--font-mono), monospace" }}>NEXT_PUBLIC_SUPABASE_URL</span>
               <span
                 style={{
                   fontFamily: "var(--font-mono), monospace",
-                  color: status.hasUrl ? "#4ade80" : "#f87171",
+                  fontSize: "0.72rem",
+                  color: status.hasUrl ? "#ffffff" : "var(--adm-text-muted)",
+                  fontWeight: 500,
                 }}
               >
-                {status.hasUrl ? "CONFIGURED" : "MISSING"}
+                {status.hasUrl ? "● CONFIGURED" : "○ MISSING"}
               </span>
             </div>
 
@@ -86,10 +90,12 @@ export default async function AdminSystemPage() {
               <span
                 style={{
                   fontFamily: "var(--font-mono), monospace",
-                  color: status.hasAnonKey ? "#4ade80" : "#f87171",
+                  fontSize: "0.72rem",
+                  color: status.hasAnonKey ? "#ffffff" : "var(--adm-text-muted)",
+                  fontWeight: 500,
                 }}
               >
-                {status.hasAnonKey ? "CONFIGURED" : "MISSING"}
+                {status.hasAnonKey ? "● CONFIGURED" : "○ MISSING"}
               </span>
             </div>
 
@@ -98,10 +104,11 @@ export default async function AdminSystemPage() {
               <span
                 style={{
                   fontFamily: "var(--font-mono), monospace",
-                  color: status.hasServiceRoleKey ? "#4ade80" : "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+                  fontSize: "0.72rem",
+                  color: status.hasServiceRoleKey ? "#ffffff" : "var(--adm-text-muted)",
                 }}
               >
-                {status.hasServiceRoleKey ? "CONFIGURED (OPTIONAL)" : "NOT SET (OPTIONAL)"}
+                {status.hasServiceRoleKey ? "● CONFIGURED (OPTIONAL)" : "○ NOT SET (OPTIONAL)"}
               </span>
             </div>
           </div>
@@ -111,35 +118,37 @@ export default async function AdminSystemPage() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <Database size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <Database size={14} style={{ color: "#ffffff" }} />
               <span>PostgreSQL & Row Level Security</span>
             </h2>
+            <span className={styles.panelMeta}>POSTGRES_V15</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.82rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.8rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>Kết nối cơ sở dữ liệu:</span>
               <span
                 style={{
                   fontFamily: "var(--font-mono), monospace",
-                  color: status.isConfigured ? "#4ade80" : "#fbbf24",
+                  fontSize: "0.72rem",
+                  color: status.isConfigured ? "#ffffff" : "var(--adm-text-muted)",
                 }}
               >
-                {status.isConfigured ? dbConnectionResult : "Chưa cấu hình"}
+                {status.isConfigured ? dbConnectionResult : "○ Chưa cấu hình"}
               </span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>Kiểm tra bảng tracks:</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace", color: "var(--v2-text-secondary, #9895a3)" }}>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem", color: "var(--adm-text-secondary)" }}>
                 {dbTablesCount}
               </span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>Chính sách RLS:</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace", color: "#4ade80" }}>
-                ENABLED (Đã kích hoạt trong migration)
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem", color: "#ffffff", fontWeight: 500 }}>
+                ● ENABLED (Schema Migration)
               </span>
             </div>
           </div>
@@ -149,23 +158,24 @@ export default async function AdminSystemPage() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <HardDrive size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <HardDrive size={14} style={{ color: "#ffffff" }} />
               <span>Supabase Storage Buckets</span>
             </h2>
+            <span className={styles.panelMeta}>STORAGE_API</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.82rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.8rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontFamily: "var(--font-mono), monospace" }}>bucket &apos;audio&apos;</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace", color: status.isConfigured ? "#4ade80" : "#fbbf24" }}>
-                {audioBucketStatus}
+              <span style={{ fontFamily: "var(--font-mono), monospace" }}>bucket &apos;audio&apos; (50MB)</span>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem", color: status.isConfigured ? "#ffffff" : "var(--adm-text-muted)" }}>
+                {status.isConfigured ? audioBucketStatus : "○ Standby"}
               </span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontFamily: "var(--font-mono), monospace" }}>bucket &apos;covers&apos;</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace", color: status.isConfigured ? "#4ade80" : "#fbbf24" }}>
-                {coversBucketStatus}
+              <span style={{ fontFamily: "var(--font-mono), monospace" }}>bucket &apos;covers&apos; (10MB)</span>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem", color: status.isConfigured ? "#ffffff" : "var(--adm-text-muted)" }}>
+                {status.isConfigured ? coversBucketStatus : "○ Standby"}
               </span>
             </div>
           </div>
@@ -175,23 +185,24 @@ export default async function AdminSystemPage() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <Server size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <Server size={14} style={{ color: "#ffffff" }} />
               <span>Nền tảng Thực thi (Runtime)</span>
             </h2>
+            <span className={styles.panelMeta}>NEXT_TURBOPACK</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.82rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: "0.8rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>Framework:</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace" }}>Next.js 16.3.0 (Turbopack)</span>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem" }}>Next.js 16.3.0</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>React Engine:</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace" }}>React 19.2.8</span>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem" }}>React 19.2.8</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>Routing Architecture:</span>
-              <span style={{ fontFamily: "var(--font-mono), monospace" }}>App Router + Route Groups</span>
+              <span>Kiến trúc Routing:</span>
+              <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.72rem" }}>App Router + Route Groups</span>
             </div>
           </div>
         </div>

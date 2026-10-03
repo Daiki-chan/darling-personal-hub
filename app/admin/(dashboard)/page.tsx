@@ -1,10 +1,9 @@
 import Link from "next/link";
 import {
-  AlertCircle,
   ArrowUpRight,
-  CheckCircle2,
   Database,
   Film,
+  HardDrive,
   Layers,
   Music2,
   Radio,
@@ -18,11 +17,11 @@ import { getServerSupabase } from "@/lib/supabase/server";
 export default async function AdminOverviewPage() {
   const isConfigured = isSupabaseConfigured();
 
-  let totalTracks = "N/A";
-  let publishedTracks = "N/A";
-  let draftTracks = "N/A";
-  let totalMemories = "N/A";
-  const totalProjects = "7 (Baseline)";
+  let totalTracks = "—";
+  let publishedTracks = "0";
+  let draftTracks = "0";
+  let totalMemories = "—";
+  const totalProjects = "7";
   let recentTracks: Array<{
     id: string;
     title: string;
@@ -77,8 +76,10 @@ export default async function AdminOverviewPage() {
 
   return (
     <div>
+      {/* Editorial Page Header */}
       <div className={styles.pageHeader}>
         <div>
+          <div className={styles.pageHeaderIndex}>01 · SYSTEM OVERVIEW</div>
           <h1 className={styles.pageHeaderTitle}>Tổng quan Hệ thống</h1>
           <p className={styles.pageHeaderSub}>
             HẠ TẦNG QUẢN TRỊ NỘI DUNG SỐ & LUỒNG PHÁT HÀNH ÂM NHẠC
@@ -89,14 +90,14 @@ export default async function AdminOverviewPage() {
             href="/admin/music/upload"
             className={`${styles.btn} ${styles.btnPrimary}`}
           >
-            <UploadCloud size={15} />
+            <UploadCloud size={14} />
             <span>Tải lên audio mới</span>
           </Link>
           <Link
             href="/admin/music"
             className={`${styles.btn} ${styles.btnSecondary}`}
           >
-            <Music2 size={15} />
+            <Music2 size={14} />
             <span>Thư viện nhạc</span>
           </Link>
         </div>
@@ -105,89 +106,101 @@ export default async function AdminOverviewPage() {
       {/* Metrics Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Tổng bản ghi audio</div>
+          <div className={styles.statLabel}>
+            <span>01 · TỔNG AUDIO ARCHIVE</span>
+            <Music2 size={12} style={{ opacity: 0.4 }} />
+          </div>
           <div className={styles.statValue}>{totalTracks}</div>
           <div className={styles.statSub}>
-            <Music2 size={12} />
-            <span>{isConfigured ? `${publishedTracks} đã phát hành` : "Cần kết nối Supabase"}</span>
+            <span className={styles.statusDot} />
+            <span>{isConfigured ? `${publishedTracks} đã xuất bản công khai` : "Yêu cầu kết nối Supabase"}</span>
           </div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Bản nháp chờ duyệt</div>
+          <div className={styles.statLabel}>
+            <span>02 · BẢN NHÁP (DRAFT)</span>
+            <Radio size={12} style={{ opacity: 0.4 }} />
+          </div>
           <div className={styles.statValue}>{draftTracks}</div>
           <div className={styles.statSub}>
-            <Radio size={12} />
-            <span>{isConfigured ? "Chỉ hiển thị trong admin" : "N/A"}</span>
+            <span className={styles.statusDotMuted} />
+            <span>{isConfigured ? "Chỉ lưu trữ trong Admin" : "Chưa kích hoạt"}</span>
           </div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Ký ức số (Memories)</div>
-          <div className={styles.statValue}>{totalMemories}</div>
+          <div className={styles.statLabel}>
+            <span>03 · KÝ ỨC SỐ (MEMORIES)</span>
+            <Film size={12} style={{ opacity: 0.4 }} />
+          </div>
+          <div className={styles.statValue}>{totalMemories === "—" ? "4" : totalMemories}</div>
           <div className={styles.statSub}>
-            <Film size={12} />
-            <span>{isConfigured ? "Game & Địa điểm" : "Đang dùng static dataset"}</span>
+            <span>Baseline game & địa điểm</span>
           </div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Hồ sơ Case Study</div>
+          <div className={styles.statLabel}>
+            <span>04 · HỒ SƠ CASE STUDY</span>
+            <Layers size={12} style={{ opacity: 0.4 }} />
+          </div>
           <div className={styles.statValue}>{totalProjects}</div>
           <div className={styles.statSub}>
-            <Layers size={12} />
-            <span>Bảo toàn cấu trúc hiện hành</span>
+            <span>Dự án kỹ thuật hiện hành</span>
           </div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Trạng thái Supabase</div>
+          <div className={styles.statLabel}>
+            <span>05 · TRẠNG THÁI SUPABASE</span>
+            <Database size={12} style={{ opacity: 0.4 }} />
+          </div>
           <div
             className={styles.statValue}
             style={{
-              fontSize: "1.1rem",
+              fontSize: "1rem",
               display: "flex",
               alignItems: "center",
               gap: 8,
-              color: isConfigured ? "#4ade80" : "#fbbf24",
-              marginTop: 6,
+              letterSpacing: "0.04em",
+              marginTop: 4,
             }}
           >
             {isConfigured ? (
               <>
-                <CheckCircle2 size={18} />
-                <span>KẾT NỐI SẴN SÀNG</span>
+                <span className={styles.statusDot} />
+                <span>ONLINE / ACTIVE</span>
               </>
             ) : (
               <>
-                <AlertCircle size={18} />
-                <span>CHƯA CẤU HÌNH</span>
+                <span className={styles.statusDotMuted} />
+                <span>STANDBY / REQ CONFIG</span>
               </>
             )}
           </div>
           <div className={styles.statSub}>
-            <Database size={12} />
-            <span>{isConfigured ? "PostgreSQL & RLS Active" : "Xem thẻ thông báo bên trên"}</span>
+            <span>{isConfigured ? "PostgreSQL & RLS Active" : "Xem thẻ cấu hình hệ thống"}</span>
           </div>
         </div>
       </div>
 
       {/* Main Grid: Recent Activity & Architecture Flow */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 20 }}>
         {/* Recent Tracks Panel */}
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <Music2 size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <Music2 size={14} style={{ color: "#ffffff" }} />
               <span>Bản nhạc tải lên gần đây</span>
             </h2>
             <Link
               href="/admin/music"
               className={styles.publicSiteLink}
-              style={{ fontSize: "0.74rem" }}
+              style={{ fontSize: "0.68rem" }}
             >
-              <span>Xem tất cả</span>
-              <ArrowUpRight size={12} />
+              <span>Xem toàn bộ</span>
+              <ArrowUpRight size={11} />
             </Link>
           </div>
 
@@ -213,10 +226,10 @@ export default async function AdminOverviewPage() {
                           {track.title}
                         </Link>
                       </td>
-                      <td style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
+                      <td style={{ color: "var(--adm-text-secondary)" }}>
                         {track.artist}
                       </td>
-                      <td style={{ fontFamily: "var(--font-mono), monospace" }}>
+                      <td style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.75rem" }}>
                         {Math.floor(track.duration / 60)}:
                         {String(track.duration % 60).padStart(2, "0")}
                       </td>
@@ -230,7 +243,7 @@ export default async function AdminOverviewPage() {
                               : styles.statusArchived
                           }`}
                         >
-                          {track.status}
+                          {track.status === "published" ? "● PUBLISHED" : "○ DRAFT"}
                         </span>
                       </td>
                     </tr>
@@ -243,22 +256,22 @@ export default async function AdminOverviewPage() {
               style={{
                 padding: "36px 20px",
                 textAlign: "center",
-                color: "var(--v2-text-tertiary, rgba(237, 234, 242, 0.45))",
+                color: "var(--adm-text-muted)",
                 fontFamily: "var(--font-mono), monospace",
-                fontSize: "0.8rem",
+                fontSize: "0.78rem",
               }}
             >
-              <p style={{ margin: "0 0 12px 0" }}>
+              <p style={{ margin: "0 0 16px 0" }}>
                 {isConfigured
-                  ? "Chưa có bản ghi âm nhạc nào trong cơ sở dữ liệu."
-                  : "Chưa cấu hình Supabase — dữ liệu bản ghi chưa thể truy vấn."}
+                  ? "Chưa có bản ghi âm nhạc nào trong kho lưu trữ."
+                  : "Chưa kết nối Supabase — dữ liệu bản ghi chưa thể truy vấn."}
               </p>
               {isConfigured ? (
                 <Link
                   href="/admin/music/upload"
                   className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
                 >
-                  <UploadCloud size={13} />
+                  <UploadCloud size={12} />
                   <span>Tải lên bản nhạc đầu tiên</span>
                 </Link>
               ) : null}
@@ -270,66 +283,70 @@ export default async function AdminOverviewPage() {
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>
-              <Sparkles size={15} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+              <Sparkles size={14} style={{ color: "#ffffff" }} />
               <span>Kiến trúc dữ liệu / Data Flow</span>
             </h2>
+            <span className={styles.panelMeta}>ARCHITECTURE V1</span>
           </div>
 
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 10,
               fontFamily: "var(--font-mono), monospace",
-              fontSize: "0.78rem",
+              fontSize: "0.74rem",
               lineHeight: 1.6,
             }}
           >
             <div
               style={{
-                padding: 14,
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.06))",
+                padding: 12,
+                borderRadius: 2,
+                background: "var(--adm-surface-2)",
+                border: "1px solid var(--adm-line-hairline)",
               }}
             >
-              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 4 }}>
-                1. /admin/music/upload
+              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                <HardDrive size={12} />
+                <span>[01] INGESTION CONSOLE (/admin/music/upload)</span>
               </div>
-              <div style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
-                Audio file được tải lên bucket <code>audio</code> trên Supabase Storage. File artwork tải lên bucket <code>covers</code>.
+              <div style={{ color: "var(--adm-text-secondary)" }}>
+                Audio binary truyền trực tiếp vào bucket <code>audio</code> (Max 50MB/file). Artwork lưu trữ trong bucket <code>covers</code> (Max 10MB/file).
               </div>
             </div>
 
             <div
               style={{
-                padding: 14,
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.06))",
+                padding: 12,
+                borderRadius: 2,
+                background: "var(--adm-surface-2)",
+                border: "1px solid var(--adm-line-hairline)",
               }}
             >
-              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 4 }}>
-                2. PostgreSQL / Row Level Security (RLS)
+              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                <Database size={12} />
+                <span>[02] STORAGE & RLS MATRIX (public.tracks)</span>
               </div>
-              <div style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
-                Metadata (Title, Artist, Duration, Bitrate, Storage Path, Status) lưu vào bảng <code>tracks</code>. RLS chỉ cấp quyền SELECT cho công khai với trạng thái <code>published</code>.
+              <div style={{ color: "var(--adm-text-secondary)" }}>
+                Metadata (Title, Artist, Duration, Bitrate, Storage Path, Status) lưu trữ an toàn trong PostgreSQL. RLS chỉ cấp quyền SELECT cho khách với trạng thái <code>published</code>.
               </div>
             </div>
 
             <div
               style={{
-                padding: 14,
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.06))",
+                padding: 12,
+                borderRadius: 2,
+                background: "var(--adm-surface-2)",
+                border: "1px solid var(--adm-line-hairline)",
               }}
             >
-              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 4 }}>
-                3. /music (/am-nhac) Consumer
+              <div style={{ color: "#ffffff", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                <Music2 size={12} />
+                <span>[03] CONSUMER PIPELINE (/music & /am-nhac)</span>
               </div>
-              <div style={{ color: "var(--v2-text-secondary, #9895a3)" }}>
-                Trang công khai truy vấn các bản ghi <code>published</code> và phát trực tiếp qua Immersive Audio Player bằng thẻ audio HTML5 đồng bộ với YouTube stage.
+              <div style={{ color: "var(--adm-text-secondary)" }}>
+                Trang công khai fetch trực tiếp danh sách nhạc đã phát hành và phát thông qua HTML5 Audio player, đồng bộ state mượt mà với YouTube stage.
               </div>
             </div>
           </div>

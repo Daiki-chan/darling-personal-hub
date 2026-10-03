@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, useRef, useState, useTransition } from "react";
 import {
-  AlertCircle,
-  CheckCircle2,
   FileAudio,
   Globe,
   ImageIcon,
@@ -77,7 +75,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
         setFeedback({ type: "error", text: res.error });
       } else {
         setStatus(targetStatus);
-        setFeedback({ type: "success", text: "Đã lưu thay đổi thành công!" });
+        setFeedback({ type: "success", text: "Đã cập nhật siêu dữ liệu bản nhạc thành công!" });
         router.refresh();
       }
     } catch (err: unknown) {
@@ -91,7 +89,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
   };
 
   const handleDelete = () => {
-    if (!confirm(`Xóa vĩnh viễn bản nhạc "${track.title}"?`)) return;
+    if (!confirm(`Xóa vĩnh viễn bản nhạc "${track.title}" khỏi hệ thống?`)) return;
 
     startTransition(async () => {
       const res = await deleteTrackAction(track.id);
@@ -110,30 +108,22 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
         <div
           role="alert"
           style={{
-            background:
-              feedback.type === "success"
-                ? "rgba(34, 197, 94, 0.1)"
-                : "rgba(239, 68, 68, 0.1)",
-            border: `1px solid ${
-              feedback.type === "success"
-                ? "rgba(34, 197, 94, 0.3)"
-                : "rgba(239, 68, 68, 0.3)"
-            }`,
-            color: feedback.type === "success" ? "#4ade80" : "#f87171",
+            background: "var(--adm-surface-3)",
+            border: "1px solid var(--adm-line-strong)",
+            color: "#ffffff",
             padding: "12px 18px",
-            borderRadius: 8,
+            borderRadius: 2,
             marginBottom: 20,
             display: "flex",
             alignItems: "center",
             gap: 10,
-            fontSize: "0.85rem",
+            fontSize: "0.8rem",
+            fontFamily: "var(--font-mono), monospace",
           }}
         >
-          {feedback.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <AlertCircle size={16} />
-          )}
+          <span style={{ fontWeight: 700 }}>
+            {feedback.type === "success" ? "[ OK ]" : "[ ! ]"}
+          </span>
           <span>{feedback.text}</span>
         </div>
       ) : null}
@@ -141,7 +131,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
       <div className={styles.panel} style={{ marginBottom: 24 }}>
         <div className={styles.panelHeader}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <FileAudio size={18} style={{ color: "var(--v2-accent, #a78bfa)" }} />
+            <FileAudio size={16} style={{ color: "#ffffff" }} />
             <h2 className={styles.panelTitle}>Trình phát & Tệp âm thanh gốc</h2>
           </div>
           <span
@@ -153,28 +143,29 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
                 : styles.statusArchived
             }`}
           >
-            {status}
+            {status === "published" ? "● PUBLISHED" : "○ DRAFT"}
           </span>
         </div>
 
-        {/* Audio Player Preview */}
+        {/* Audio Player Preview Container */}
         <div
           style={{
-            background: "rgba(0, 0, 0, 0.4)",
-            border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.08))",
-            borderRadius: 8,
+            background: "var(--adm-surface-2)",
+            border: "1px solid var(--adm-line-subtle)",
+            borderRadius: 2,
             padding: 16,
-            marginBottom: 20,
+            marginBottom: 24,
           }}
         >
           <div
             style={{
               fontFamily: "var(--font-mono), monospace",
-              fontSize: "0.72rem",
-              color: "var(--v2-text-secondary, #9895a3)",
+              fontSize: "0.68rem",
+              color: "var(--adm-text-muted)",
               marginBottom: 10,
               display: "flex",
               justifyContent: "space-between",
+              letterSpacing: "0.06em",
             }}
           >
             <span>SUPABASE STORAGE: {track.storage_path}</span>
@@ -184,7 +175,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
           <audio
             controls
             src={track.audio_url}
-            style={{ width: "100%", height: 38 }}
+            style={{ width: "100%", height: 36 }}
             preload="metadata"
           />
         </div>
@@ -204,9 +195,9 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
               style={{
                 width: 180,
                 height: 180,
-                borderRadius: 8,
-                background: "#121218",
-                border: "1px solid var(--v2-line, rgba(255, 255, 255, 0.1))",
+                borderRadius: 2,
+                background: "var(--adm-surface-3)",
+                border: "1px solid var(--adm-line-subtle)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -222,7 +213,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (
-                <ImageIcon size={40} style={{ opacity: 0.3 }} />
+                <ImageIcon size={36} style={{ opacity: 0.3 }} />
               )}
             </div>
 
@@ -240,7 +231,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
               className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
               style={{ width: "100%", marginTop: 10 }}
             >
-              <ImageIcon size={12} />
+              <ImageIcon size={11} />
               <span>Đổi ảnh bìa</span>
             </button>
           </div>
@@ -249,7 +240,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
               gap: 16,
             }}
           >
@@ -269,7 +260,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
 
             <div className={styles.formGroup}>
               <label className={styles.formLabel} htmlFor="edit-artist">
-                Nghệ sĩ *
+                Nghệ sĩ biểu diễn *
               </label>
               <input
                 id="edit-artist"
@@ -283,7 +274,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
 
             <div className={styles.formGroup}>
               <label className={styles.formLabel} htmlFor="edit-album">
-                Album
+                Album / Tuyển tập
               </label>
               <input
                 id="edit-album"
@@ -309,7 +300,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
 
             <div className={styles.formGroup}>
               <label className={styles.formLabel} htmlFor="edit-genre">
-                Thể loại
+                Thể loại âm nhạc
               </label>
               <input
                 id="edit-genre"
@@ -358,7 +349,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
                 onChange={(e) => setStatus(e.target.value as ContentStatus)}
               >
                 <option value="published">Xuất bản công khai (Hiển thị tại /music)</option>
-                <option value="draft">Bản nháp (Chỉ xem trong Admin)</option>
+                <option value="draft">Bản nháp (Chỉ lưu trữ trong Admin)</option>
                 <option value="archived">Lưu trữ (Ẩn khỏi công khai)</option>
               </select>
             </div>
@@ -368,7 +359,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
         {/* Lyrics */}
         <div className={styles.formGroup} style={{ marginTop: 24 }}>
           <label className={styles.formLabel} htmlFor="edit-lyrics">
-            Lời bài hát (Plain text)
+            Lời bài hát (Plain text lyrics)
           </label>
           <textarea
             id="edit-lyrics"
@@ -387,7 +378,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
             justifyContent: "space-between",
             marginTop: 28,
             paddingTop: 20,
-            borderTop: "1px solid var(--v2-line-subtle, rgba(255, 255, 255, 0.04))",
+            borderTop: "1px solid var(--adm-line-hairline)",
           }}
         >
           <button
@@ -396,11 +387,11 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
             disabled={isSaving || isPending}
             className={`${styles.btn} ${styles.btnDanger}`}
           >
-            <Trash2 size={13} />
+            <Trash2 size={12} />
             <span>Xóa bài hát</span>
           </button>
 
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "flex", gap: 10 }}>
             <button
               type="button"
               onClick={() => router.push("/admin/music")}
@@ -415,9 +406,9 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
               className={`${styles.btn} ${styles.btnSecondary}`}
             >
               {isSaving ? (
-                <Loader2 size={13} className="animate-spin" />
+                <Loader2 size={12} className="animate-spin" />
               ) : (
-                <Save size={13} />
+                <Save size={12} />
               )}
               <span>Lưu thông tin</span>
             </button>
@@ -429,7 +420,7 @@ export function MusicEditorForm({ track }: { track: TrackRow }) {
                 disabled={isSaving}
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
-                <Globe size={13} />
+                <Globe size={12} />
                 <span>Lưu & Xuất bản ngay</span>
               </button>
             ) : null}
